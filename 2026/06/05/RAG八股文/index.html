@@ -18,7 +18,7 @@
 
 
 
-<html lang="en" class="h-full scroll-smooth">
+<html lang="zh-CN" class="h-full scroll-smooth">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -32,7 +32,7 @@
     <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
          priority ahead of the blocking theme script, shrinking the swap window.
          Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&display=swap" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
     
     <!-- FOUC prevention: resolve theme before first paint.
          Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
@@ -75,7 +75,7 @@
     </script>
     
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
     
     
     
@@ -118,7 +118,7 @@
     <meta property="og:site_name" content="Hexo" />
     
     
-    <meta property="og:locale" content="en" />
+    <meta property="og:locale" content="zh_CN" />
     
     
     
@@ -255,7 +255,7 @@
             <div class="mt-3 sm:mt-4 flex justify-center gap-2">
                 
                 
-                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="Light" data-label-system="System" data-label-light="Light" data-label-dark="Dark">
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
                     
 <svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
@@ -283,13 +283,13 @@
 
 <!-- Navigation -->
 
-<nav class="mt-8 md:mt-10" aria-label="Menu" data-pagefind-ignore>
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
     <!-- Mobile Toggle -->
     <div class="flex items-center justify-center md:hidden">
         <button id="menuBtn" type="button"
             class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
             aria-expanded="false" aria-controls="mobileMenu">
-            <span class="text-base leading-none tracking-widest">Menu</span>
+            <span class="text-base leading-none tracking-widest">菜单</span>
             
 <svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
     viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -435,9 +435,9 @@
     
     
 <!-- Inline TOC (small screens < xl) -->
-<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="Contents" data-pagefind-ignore>
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
     <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
-        <span class="toc-toggle-title">Contents</span>
+        <span class="toc-toggle-title">目录</span>
         
 <svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
     viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -451,9 +451,9 @@
 </nav>
 
 <!-- Sidebar TOC (xl+ screens) -->
-<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="Contents" data-pagefind-ignore>
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
     <div class="toc-sidebar-inner">
-        <p class="toc-sidebar-title">Contents</p>
+        <p class="toc-sidebar-title">目录</p>
         <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF-RAG%EF%BC%9F%E8%AF%A6%E7%BB%86%E6%8F%8F%E8%BF%B0%E4%B8%80%E4%B8%AA%E5%AE%8C%E6%95%B4-RAG-%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%AF%A6%E7%BB%86%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%EF%BC%9F" data-target="1-什么是-RAG？详细描述一个完整-RAG-系统的详细工作流程？">1. 什么是 RAG？详细描述一个完整 RAG 系统的详细工作流程？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%9A%84-RAG-%E4%B8%BB%E8%A6%81%E7%94%A8%E6%9D%A5%E8%A7%A3%E5%86%B3%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98%EF%BC%9F" data-target="2-大模型的-RAG-主要用来解决什么问题？">2. 大模型的 RAG 主要用来解决什么问题？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-%E7%9B%B8%E6%AF%94%E7%9B%B4%E6%8E%A5%E5%BE%AE%E8%B0%83-LLM%EF%BC%8CRAG-%E8%A7%A3%E5%86%B3%E4%BA%86%E4%BB%80%E4%B9%88%E9%97%AE%E9%A2%98%EF%BC%9F%E5%BE%AE%E8%B0%83%E5%92%8C-RAG-%E5%90%84%E8%87%AA%E7%9A%84%E4%BC%98%E5%8A%A3%E5%8A%BF%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F" data-target="3-相比直接微调-LLM，RAG-解决了什么问题？微调和-RAG-各自的优劣势是什么？">3. 相比直接微调 LLM，RAG 解决了什么问题？微调和 RAG 各自的优劣势是什么？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-RAG-%E4%B8%AD%E7%9A%84%E6%96%87%E6%A1%A3%E6%98%AF%E6%80%8E%E4%B9%88%E5%AD%98%E7%9A%84%EF%BC%9F%E7%B2%92%E5%BA%A6%E6%98%AF%E5%A4%9A%E5%A4%A7%EF%BC%9F%E8%AF%A6%E7%BB%86%E8%AF%B4%E8%AF%B4%E6%96%87%E6%A1%A3%E5%88%87%E5%89%B2%EF%BC%88Chunking%EF%BC%89%E7%AD%96%E7%95%A5%EF%BC%9F" data-target="4-RAG-中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？">4. RAG 中的文档是怎么存的？粒度是多大？详细说说文档切割（Chunking）策略？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E6%80%8E%E4%B9%88%E8%A7%84%E9%81%BF%E8%AF%AD%E4%B9%89%E8%A2%AB%E5%88%87%E5%89%B2%E6%8E%89%E7%9A%84%E9%97%AE%E9%A2%98%EF%BC%9F" data-target="5-怎么规避语义被切割掉的问题？">5. 怎么规避语义被切割掉的问题？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%9C%A8-RAG-%E4%B8%AD-Embedding-%E7%A9%B6%E7%AB%9F%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F%E5%A6%82%E4%BD%95%E9%80%89%E6%8B%A9%E5%92%8C%E8%AF%84%E4%BC%B0%E4%B8%80%E4%B8%AA-Embedding-%E6%A8%A1%E5%9E%8B%EF%BC%9F" data-target="6-在-RAG-中-Embedding-究竟是什么？如何选择和评估一个-Embedding-模型？">6. 在 RAG 中 Embedding 究竟是什么？如何选择和评估一个 Embedding 模型？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-Embedding-%E6%9C%89%E5%93%AA%E5%87%A0%E7%A7%8D%E7%AE%97%E6%B3%95%E4%BD%A0%E4%BA%86%E8%A7%A3%E8%BF%87%E5%90%97%EF%BC%9F" data-target="7-Embedding-有哪几种算法你了解过吗？">7. Embedding 有哪几种算法你了解过吗？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#8-%E4%BB%80%E4%B9%88%E6%98%AF%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%9F%E6%9C%89%E6%B2%A1%E6%9C%89%E5%81%9A%E8%BF%87%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%AF%B9%E6%AF%94%E9%80%89%E5%9E%8B%EF%BC%9F" data-target="8-什么是向量数据库？有没有做过向量数据库的对比选型？">8. 什么是向量数据库？有没有做过向量数据库的对比选型？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#9-%E8%AE%B2%E8%AE%B2%E4%BD%A0%E7%94%A8%E7%9A%84%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%9F%E6%95%B0%E6%8D%AE%E9%87%8F%E7%BA%A7%E6%98%AF%E5%A4%9A%E5%A4%A7%EF%BC%9F%E6%80%A7%E8%83%BD%E5%A6%82%E4%BD%95%EF%BC%9F%E9%81%87%E5%88%B0%E8%BF%87%E6%80%A7%E8%83%BD%E7%93%B6%E9%A2%88%E5%90%97%EF%BC%9F" data-target="9-讲讲你用的向量数据库？数据量级是多大？性能如何？遇到过性能瓶颈吗？">9. 讲讲你用的向量数据库？数据量级是多大？性能如何？遇到过性能瓶颈吗？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#10-%E4%BD%A0%E4%BD%BF%E7%94%A8-RAG-%E7%BB%99%E5%A4%A7%E6%A8%A1%E5%9E%8B%E4%B8%80%E4%B8%AA%E8%BE%93%E5%85%A5%EF%BC%8C%E7%B3%BB%E7%BB%9F%E6%98%AF%E6%80%8E%E6%A0%B7%E7%9A%84%E5%B7%A5%E4%BD%9C%E6%B5%81%E7%A8%8B%EF%BC%9F" data-target="10-你使用-RAG-给大模型一个输入，系统是怎样的工作流程？">10. 你使用 RAG 给大模型一个输入，系统是怎样的工作流程？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#11-%E8%AF%B7%E4%BD%A0%E4%BB%8B%E7%BB%8D%E4%B8%80%E4%B8%8B%E5%90%91%E9%87%8F%E6%A3%80%E7%B4%A2%E5%92%8C%E5%85%B3%E9%94%AE%E8%AF%8D%E6%A3%80%E7%B4%A2%E7%9A%84%E5%8C%BA%E5%88%AB%EF%BC%9F" data-target="11-请你介绍一下向量检索和关键词检索的区别？">11. 请你介绍一下向量检索和关键词检索的区别？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#12-%E5%A6%82%E4%BD%95%E6%B6%A6%E8%89%B2%E7%94%A8%E6%88%B7%E7%9A%84-Query%EF%BC%88Query-Rewrite%EF%BC%89%EF%BC%9F%E7%9B%AE%E7%9A%84%E6%98%AF%E4%BB%80%E4%B9%88%EF%BC%9F" data-target="12-如何润色用户的-Query（Query-Rewrite）？目的是什么？">12. 如何润色用户的 Query（Query Rewrite）？目的是什么？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#13-%E4%BB%80%E4%B9%88%E6%98%AF%E5%A4%9A%E8%B7%AF%E5%8F%AC%E5%9B%9E%EF%BC%9F%E5%85%B7%E4%BD%93%E6%80%8E%E4%B9%88%E5%81%9A%EF%BC%9F" data-target="13-什么是多路召回？具体怎么做？">13. 什么是多路召回？具体怎么做？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#14-RAG-%E6%A3%80%E7%B4%A2%E4%BC%98%E5%8C%96%E7%AD%96%E7%95%A5%E6%9C%89%E5%93%AA%E4%BA%9B%EF%BC%9F" data-target="14-RAG-检索优化策略有哪些？">14. RAG 检索优化策略有哪些？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#15-%E4%BA%86%E8%A7%A3%E5%93%AA%E4%BA%9B%E6%9B%B4%E5%A4%8D%E6%9D%82%E7%9A%84-RAG-%E8%8C%83%E5%BC%8F%EF%BC%9F" data-target="15-了解哪些更复杂的-RAG-范式？">15. 了解哪些更复杂的 RAG 范式？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#16-%E5%9C%A8%E4%BB%80%E4%B9%88%E5%9C%BA%E6%99%AF%E4%B8%8B%EF%BC%8C%E4%BD%A0%E4%BC%9A%E9%80%89%E6%8B%A9%E4%BD%BF%E7%94%A8%E5%9B%BE%E6%95%B0%E6%8D%AE%E5%BA%93%E6%9D%A5%E5%A2%9E%E5%BC%BA%E4%BC%A0%E7%BB%9F%E7%9A%84%E5%90%91%E9%87%8F%E6%A3%80%E7%B4%A2%EF%BC%9F" data-target="16-在什么场景下，你会选择使用图数据库来增强传统的向量检索？">16. 在什么场景下，你会选择使用图数据库来增强传统的向量检索？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#17-%E5%A6%82%E4%BD%95%E8%A7%84%E9%81%BF-RAG-%E7%B3%BB%E7%BB%9F%E4%B8%AD%E5%A4%A7%E6%A8%A1%E5%9E%8B%E7%9A%84%E5%B9%BB%E8%A7%89%EF%BC%9F" data-target="17-如何规避-RAG-系统中大模型的幻觉？">17. 如何规避 RAG 系统中大模型的幻觉？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#18-%E6%80%8E%E4%B9%88%E9%87%8F%E5%8C%96%E4%BD%A0%E7%9A%84-RAG-%E6%95%88%E6%9E%9C%EF%BC%9F" data-target="18-怎么量化你的-RAG-效果？">18. 怎么量化你的 RAG 效果？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#19-RAG-%E7%9F%A5%E8%AF%86%E5%BA%93%E5%A6%82%E4%BD%95%E5%AE%9E%E7%8E%B0%E5%8A%A8%E6%80%81%E4%B8%8E%E6%8C%81%E7%BB%AD%E6%9B%B4%E6%96%B0%EF%BC%9F" data-target="19-RAG-知识库如何实现动态与持续更新？">19. RAG 知识库如何实现动态与持续更新？</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#20-%E5%9C%A8%E5%AE%9E%E9%99%85%E8%90%BD%E5%9C%B0%E4%B8%AD%EF%BC%8C%E4%BD%A0%E8%A7%89%E5%BE%97-RAG-%E6%9C%80%E9%9A%BE%E7%9A%84%E5%9C%B0%E6%96%B9%E6%98%AF%E5%93%AA%E9%87%8C%EF%BC%9F" data-target="20-在实际落地中，你觉得-RAG-最难的地方是哪里？">20. 在实际落地中，你觉得 RAG 最难的地方是哪里？</a></li></ul></div>
     </div>
 </nav>
@@ -558,7 +558,7 @@
     </div>
 
     
-    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="Back to Top">
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
         <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
         </svg>

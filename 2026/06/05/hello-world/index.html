@@ -18,7 +18,7 @@
 
 
 
-<html lang="en" class="h-full scroll-smooth">
+<html lang="zh-CN" class="h-full scroll-smooth">
 <head>
     <meta charset="utf-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1" />
@@ -32,7 +32,7 @@
     <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
          priority ahead of the blocking theme script, shrinking the swap window.
          Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
-    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&display=swap" />
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
     
     <!-- FOUC prevention: resolve theme before first paint.
          Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
@@ -75,7 +75,7 @@
     </script>
     
     
-    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&display=swap" />
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
     
     
     
@@ -121,7 +121,7 @@
     <meta property="og:site_name" content="Hexo" />
     
     
-    <meta property="og:locale" content="en" />
+    <meta property="og:locale" content="zh_CN" />
     
     
     
@@ -256,7 +256,7 @@
             <div class="mt-3 sm:mt-4 flex justify-center gap-2">
                 
                 
-                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="Light" data-label-system="System" data-label-light="Light" data-label-dark="Dark">
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
                     
 <svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
     <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
@@ -284,13 +284,13 @@
 
 <!-- Navigation -->
 
-<nav class="mt-8 md:mt-10" aria-label="Menu" data-pagefind-ignore>
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
     <!-- Mobile Toggle -->
     <div class="flex items-center justify-center md:hidden">
         <button id="menuBtn" type="button"
             class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
             aria-expanded="false" aria-controls="mobileMenu">
-            <span class="text-base leading-none tracking-widest">Menu</span>
+            <span class="text-base leading-none tracking-widest">菜单</span>
             
 <svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
     viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -420,9 +420,9 @@
     
     
 <!-- Inline TOC (small screens < xl) -->
-<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="Contents" data-pagefind-ignore>
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
     <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
-        <span class="toc-toggle-title">Contents</span>
+        <span class="toc-toggle-title">目录</span>
         
 <svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
     viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
@@ -436,9 +436,9 @@
 </nav>
 
 <!-- Sidebar TOC (xl+ screens) -->
-<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="Contents" data-pagefind-ignore>
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
     <div class="toc-sidebar-inner">
-        <p class="toc-sidebar-title">Contents</p>
+        <p class="toc-sidebar-title">目录</p>
         <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#Quick-Start" data-target="Quick-Start">Quick Start</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Create-a-new-post" data-target="Create-a-new-post">Create a new post</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Run-server" data-target="Run-server">Run server</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Generate-static-files" data-target="Generate-static-files">Generate static files</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Deploy-to-remote-sites" data-target="Deploy-to-remote-sites">Deploy to remote sites</a></li></ul></div>
     </div>
 </nav>
@@ -514,7 +514,7 @@
     </div>
 
     
-    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="Back to Top">
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
         <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
         </svg>
@@ -531,7 +531,7 @@
         
         
         
-        window.__i18n["clipboard"] = {"copied":"Copied","copy":"Copy code"};
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
         window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
         
         
