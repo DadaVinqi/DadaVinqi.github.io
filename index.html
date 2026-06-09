@@ -144,6 +144,7 @@
 
     <!-- CSS -->
     <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=adcac54c">
     
     
     <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
@@ -223,7 +224,13 @@
                 
             </div>
             
-            <div class="mt-3 sm:mt-4 flex justify-center gap-2">
+            <div class="mt-3 sm:mt-4 flex flex-col items-center gap-2">
+                <div class="flex justify-center gap-2">
+                
+                
+                <button id="contactToggle" type="button" class="focus-elegant header-pill-btn" aria-expanded="false" aria-controls="contactPanel">
+                    联系我
+                </button>
                 
                 
                 <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
@@ -246,6 +253,14 @@
 
                 </button>
                 
+                
+                </div>
+                
+                <div id="contactPanel" class="header-contact-panel" data-open="false" hidden>
+                    <a class="header-contact-email focus-elegant" href="mailto:llp507187@gmail.com">
+                        llp507187@gmail.com
+                    </a>
+                </div>
                 
             </div>
         </div>
@@ -534,6 +549,7 @@
     
     <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
     
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
     
     <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
     

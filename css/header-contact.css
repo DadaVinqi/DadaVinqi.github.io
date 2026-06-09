@@ -1,0 +1,38 @@
+.header-contact-panel {
+    display: flex;
+    justify-content: center;
+    padding-inline: 0.5rem;
+}
+
+.header-contact-email {
+    display: inline-flex;
+    max-width: 100%;
+    align-items: center;
+    border: 1px solid rgba(226, 232, 240, 0.8);
+    border-radius: 9999px;
+    background: color-mix(in oklab, var(--color-slate-50) 70%, transparent);
+    padding: 0.375rem 0.75rem;
+    color: var(--color-slate-600);
+    font-size: var(--text-xs);
+    letter-spacing: var(--tracking-wide);
+    transition: color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
+    word-break: break-all;
+}
+
+.header-contact-email:hover {
+    background-color: var(--color-paper);
+    color: var(--color-seal);
+    border-color: color-mix(in srgb, var(--color-seal) 30%, transparent);
+    box-shadow: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+}
+
+html[data-theme="dark"] .header-contact-email {
+    border-color: var(--color-border-strong);
+    background-color: var(--color-bg-inset);
+    color: var(--color-text-body);
+}
+
+html[data-theme="dark"] .header-contact-email:hover {
+    background-color: var(--color-bg-overlay);
+    color: var(--color-seal);
+}
