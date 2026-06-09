@@ -8,6 +8,10 @@
     }
 }
 
+.site-title {
+    font-family: "Noto Serif SC", "Songti SC", "STSong", serif;
+}
+
 .header-contact-panel {
     display: flex;
     justify-content: center;
