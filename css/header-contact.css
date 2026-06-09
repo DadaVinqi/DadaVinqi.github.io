@@ -10,9 +10,7 @@
 
 .header-contact-panel {
     display: flex;
-    width: 100%;
-    justify-content: center;
-    padding-inline: 0.5rem;
+    flex: 0 0 auto;
 }
 
 .header-contact-email {
