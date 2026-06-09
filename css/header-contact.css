@@ -10,13 +10,13 @@
 
 .header-contact-panel {
     display: flex;
+    width: 100%;
     justify-content: center;
     padding-inline: 0.5rem;
 }
 
 .header-contact-email {
     display: inline-flex;
-    max-width: 100%;
     align-items: center;
     border: 1px solid rgba(226, 232, 240, 0.8);
     border-radius: 9999px;
@@ -25,8 +25,8 @@
     color: var(--color-slate-600);
     font-size: var(--text-xs);
     letter-spacing: var(--tracking-wide);
+    white-space: nowrap;
     transition: color 0.3s, background-color 0.3s, border-color 0.3s, box-shadow 0.3s;
-    word-break: break-all;
 }
 
 .header-contact-email:hover {
