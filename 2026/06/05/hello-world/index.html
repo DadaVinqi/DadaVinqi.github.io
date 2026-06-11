@@ -508,6 +508,198 @@
 
 
 
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
 
 </article>
 
