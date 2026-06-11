@@ -1,0 +1,820 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>第一次开源贡献与PR提交流程 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="记录我的第一次开源贡献经历，特别感谢项目 Code Owner 的耐心指导。我将从 项目选择 、 Issue 筛选 、 修复策略 、 PR 提交与跟进 四个方面，记录这次贡献过程，最后附上总结的完整 PR 提交流程。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="开源贡献, GitHub, PR流程, Git" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="第一次开源贡献与PR提交流程 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="记录我的第一次开源贡献经历，特别感谢项目 Code Owner 的耐心指导。我将从 项目选择 、 Issue 筛选 、 修复策略 、 PR 提交与跟进 四个方面，记录这次贡献过程，最后附上总结的完整 PR 提交流程。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/06/11/%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%BC%80%E6%BA%90%E8%B4%A1%E7%8C%AE%E4%B8%8EPR%E6%8F%90%E4%BA%A4%E6%B5%81%E7%A8%8B/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-06-11T01:57:45.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-06-11T07:36:46.785Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="开源贡献" />
+    
+    <meta property="article:tag" content="GitHub" />
+    
+    <meta property="article:tag" content="PR流程" />
+    
+    <meta property="article:tag" content="Git" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="第一次开源贡献与PR提交流程 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="记录我的第一次开源贡献经历，特别感谢项目 Code Owner 的耐心指导。我将从 项目选择 、 Issue 筛选 、 修复策略 、 PR 提交与跟进 四个方面，记录这次贡献过程，最后附上总结的完整 PR 提交流程。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/06/11/%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%BC%80%E6%BA%90%E8%B4%A1%E7%8C%AE%E4%B8%8EPR%E6%8F%90%E4%BA%A4%E6%B5%81%E7%A8%8B/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"第一次开源贡献与PR提交流程","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/06/11/%E7%AC%AC%E4%B8%80%E6%AC%A1%E5%BC%80%E6%BA%90%E8%B4%A1%E7%8C%AE%E4%B8%8EPR%E6%8F%90%E4%BA%A4%E6%B5%81%E7%A8%8B/index.html"},"description":"记录我的第一次开源贡献经历，特别感谢项目 Code Owner 的耐心指导。我将从 项目选择 、 Issue 筛选 、 修复策略 、 PR 提交与跟进 四个方面，记录这次贡献过程，最后附上总结的完整 PR 提交流程。","datePublished":"2026-06-11T01:57:45.000Z","dateModified":"2026-06-11T07:36:46.785Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"开源贡献, GitHub, PR流程, Git"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog白自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">白</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            第一次开源贡献与PR提交流程
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-06-11">2026/06/11</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    <span class="text-slate-300">/</span>
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/%E5%BC%80%E6%BA%90/">开源</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1%E3%80%81%E9%80%89%E6%8B%A9%E7%9A%84%E9%A1%B9%E7%9B%AE" data-target="1、选择的项目">1、选择的项目</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E5%A6%82%E4%BD%95%E7%AD%9B%E9%80%89-Issue" data-target="2-如何筛选-Issue">2. 如何筛选 Issue</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3%E3%80%81%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5" data-target="3、修复策略">3、修复策略</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4%E3%80%81PR%E7%9A%84%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%8E%E7%BB%AD%E8%B7%9F%E8%BF%9B" data-target="4、PR的提交与后续跟进">4、PR的提交与后续跟进</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E9%80%89%E4%B8%80%E4%B8%AA%E5%B0%8F%E8%80%8C%E7%9C%9F%E5%AE%9E%E7%9A%84%E9%97%AE%E9%A2%98" data-target="1-先选一个小而真实的问题">1. 先选一个小而真实的问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E9%98%85%E8%AF%BB%E9%A1%B9%E7%9B%AE%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97" data-target="2-阅读项目贡献指南">2. 阅读项目贡献指南</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-Fork-%E4%BB%93%E5%BA%93" data-target="3-Fork-仓库">3. Fork 仓库</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-Clone-%E5%88%B0%E6%9C%AC%E5%9C%B0" data-target="4-Clone-到本地">4. Clone 到本地</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E5%90%8C%E6%AD%A5%E6%9C%80%E6%96%B0%E4%B8%BB%E5%88%86%E6%94%AF" data-target="5-同步最新主分支">5. 同步最新主分支</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%88%9B%E5%BB%BA%E5%B7%A5%E4%BD%9C%E5%88%86%E6%94%AF" data-target="6-创建工作分支">6. 创建工作分支</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98" data-target="7-复现问题">7. 复现问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#8-%E5%86%99%E5%A4%B1%E8%B4%A5%E6%B5%8B%E8%AF%95" data-target="8-写失败测试">8. 写失败测试</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#9-%E5%81%9A%E6%9C%80%E5%B0%8F%E4%BB%A3%E7%A0%81%E6%94%B9%E5%8A%A8" data-target="9-做最小代码改动">9. 做最小代码改动</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#10-%E6%9C%AC%E5%9C%B0%E9%AA%8C%E8%AF%81" data-target="10-本地验证">10. 本地验证</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#11-%E8%87%AA%E6%9F%A5diff" data-target="11-自查diff">11.自查diff</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#12-Commit" data-target="12-Commit">12.Commit</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#13-Push%E5%88%B0%E8%87%AA%E5%B7%B1%E7%9A%84fork" data-target="13-Push到自己的fork">13.Push到自己的fork</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#14-%E5%88%9B%E5%BB%BAPullRequest" data-target="14-创建PullRequest">14.创建PullRequest</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#15-%E7%AD%89CI%E5%92%8Creview" data-target="15-等CI和review">15.等CI和review</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#16-%E6%9B%B4%E6%96%B0PR" data-target="16-更新PR">16.更新PR</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1%E3%80%81%E9%80%89%E6%8B%A9%E7%9A%84%E9%A1%B9%E7%9B%AE" data-target="1、选择的项目">1、选择的项目</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E5%A6%82%E4%BD%95%E7%AD%9B%E9%80%89-Issue" data-target="2-如何筛选-Issue">2. 如何筛选 Issue</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3%E3%80%81%E4%BF%AE%E5%A4%8D%E7%AD%96%E7%95%A5" data-target="3、修复策略">3、修复策略</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4%E3%80%81PR%E7%9A%84%E6%8F%90%E4%BA%A4%E4%B8%8E%E5%90%8E%E7%BB%AD%E8%B7%9F%E8%BF%9B" data-target="4、PR的提交与后续跟进">4、PR的提交与后续跟进</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E9%80%89%E4%B8%80%E4%B8%AA%E5%B0%8F%E8%80%8C%E7%9C%9F%E5%AE%9E%E7%9A%84%E9%97%AE%E9%A2%98" data-target="1-先选一个小而真实的问题">1. 先选一个小而真实的问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E9%98%85%E8%AF%BB%E9%A1%B9%E7%9B%AE%E8%B4%A1%E7%8C%AE%E6%8C%87%E5%8D%97" data-target="2-阅读项目贡献指南">2. 阅读项目贡献指南</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-Fork-%E4%BB%93%E5%BA%93" data-target="3-Fork-仓库">3. Fork 仓库</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-Clone-%E5%88%B0%E6%9C%AC%E5%9C%B0" data-target="4-Clone-到本地">4. Clone 到本地</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E5%90%8C%E6%AD%A5%E6%9C%80%E6%96%B0%E4%B8%BB%E5%88%86%E6%94%AF" data-target="5-同步最新主分支">5. 同步最新主分支</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%88%9B%E5%BB%BA%E5%B7%A5%E4%BD%9C%E5%88%86%E6%94%AF" data-target="6-创建工作分支">6. 创建工作分支</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-%E5%A4%8D%E7%8E%B0%E9%97%AE%E9%A2%98" data-target="7-复现问题">7. 复现问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#8-%E5%86%99%E5%A4%B1%E8%B4%A5%E6%B5%8B%E8%AF%95" data-target="8-写失败测试">8. 写失败测试</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#9-%E5%81%9A%E6%9C%80%E5%B0%8F%E4%BB%A3%E7%A0%81%E6%94%B9%E5%8A%A8" data-target="9-做最小代码改动">9. 做最小代码改动</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#10-%E6%9C%AC%E5%9C%B0%E9%AA%8C%E8%AF%81" data-target="10-本地验证">10. 本地验证</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#11-%E8%87%AA%E6%9F%A5diff" data-target="11-自查diff">11.自查diff</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#12-Commit" data-target="12-Commit">12.Commit</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#13-Push%E5%88%B0%E8%87%AA%E5%B7%B1%E7%9A%84fork" data-target="13-Push到自己的fork">13.Push到自己的fork</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#14-%E5%88%9B%E5%BB%BAPullRequest" data-target="14-创建PullRequest">14.创建PullRequest</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#15-%E7%AD%89CI%E5%92%8Creview" data-target="15-等CI和review">15.等CI和review</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#16-%E6%9B%B4%E6%96%B0PR" data-target="16-更新PR">16.更新PR</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>记录我的第一次开源贡献经历，特别感谢项目 Code Owner 的耐心指导。我将从<strong>项目选择</strong>、<strong>Issue 筛选</strong>、<strong>修复策略</strong>、<strong>PR 提交与跟进</strong>四个方面，记录这次贡献过程，最后附上总结的完整 PR 提交流程。</p>
+<span id="more"></span>
+
+<h1 id="PR过程的思考"><a href="#PR过程的思考" class="headerlink" title="PR过程的思考"></a>PR过程的思考</h1><h2 id="1、选择的项目"><a href="#1、选择的项目" class="headerlink" title="1、选择的项目"></a>1、选择的项目</h2><p>选择开源项目时，建议优先考虑<strong>自己日常使用的工具、框架，或领域内知名度较高、维护相对活跃的项目</strong>。这样不仅上手更快，也更容易发现真实且有价值的问题。</p>
+<p><strong>额外建议</strong>：</p>
+<ul>
+<li>查看项目 Star 数、最近提交频率、Issue 响应速度、是否有活跃的 Contributor。</li>
+<li>优先选择社区氛围友好、有 <code>good first issue</code> 标签较多的项目。</li>
+</ul>
+<p>这次我选择了 <strong>Terragrunt</strong>，它是 Gruntwork 团队维护的 Terraform &#x2F; OpenTofu 辅助工具，主要用于大规模、多环境下的基础设施配置管理、模块复用、依赖处理、配置文件生成以及远程状态管理等。它在 GitHub 上拥有 <strong>9.6k+ Stars</strong>，是一个质量很高、维护活跃的项目。</p>
+<ul>
+<li><strong>项目</strong>：<code>gruntwork-io/terragrunt</code></li>
+<li><strong>仓库链接</strong>：<a target="_blank" rel="noopener" href="https://github.com/gruntwork-io/terragrunt">https://github.com/gruntwork-io/terragrunt</a></li>
+</ul>
+<p><img src="E:\Hexo\source_posts\image-20260611132215701.png" decoding="async" loading="eager" fetchpriority="high"></p>
+<h2 id="2-如何筛选-Issue"><a href="#2-如何筛选-Issue" class="headerlink" title="2. 如何筛选 Issue"></a>2. 如何筛选 Issue</h2><p>在项目开发过程中发现 Bug 或可优化点时，可以自己提交 Issue 并尝试修复。也可以从已有的 Open Issue 中挑选。</p>
+<p><strong>推荐优先筛选带有 <code>good first issue</code> 或 <code>help wanted</code> 标签的 Issue</strong>，这类问题通常难度适中，且维护者更愿意帮助新人。</p>
+<p><strong>筛选技巧</strong>：</p>
+<ul>
+<li>阅读 Issue 的历史评论，确认目前还没有人认领或正在处理。</li>
+<li>优先选择描述清晰、有复现步骤、可验证的 Issue。</li>
+<li>评估问题范围：最好是<strong>小而明确</strong>的问题，避免跨多个模块的大改动。</li>
+</ul>
+<p>本次 PR 我选择了已有的 Open Issue，筛选时主要考虑以下几点：</p>
+<ul>
+<li>Issue 是否真实存在且有实际用户价值</li>
+<li>问题范围是否清晰适中</li>
+<li>是否容易验证修复效果</li>
+</ul>
+<h2 id="3、修复策略"><a href="#3、修复策略" class="headerlink" title="3、修复策略"></a>3、修复策略</h2><p>选定 Issue 后，将项目 Fork 到本地进行修改。对于 Bugfix 类型的 PR，建议在修复过程中思考并能够回答以下问题：</p>
+<ul>
+<li>原来为什么会出现这个问题？</li>
+<li>现在为什么是正确的？</li>
+<li>测试覆盖了哪条失败路径？</li>
+<li>是否会影响已有的正常行为？</li>
+<li>是否需要更新文档或 Changelog？</li>
+</ul>
+<p><strong>核心原则</strong>：保持改动最小化，只解决当前问题，不做无关的重构或大范围改动。</p>
+<h2 id="4、PR的提交与后续跟进"><a href="#4、PR的提交与后续跟进" class="headerlink" title="4、PR的提交与后续跟进"></a>4、PR的提交与后续跟进</h2><p>提交 PR 后，通常会有机器人自动检查（Lint、Test、DCO 等）和 Code Owner 进行 Review。此时需要<strong>积极、耐心跟进</strong>：</p>
+<ul>
+<li>认真阅读每一条评论，判断是否合理。</li>
+<li>只修改真正有必要的地方，保持改动最小。</li>
+<li>每次修改后重新 push，并确认 CI 全部通过。</li>
+<li>对于不理解的点，可以礼貌地提问，与维护者共同讨论。</li>
+</ul>
+<p><strong>小建议</strong>：</p>
+<ul>
+<li>PR 描述要写清楚：<strong>做了什么改动、为什么这么改、如何验证</strong>。</li>
+<li>回复 Review 评论时，态度谦虚、表达清晰，可以使用 “Done.”、“Addressed.” 等简洁回复。</li>
+<li>这是一个很好的学习机会，能直接和项目核心贡献者交流代码设计思路。</li>
+</ul>
+<p><img src="E:\Hexo\source_posts\image-20260611135520392.png" decoding="async" loading="lazy" fetchpriority="auto"></p>
+<h1 id="完整的PR流程"><a href="#完整的PR流程" class="headerlink" title="完整的PR流程"></a>完整的PR流程</h1><h2 id="1-先选一个小而真实的问题"><a href="#1-先选一个小而真实的问题" class="headerlink" title="1. 先选一个小而真实的问题"></a>1. 先选一个小而真实的问题</h2><p>作为第一次贡献，新手最好挑边界清晰、容易验证的问题下手。比如：</p>
+<ul>
+<li>小 Bug 修复</li>
+<li>补缺失的测试</li>
+<li>CLI 参数组合问题</li>
+<li>文档和实际行为不一致的地方</li>
+</ul>
+<p><strong>千万别</strong> 一上来就挑大重构、核心架构修改或者特别复杂的功能。目标是让 Reviewer 能快速看懂：这个问题确实存在，你的修复是合理的，而且有测试覆盖。</p>
+<h2 id="2-阅读项目贡献指南"><a href="#2-阅读项目贡献指南" class="headerlink" title="2. 阅读项目贡献指南"></a>2. 阅读项目贡献指南</h2><p>在动手前一定要先看这些文件：</p>
+<ul>
+<li><code>CONTRIBUTING.md</code></li>
+<li><code>README.md</code></li>
+<li><code>.github/PULL_REQUEST_TEMPLATE.md</code>（如果有）</li>
+<li>其他贡献相关文档</li>
+</ul>
+<p>重点关注：</p>
+<ul>
+<li>PR 标题格式要求</li>
+<li>是否需要关联 Issue</li>
+<li>是否要求 DCO（Signed-off-by）</li>
+<li>测试和 Lint 如何运行</li>
+<li>有没有明确禁止低价值 PR 的规则</li>
+</ul>
+<p>按规矩来，能少走很多弯路。</p>
+<h2 id="3-Fork-仓库"><a href="#3-Fork-仓库" class="headerlink" title="3. Fork 仓库"></a>3. Fork 仓库</h2><p>在 GitHub 项目页面点击右上角的 <strong>Fork</strong>。</p>
+<p>Fork 后本地会有两个远程仓库：</p>
+<ul>
+<li><code>upstream</code>：原项目（gruntwork-io&#x2F;terragrunt）</li>
+<li><code>origin</code>：你自己的 Fork</li>
+</ul>
+<h2 id="4-Clone-到本地"><a href="#4-Clone-到本地" class="headerlink" title="4. Clone 到本地"></a>4. Clone 到本地</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br></pre></td><td class="code"><pre><span class="line">git <span class="built_in">clone</span> https://github.com/你的用户名/terragrunt.git</span><br><span class="line"><span class="built_in">cd</span> terragrunt</span><br><span class="line"></span><br><span class="line"><span class="comment"># 添加 upstream</span></span><br><span class="line">git remote add upstream https://github.com/gruntwork-io/terragrunt.git</span><br><span class="line">git remote -v</span><br></pre></td></tr></table></figure>
+
+<h2 id="5-同步最新主分支"><a href="#5-同步最新主分支" class="headerlink" title="5. 同步最新主分支"></a>5. 同步最新主分支</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br><span class="line">git switch main</span><br><span class="line">git pull upstream main</span><br></pre></td></tr></table></figure>
+
+<p>如果项目主分支叫 master，把 main 换成 master。</p>
+<h2 id="6-创建工作分支"><a href="#6-创建工作分支" class="headerlink" title="6. 创建工作分支"></a>6. 创建工作分支</h2><p>分支名写清楚目的,例如：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git switch - c fix/benchmark- result- filename</span><br></pre></td></tr></table></figure>
+
+<p>分支命名建议带前缀：fix&#x2F;、feat&#x2F;、docs&#x2F;、test&#x2F; 等，清晰描述目的。</p>
+<h2 id="7-复现问题"><a href="#7-复现问题" class="headerlink" title="7. 复现问题"></a>7. 复现问题</h2><p>先别急着改代码，一定要先确认问题真实存在。可以用最小复现命令、运行相关测试、查看日志等方式验证。</p>
+<h2 id="8-写失败测试"><a href="#8-写失败测试" class="headerlink" title="8. 写失败测试"></a>8. 写失败测试</h2><p>bugfix PR 最好先写 regression test。</p>
+<p>流程：</p>
+<p>写测试 → 看它失败 → 修代码 → 看它通过</p>
+<p>测试要覆盖用户行为或关键边界，不要只测实现细节。</p>
+<h2 id="9-做最小代码改动"><a href="#9-做最小代码改动" class="headerlink" title="9. 做最小代码改动"></a>9. 做最小代码改动</h2><p>改动原则：</p>
+<ul>
+<li>只解决当前这个问题</li>
+<li>不要顺手重构</li>
+<li>不要大范围格式化</li>
+<li>不要引入自己也解释不清的新东西</li>
+<li>如果用户可见行为变了，就记得更新文档</li>
+</ul>
+<p>改完后问自己：原来为什么错？现在为什么对？会不会影响其他功能？</p>
+<h2 id="10-本地验证"><a href="#10-本地验证" class="headerlink" title="10. 本地验证"></a>10. 本地验证</h2><p>按项目要求跑测试。常见命令：</p>
+<p>Python 项目：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">pytest tests/ -q</span><br><span class="line">ruff check .</span><br><span class="line">ruff format --check .</span><br></pre></td></tr></table></figure>
+
+<p>Node&#x2F;Go&#x2F;Rust项目换成对应命令：</p>
+<figure class="highlight plaintext"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">npm test npm run lint</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight go"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">go</span> test ./... gofmt - w path/to/file.<span class="keyword">go</span></span><br></pre></td></tr></table></figure>
+
+<figure class="highlight rust"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">cargo test  cargo fmt --check  cargo clippy</span><br></pre></td></tr></table></figure>
+
+<p>没跑的测试不要写进PRbody。</p>
+<h2 id="11-自查diff"><a href="#11-自查diff" class="headerlink" title="11.自查diff"></a>11.自查diff</h2><p>提交前一定要执行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git status --short </span><br><span class="line">git diff</span><br></pre></td></tr></table></figure>
+
+<p>重点检查：- 有没有无关文件。- 有没有临时文件、缓存、日志。- 有没有 debug print。- 有没有本地路径、token、密钥。- 有没有无意义格式化。- 新测试是否真的覆盖问题。</p>
+<h2 id="12-Commit"><a href="#12-Commit" class="headerlink" title="12.Commit"></a>12.Commit</h2><p>普通提交：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git add 文件路径</span><br><span class="line">git commit -m <span class="string">&quot;fix: 简短清晰的描述&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>项目要求DCO时加- s：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git commit - s - m <span class="string">&quot;fix: handle dataset stats plot filename&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>项目要求标题前缀时：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git commit - s - m <span class="string">&quot;[Bugfix] [Benchmark] Fix dataset stats plot filename&quot;</span></span><br></pre></td></tr></table></figure>
+
+<p>若项目要求GPG签名，可以参考：<br><a target="_blank" rel="noopener" href="https://docs.github.com/zh/authentication/managing-commit-signature-verification/signing-commits">https://docs.github.com/zh/authentication/managing-commit-signature-verification/signing-commits</a></p>
+<h2 id="13-Push到自己的fork"><a href="#13-Push到自己的fork" class="headerlink" title="13.Push到自己的fork"></a>13.Push到自己的fork</h2><figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">git push -u origin fix/你的分支名</span><br></pre></td></tr></table></figure>
+
+<p>GitHub会给出创建PR的链接。</p>
+<h2 id="14-创建PullRequest"><a href="#14-创建PullRequest" class="headerlink" title="14.创建PullRequest"></a>14.创建PullRequest</h2><p>PR 描述要写清楚三件事：</p>
+<ul>
+<li>改了什么</li>
+<li>为什么改</li>
+<li>如何验证</li>
+</ul>
+<p>标题和描述尽量遵循项目规范。</p>
+<h2 id="15-等CI和review"><a href="#15-等CI和review" class="headerlink" title="15.等CI和review"></a>15.等CI和review</h2><p>PR创建后看Checks。</p>
+<p>CI失败时按这个顺序处理：</p>
+<p>读日志 → 定位失败点 → 本地复现 → 修复 → push新commit</p>
+<p>不要猜原因，也不要一次改很多地方。</p>
+<p>收到 Reviewer 意见后，能改的尽快改，不懂的就礼貌提问。改完后回复 “Done” 或 “Addressed” 并说明修改点。</p>
+<h2 id="16-更新PR"><a href="#16-更新PR" class="headerlink" title="16.更新PR"></a>16.更新PR</h2><p>修改后正常 push 即可，PR 会自动更新。</p>
+<p>如果reviewer要求squash：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream</span><br><span class="line">git rebase -i upstream/main</span><br><span class="line">git push --force-with-lease</span><br></pre></td></tr></table></figure>
+
+<p>注意：用 –force-with-lease，不要用裸 –force。</p>
+<p>同步主分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git fetch upstream git switch main </span><br><span class="line">git pull upstream main</span><br></pre></td></tr></table></figure>
+
+<p>最后清理分支：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">git branch -d fix/你的分支名</span><br><span class="line">git push origin --delete fix/你的分支名</span><br></pre></td></tr></table></figure>
+
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E5%BC%80%E6%BA%90%E8%B4%A1%E7%8C%AE/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    开源贡献
+    
+</a>
+
+        
+        
+<a href="/tags/GitHub/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    GitHub
+    
+</a>
+
+        
+        
+<a href="/tags/PR%E6%B5%81%E7%A8%8B/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    PR流程
+    
+</a>
+
+        
+        
+<a href="/tags/Git/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Git
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <div></div>
+        
+
+        
+        <a href="/2026/06/05/RAG%E5%85%AB%E8%82%A1%E6%96%87/" class="post-nav-link group text-right" title="RAG相关的面试题">
+            <span class="post-nav-title">RAG相关的面试题</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+
+</body>
+</html>
