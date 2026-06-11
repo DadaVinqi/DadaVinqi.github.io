@@ -8,26 +8,6 @@
     }
 }
 
-.site-seal-slot {
-    margin-left: -0.25rem;
-}
-
-.site-seal-image {
-    width: 3.5rem;
-    height: 3.5rem;
-}
-
-@media (min-width: 40rem) {
-    .site-seal-slot {
-        margin-left: -1.25rem;
-    }
-
-    .site-seal-image {
-        width: 4rem;
-        height: 4rem;
-    }
-}
-
 .header-contact-panel {
     display: flex;
     flex: 0 0 auto;
