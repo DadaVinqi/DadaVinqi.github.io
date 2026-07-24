@@ -1,0 +1,1118 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>LSM Tree 总结 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="LSM Tree（Log-Structured Merge Tree，日志结构合并树）是一种 面向高并发写入优化，同时兼顾查询效率的键值存储模型 。 一、核心主线 LSM Tree被广泛应用于 BigTable、HBase、Cassandra、TiDB 等 NoSQL 或分布式数据库中。 核心思路是： 将随机写转换为内存写和磁盘顺序写，以充分发挥内存与磁盘的性能优势。 整体数据流转过程： 二、LS..." />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, 存储系统, LSM-Tree, MemTable, SSTable, WAL, Compaction" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="LSM Tree 总结 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="LSM Tree（Log-Structured Merge Tree，日志结构合并树）是一种 面向高并发写入优化，同时兼顾查询效率的键值存储模型 。 一、核心主线 LSM Tree被广泛应用于 BigTable、HBase、Cassandra、TiDB 等 NoSQL 或分布式数据库中。 核心思路是： 将随机写转换为内存写和磁盘顺序写，以充分发挥内存与磁盘的性能优势。 整体数据流转过程： 二、LS..." />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/18/LSM%20Tree%E6%80%BB%E7%BB%93/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-18T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-07-24T14:50:25.788Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="存储系统" />
+    
+    <meta property="article:tag" content="LSM-Tree" />
+    
+    <meta property="article:tag" content="MemTable" />
+    
+    <meta property="article:tag" content="SSTable" />
+    
+    <meta property="article:tag" content="WAL" />
+    
+    <meta property="article:tag" content="Compaction" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="LSM Tree 总结 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="LSM Tree（Log-Structured Merge Tree，日志结构合并树）是一种 面向高并发写入优化，同时兼顾查询效率的键值存储模型 。 一、核心主线 LSM Tree被广泛应用于 BigTable、HBase、Cassandra、TiDB 等 NoSQL 或分布式数据库中。 核心思路是： 将随机写转换为内存写和磁盘顺序写，以充分发挥内存与磁盘的性能优势。 整体数据流转过程： 二、LS..." />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/18/LSM%20Tree%E6%80%BB%E7%BB%93/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"LSM Tree 总结","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/18/LSM%20Tree%E6%80%BB%E7%BB%93/index.html"},"description":"LSM Tree（Log-Structured Merge Tree，日志结构合并树）是一种 面向高并发写入优化，同时兼顾查询效率的键值存储模型 。 一、核心主线 LSM Tree被广泛应用于 BigTable、HBase、Cassandra、TiDB 等 NoSQL 或分布式数据库中。 核心思路是： 将随机写转换为内存写和磁盘顺序写，以充分发挥内存与磁盘的性能优势。 整体数据流转过程： 二、LS...","datePublished":"2026-07-18T14:27:35.000Z","dateModified":"2026-07-24T14:50:25.788Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 存储系统, LSM-Tree, MemTable, SSTable, WAL, Compaction"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            LSM Tree 总结
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-18">2026/07/18</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81LSM-Tree-%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%9F%BA%E7%A1%80" data-target="二、LSM-Tree-的设计基础">二、LSM Tree 的设计基础</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%A1%BA%E5%BA%8F%E8%AF%BB%E5%86%99%E4%BC%98%E4%BA%8E%E9%9A%8F%E6%9C%BA%E8%AF%BB%E5%86%99" data-target="1-顺序读写优于随机读写">1. 顺序读写优于随机读写</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81LSM-Tree-%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E6%88%90" data-target="三、LSM-Tree-的核心组成">三、LSM Tree 的核心组成</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-WAL" data-target="1-WAL">1. WAL</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-MemTable" data-target="2-MemTable">2. MemTable</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-Immutable-MemTable" data-target="3-Immutable-MemTable">3. Immutable MemTable</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-SSTable" data-target="4-SSTable">4. SSTable</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%95%B0%E6%8D%AE%E5%86%97%E4%BD%99%E4%B8%8E-Compaction" data-target="四、数据冗余与-Compaction">四、数据冗余与 Compaction</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%90%88%E5%B9%B6" data-target="1-为什么需要合并">1. 为什么需要合并</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-Level-%E5%88%86%E5%B1%82" data-target="2-Level-分层">2. Level 分层</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-Leveled-Compaction-Strategy" data-target="3-Leveled-Compaction-Strategy">3. Leveled Compaction Strategy</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E5%88%86%E5%B1%82%E5%90%88%E5%B9%B6%E8%BF%87%E7%A8%8B" data-target="4-分层合并过程">4. 分层合并过程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-Level-0-%E7%9A%84%E7%89%B9%E6%AE%8A%E6%80%A7" data-target="5-Level-0-的特殊性">5. Level 0 的特殊性</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%86%99%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B" data-target="五、写数据流程">五、写数据流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%AE%8C%E6%95%B4%E5%86%99%E5%85%A5%E9%93%BE%E8%B7%AF" data-target="1-完整写入链路">1. 完整写入链路</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%86%99%E6%80%A7%E8%83%BD%E9%AB%98%E7%9A%84%E5%8E%9F%E5%9B%A0" data-target="2-写性能高的原因">2. 写性能高的原因</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E8%AF%BB%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B" data-target="六、读数据流程">六、读数据流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E6%9F%A5%E8%AF%A2%E9%A1%BA%E5%BA%8F" data-target="1-查询顺序">1. 查询顺序</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E4%BB%8E%E6%96%B0%E5%88%B0%E6%97%A7%E6%9F%A5%E8%AF%A2" data-target="2-为什么必须从新到旧查询">2. 为什么必须从新到旧查询</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81LSM-Tree-%E7%9A%84%E6%A0%B8%E5%BF%83%E6%9D%83%E8%A1%A1" data-target="七、LSM-Tree-的核心权衡">七、LSM Tree 的核心权衡</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BC%98%E5%8A%BF" data-target="1-优势">1. 优势</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%BB%A3%E4%BB%B7" data-target="2-代价">2. 代价</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="八、核心架构思想">八、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="九、一句话总结">九、一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81LSM-Tree-%E7%9A%84%E8%AE%BE%E8%AE%A1%E5%9F%BA%E7%A1%80" data-target="二、LSM-Tree-的设计基础">二、LSM Tree 的设计基础</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%A1%BA%E5%BA%8F%E8%AF%BB%E5%86%99%E4%BC%98%E4%BA%8E%E9%9A%8F%E6%9C%BA%E8%AF%BB%E5%86%99" data-target="1-顺序读写优于随机读写">1. 顺序读写优于随机读写</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81LSM-Tree-%E7%9A%84%E6%A0%B8%E5%BF%83%E7%BB%84%E6%88%90" data-target="三、LSM-Tree-的核心组成">三、LSM Tree 的核心组成</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-WAL" data-target="1-WAL">1. WAL</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-MemTable" data-target="2-MemTable">2. MemTable</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-Immutable-MemTable" data-target="3-Immutable-MemTable">3. Immutable MemTable</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-SSTable" data-target="4-SSTable">4. SSTable</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%95%B0%E6%8D%AE%E5%86%97%E4%BD%99%E4%B8%8E-Compaction" data-target="四、数据冗余与-Compaction">四、数据冗余与 Compaction</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81%E5%90%88%E5%B9%B6" data-target="1-为什么需要合并">1. 为什么需要合并</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-Level-%E5%88%86%E5%B1%82" data-target="2-Level-分层">2. Level 分层</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-Leveled-Compaction-Strategy" data-target="3-Leveled-Compaction-Strategy">3. Leveled Compaction Strategy</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E5%88%86%E5%B1%82%E5%90%88%E5%B9%B6%E8%BF%87%E7%A8%8B" data-target="4-分层合并过程">4. 分层合并过程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-Level-0-%E7%9A%84%E7%89%B9%E6%AE%8A%E6%80%A7" data-target="5-Level-0-的特殊性">5. Level 0 的特殊性</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%86%99%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B" data-target="五、写数据流程">五、写数据流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%AE%8C%E6%95%B4%E5%86%99%E5%85%A5%E9%93%BE%E8%B7%AF" data-target="1-完整写入链路">1. 完整写入链路</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%86%99%E6%80%A7%E8%83%BD%E9%AB%98%E7%9A%84%E5%8E%9F%E5%9B%A0" data-target="2-写性能高的原因">2. 写性能高的原因</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E8%AF%BB%E6%95%B0%E6%8D%AE%E6%B5%81%E7%A8%8B" data-target="六、读数据流程">六、读数据流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E6%9F%A5%E8%AF%A2%E9%A1%BA%E5%BA%8F" data-target="1-查询顺序">1. 查询顺序</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E5%BF%85%E9%A1%BB%E4%BB%8E%E6%96%B0%E5%88%B0%E6%97%A7%E6%9F%A5%E8%AF%A2" data-target="2-为什么必须从新到旧查询">2. 为什么必须从新到旧查询</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81LSM-Tree-%E7%9A%84%E6%A0%B8%E5%BF%83%E6%9D%83%E8%A1%A1" data-target="七、LSM-Tree-的核心权衡">七、LSM Tree 的核心权衡</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BC%98%E5%8A%BF" data-target="1-优势">1. 优势</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%BB%A3%E4%BB%B7" data-target="2-代价">2. 代价</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="八、核心架构思想">八、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="九、一句话总结">九、一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>LSM Tree（Log-Structured Merge Tree，日志结构合并树）是一种<strong>面向高并发写入优化，同时兼顾查询效率的键值存储模型</strong>。</p>
+<!--  more -->
+
+<h2 id="一、核心主线"><a href="#一、核心主线" class="headerlink" title="一、核心主线"></a>一、核心主线</h2><p>LSM Tree被广泛应用于 BigTable、HBase、Cassandra、TiDB 等 NoSQL 或分布式数据库中。</p>
+<p>核心思路是：</p>
+<blockquote>
+<p>将随机写转换为内存写和磁盘顺序写，以充分发挥内存与磁盘的性能优势。</p>
+</blockquote>
+<p>整体数据流转过程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">写请求</span><br><span class="line">  ↓</span><br><span class="line">WAL：先记录日志，保证可靠性</span><br><span class="line">  ↓</span><br><span class="line">MemTable：在内存中有序写入</span><br><span class="line">  ↓ 达到容量阈值</span><br><span class="line">Immutable MemTable：冻结为只读结构</span><br><span class="line">  ↓ 后台持久化</span><br><span class="line">Level 0 SSTable</span><br><span class="line">  ↓ Compaction</span><br><span class="line">Level 1 → Level 2 → ... → Level N</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、LSM-Tree-的设计基础"><a href="#二、LSM-Tree-的设计基础" class="headerlink" title="二、LSM Tree 的设计基础"></a>二、LSM Tree 的设计基础</h2><h3 id="1-顺序读写优于随机读写"><a href="#1-顺序读写优于随机读写" class="headerlink" title="1. 顺序读写优于随机读写"></a>1. 顺序读写优于随机读写</h3><p>LSM Tree 建立在一个重要结论之上：</p>
+<blockquote>
+<p>磁盘或内存的顺序读写性能远高于随机读写性能。</p>
+</blockquote>
+<p>这一规律不仅适用于机械硬盘，也适用于 SSD。</p>
+<ul>
+<li><strong>顺序读写</strong>：按照文件中数据的排列顺序进行操作，例如向文件尾部追加数据；</li>
+<li><strong>随机读写</strong>：不遵循文件中数据的排列顺序，需要在不同位置间跳转。</li>
+</ul>
+<p>传统原地更新会造成大量随机写，而 LSM Tree 尽量不在磁盘中直接修改旧数据，而是：</p>
+<ol>
+<li>先在内存中处理写入；</li>
+<li>再将有序数据批量刷入磁盘；</li>
+<li>后台通过合并操作清理旧数据。</li>
+</ol>
+<p>这样便把大量随机写转换成了顺序写。</p>
+<hr>
+<h2 id="三、LSM-Tree-的核心组成"><a href="#三、LSM-Tree-的核心组成" class="headerlink" title="三、LSM Tree 的核心组成"></a>三、LSM Tree 的核心组成</h2><h3 id="1-WAL"><a href="#1-WAL" class="headerlink" title="1. WAL"></a>1. WAL</h3><p>WAL 全称为 Write-Ahead Log，即预写日志。</p>
+<p>MemTable 位于内存中，如果机器宕机或进程异常退出，尚未持久化的数据就会丢失。因此，修改 MemTable 前需要先把数据变更追加到磁盘上的 WAL 文件。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">写请求</span><br><span class="line">  ↓</span><br><span class="line">追加到 WAL</span><br><span class="line">  ↓</span><br><span class="line">写入 MemTable</span><br><span class="line">  ↓</span><br><span class="line">返回成功</span><br></pre></td></tr></table></figure>
+
+<p>WAL 的核心作用是：</p>
+<ul>
+<li>为内存数据提供持久化保障；</li>
+<li>系统异常后可以根据日志恢复数据；</li>
+<li>在保证可靠性的同时，保留内存写入的高性能。</li>
+</ul>
+<hr>
+<h3 id="2-MemTable"><a href="#2-MemTable" class="headerlink" title="2. MemTable"></a>2. MemTable</h3><p>MemTable 是位于内存中的有序数据结构，用于保存最近更新的数据。</p>
+<p>它按照 Key 的字典序组织数据。LSM Tree 并不限制其具体实现，只要满足以下要求即可：</p>
+<ul>
+<li>数据保持有序；</li>
+<li>写入效率高；</li>
+<li>查询效率较高。</li>
+</ul>
+<p>常见实现包括：</p>
+<ul>
+<li>红黑树；</li>
+<li>跳表。</li>
+</ul>
+<h4 id="2-1-新增数据"><a href="#2-1-新增数据" class="headerlink" title="2.1 新增数据"></a>2.1 新增数据</h4><p>直接将新的 Key 和 Value 插入 MemTable。</p>
+<h4 id="2-2-修改数据"><a href="#2-2-修改数据" class="headerlink" title="2.2 修改数据"></a>2.2 修改数据</h4><ul>
+<li>如果 Key 已存在于 MemTable，直接修改；</li>
+<li>如果不存在，则在 MemTable 中插入该 Key 的新值。</li>
+</ul>
+<p>LSM Tree 不需要立即找到并修改磁盘中的旧数据。</p>
+<h4 id="2-3-删除数据"><a href="#2-3-删除数据" class="headerlink" title="2.3 删除数据"></a>2.3 删除数据</h4><p>LSM Tree 通常不会立即物理删除数据，而是写入一条带有 <code>tombstone</code>（墓碑）标记的记录。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">删除 Key</span><br><span class="line">  ↓</span><br><span class="line">写入 Key + tombstone</span><br><span class="line">  ↓</span><br><span class="line">读取时视为数据已删除</span><br><span class="line">  ↓</span><br><span class="line">后续合并时清理旧值和删除标记</span><br></pre></td></tr></table></figure>
+
+<p>删除操作因此被转换为一次普通写入，避免了磁盘随机删除。</p>
+<hr>
+<h3 id="3-Immutable-MemTable"><a href="#3-Immutable-MemTable" class="headerlink" title="3. Immutable MemTable"></a>3. Immutable MemTable</h3><p>当 MemTable 的数据量达到容量阈值，例如 32 MB 时，它会转变为只读的 Immutable MemTable。</p>
+<p>随后系统会：</p>
+<ol>
+<li>将当前 MemTable 冻结为 Immutable MemTable；</li>
+<li>创建一个新的空 MemTable；</li>
+<li>新 MemTable 继续接收写请求；</li>
+<li>后台线程把 Immutable MemTable 持久化到磁盘。</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">旧 MemTable 达到阈值</span><br><span class="line">        ↓</span><br><span class="line">转为 Immutable MemTable ──→ 后台刷入磁盘</span><br><span class="line">        ↓</span><br><span class="line">新建 MemTable ─────────────→ 继续处理写请求</span><br></pre></td></tr></table></figure>
+
+<p>这样可以避免数据持久化过程阻塞新的写请求。</p>
+<hr>
+<h3 id="4-SSTable"><a href="#4-SSTable" class="headerlink" title="4. SSTable"></a>4. SSTable</h3><p>SSTable 全称为 Sorted String Table，是 LSM Tree 在磁盘上的主要持久化结构。</p>
+<p>它具有三个重要特征：</p>
+<ul>
+<li><strong>持久化</strong>：数据保存在磁盘中；</li>
+<li><strong>有序</strong>：记录按照 Key 的字典序排列；</li>
+<li><strong>不可变</strong>：文件生成后不再原地修改。</li>
+</ul>
+<p>SSTable 中的 Key 和 Value 连续存储，文件还会保存 Key 对应数据位置的偏移量，形成稀疏索引，以提高查询速度。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">SSTable</span><br><span class="line">├── Key / Value 数据区</span><br><span class="line">└── 稀疏索引：Key → Offset</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="四、数据冗余与-Compaction"><a href="#四、数据冗余与-Compaction" class="headerlink" title="四、数据冗余与 Compaction"></a>四、数据冗余与 Compaction</h2><h3 id="1-为什么需要合并"><a href="#1-为什么需要合并" class="headerlink" title="1. 为什么需要合并"></a>1. 为什么需要合并</h3><p>MemTable 会不断被持久化为新的 SSTable，因此同一个 Key 可能同时存在于多个 SSTable 中。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">旧 SSTable：user:1 = A</span><br><span class="line">新 SSTable：user:1 = B</span><br></pre></td></tr></table></figure>
+
+<p>其中新 SSTable 中的 <code>B</code> 才是最新值，旧值 <code>A</code> 已经失效，但仍然占用磁盘空间。</p>
+<p>删除操作也类似：旧 SSTable 中可能保存数据，新 SSTable 中保存其 tombstone 标记。</p>
+<p>为了清理冗余版本和已删除数据，LSM Tree 会周期性执行 <strong>Compaction（合并）</strong>。</p>
+<hr>
+<h3 id="2-Level-分层"><a href="#2-Level-分层" class="headerlink" title="2. Level 分层"></a>2. Level 分层</h3><p>LSM Tree 使用 Level 对 SSTable 进行分层：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">Immutable MemTable</span><br><span class="line">        ↓</span><br><span class="line">Level 0</span><br><span class="line">        ↓</span><br><span class="line">Level 1</span><br><span class="line">        ↓</span><br><span class="line">Level 2</span><br><span class="line">        ↓</span><br><span class="line">...</span><br><span class="line">        ↓</span><br><span class="line">Level N</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Immutable MemTable 刷盘后形成 Level 0 SSTable；</li>
+<li>Level N 中的数据通过合并下沉到 Level N+1；</li>
+<li>层级越低，数据通常越新；</li>
+<li>层级越高，数据通常越旧。</li>
+</ul>
+<p>如果同一个 Key 同时存在于多个层级，应优先使用较低层级中的值。</p>
+<hr>
+<h3 id="3-Leveled-Compaction-Strategy"><a href="#3-Leveled-Compaction-Strategy" class="headerlink" title="3. Leveled Compaction Strategy"></a>3. Leveled Compaction Strategy</h3><p>主要合并策略是 LCS（Leveled Compaction Strategy，分层合并策略）。</p>
+<p>其基本规则包括：</p>
+<ul>
+<li>SSTable 文件大小通常保持一致，例如默认约为 160 MB；</li>
+<li>每个 Level 都有总容量限制；</li>
+<li>层级越高，允许保存的数据总量越大；</li>
+<li>单个 SSTable 内部的 Key 有序；</li>
+<li>Level 1～N 中，同一层的不同 SSTable 之间也按照 Key 范围有序且互不重叠。</li>
+</ul>
+<p>容量示例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Level 1：总容量约 10 GB</span><br><span class="line">Level 2：总容量约 100 GB</span><br><span class="line">更高层级：容量继续递增</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="4-分层合并过程"><a href="#4-分层合并过程" class="headerlink" title="4. 分层合并过程"></a>4. 分层合并过程</h3><p>当 Level N 的文件总量超过阈值时：</p>
+<ol>
+<li>从 Level N 选择一个 SSTable；</li>
+<li>找出 Level N+1 中与其 Key 范围有交集的 SSTable；</li>
+<li>将这些 SSTable 合并；</li>
+<li>清除重复记录和已失效的旧版本；</li>
+<li>生成若干新的 SSTable；</li>
+<li>将新文件归入 Level N+1；</li>
+<li>如果 Level N+1 也超出容量限制，则继续向下合并。</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Level N 的 SSTable</span><br><span class="line">        +</span><br><span class="line">Level N+1 中 Key 范围重叠的 SSTable</span><br><span class="line">        ↓</span><br><span class="line">合并、排序、清除旧版本</span><br><span class="line">        ↓</span><br><span class="line">生成新的 SSTable</span><br><span class="line">        ↓</span><br><span class="line">归入 Level N+1</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h3 id="5-Level-0-的特殊性"><a href="#5-Level-0-的特殊性" class="headerlink" title="5. Level 0 的特殊性"></a>5. Level 0 的特殊性</h3><p>Level 0 SSTable 直接来自不同的 Immutable MemTable，因此多个 Level 0 文件的 Key 范围可能相互重叠。</p>
+<p>经过合并后：</p>
+<ul>
+<li>Level 1～N 同一层的 SSTable 之间通常不存在 Key 范围重叠；</li>
+<li>一个 Key 在同一个非 Level 0 层级中至多出现一次；</li>
+<li>查询高层级数据时更容易定位目标 SSTable。</li>
+</ul>
+<hr>
+<h2 id="五、写数据流程"><a href="#五、写数据流程" class="headerlink" title="五、写数据流程"></a>五、写数据流程</h2><h3 id="1-完整写入链路"><a href="#1-完整写入链路" class="headerlink" title="1. 完整写入链路"></a>1. 完整写入链路</h3><p>LSM Tree 处理写请求的过程如下：</p>
+<ol>
+<li>将数据变更追加到 WAL；</li>
+<li>把数据写入 MemTable；</li>
+<li>此时即可向客户端返回成功；</li>
+<li>MemTable 达到容量阈值后转为 Immutable MemTable；</li>
+<li>新建一个 MemTable 继续处理请求；</li>
+<li>后台将 Immutable MemTable 持久化为 Level 0 SSTable；</li>
+<li>Level 0 超过容量阈值后触发 Compaction；</li>
+<li>SSTable 逐层下沉至 Level 1、Level 2，直到容量满足限制。</li>
+</ol>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">客户端写请求</span><br><span class="line">      ↓</span><br><span class="line">WAL</span><br><span class="line">      ↓</span><br><span class="line">MemTable</span><br><span class="line">      ↓ 返回成功</span><br><span class="line">Immutable MemTable</span><br><span class="line">      ↓</span><br><span class="line">Level 0 SSTable</span><br><span class="line">      ↓ Compaction</span><br><span class="line">Level 1 → Level 2 → ... → Level N</span><br></pre></td></tr></table></figure>
+
+<h3 id="2-写性能高的原因"><a href="#2-写性能高的原因" class="headerlink" title="2. 写性能高的原因"></a>2. 写性能高的原因</h3><p>LSM Tree 写性能较高，主要因为：</p>
+<ul>
+<li>首先写入内存中的 MemTable；</li>
+<li>WAL 使用追加写，属于顺序写；</li>
+<li>不直接在磁盘中随机查找并修改旧记录；</li>
+<li>数据以批量、有序的方式刷入磁盘；</li>
+<li>数据整理和旧版本清理由后台 Compaction 完成。</li>
+</ul>
+<hr>
+<h2 id="六、读数据流程"><a href="#六、读数据流程" class="headerlink" title="六、读数据流程"></a>六、读数据流程</h2><h3 id="1-查询顺序"><a href="#1-查询顺序" class="headerlink" title="1. 查询顺序"></a>1. 查询顺序</h3><p>为了读到某个 Key 的最新值，LSM Tree 会按照数据从新到旧的顺序查找：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">MemTable</span><br><span class="line">  ↓ 未找到</span><br><span class="line">Immutable MemTable</span><br><span class="line">  ↓ 未找到</span><br><span class="line">Level 0 最新 SSTable</span><br><span class="line">  ↓ 未找到</span><br><span class="line">Level 0 其他 SSTable</span><br><span class="line">  ↓ 未找到</span><br><span class="line">Level 1</span><br><span class="line">  ↓</span><br><span class="line">Level 2</span><br><span class="line">  ↓</span><br><span class="line">...</span><br><span class="line">  ↓</span><br><span class="line">Level N</span><br></pre></td></tr></table></figure>
+
+<p>具体流程：</p>
+<ol>
+<li>先查询 MemTable；</li>
+<li>未找到时查询 Immutable MemTable；</li>
+<li>继续查询 Level 0 中最新的 SSTable；</li>
+<li>遍历 Level 0 的相关 SSTable；</li>
+<li>再依次查询 Level 1～N；</li>
+<li>找到后立即返回，全部未找到则表示数据不存在。</li>
+</ol>
+<h3 id="2-为什么必须从新到旧查询"><a href="#2-为什么必须从新到旧查询" class="headerlink" title="2. 为什么必须从新到旧查询"></a>2. 为什么必须从新到旧查询</h3><p>同一个 Key 可能存在多个版本：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">MemTable：最新版本</span><br><span class="line">Level 0：较新版本</span><br><span class="line">Level 3：更旧版本</span><br><span class="line">Level 5：最旧版本</span><br></pre></td></tr></table></figure>
+
+<p>如果不按新旧顺序查询，就可能返回已经失效的旧值。</p>
+<p>同样，如果先找到 tombstone，就应认为该数据已被删除，不能继续返回更旧层级中的历史值。</p>
+<hr>
+<h2 id="七、LSM-Tree-的核心权衡"><a href="#七、LSM-Tree-的核心权衡" class="headerlink" title="七、LSM Tree 的核心权衡"></a>七、LSM Tree 的核心权衡</h2><h3 id="1-优势"><a href="#1-优势" class="headerlink" title="1. 优势"></a>1. 优势</h3><ul>
+<li>将随机写转换为内存写和磁盘顺序写；</li>
+<li>非常适合高并发写入；</li>
+<li>WAL 保证内存数据的可靠性；</li>
+<li>SSTable 有序并带有索引，可以兼顾查询效率；</li>
+<li>数据可以通过分层和合并持续整理；</li>
+<li>很适合作为分布式 NoSQL 数据库的底层存储模型。</li>
+</ul>
+<h3 id="2-代价"><a href="#2-代价" class="headerlink" title="2. 代价"></a>2. 代价</h3><ul>
+<li>同一个 Key 可能存在多个版本，占用额外空间；</li>
+<li>读取数据可能需要查询多个内存结构和 SSTable；</li>
+<li>后台 Compaction 会消耗 CPU、磁盘 I&#x2F;O 和存储带宽；</li>
+<li>数据不会在修改或删除时立即原地更新，而是延迟到合并阶段清理。</li>
+</ul>
+<p>LSM Tree 的本质权衡是：</p>
+<blockquote>
+<p>通过增加读路径和后台合并的复杂度，换取更高的写入性能。</p>
+</blockquote>
+<hr>
+<h2 id="八、核心架构思想"><a href="#八、核心架构思想" class="headerlink" title="八、核心架构思想"></a>八、核心架构思想</h2><ol>
+<li><strong>顺序读写性能高于随机读写，是 LSM Tree 成立的基础。</strong></li>
+<li><strong>写请求先进入 WAL，再写入 MemTable，在性能和可靠性之间取得平衡。</strong></li>
+<li><strong>MemTable 保存最新数据，并通过有序结构提高读写效率。</strong></li>
+<li><strong>删除不立即清除旧数据，而是写入 tombstone，将随机删除转换为普通写入。</strong></li>
+<li><strong>Immutable MemTable 让后台刷盘不阻塞新的写请求。</strong></li>
+<li><strong>SSTable 是持久化、有序且不可变的磁盘文件。</strong></li>
+<li><strong>同一 Key 可以存在多个版本，较新的结构或较低层级中的值优先。</strong></li>
+<li><strong>Compaction 负责清除冗余版本、整理数据并回收空间。</strong></li>
+<li><strong>Level 0 的文件可能重叠，Level 1～N 同层文件通常不重叠。</strong></li>
+<li><strong>写入路径短而快速，读取路径需要从新到旧逐层查找。</strong></li>
+<li><strong>LSM Tree 用读放大、写放大和后台合并成本，换取高并发写入能力。</strong></li>
+</ol>
+<hr>
+<h2 id="九、一句话总结"><a href="#九、一句话总结" class="headerlink" title="九、一句话总结"></a>九、一句话总结</h2><p><strong>LSM Tree 通过 WAL 保证可靠性，在 MemTable 中承接高速内存写入，再将数据有序地刷入不可变的 SSTable，并通过分层 Compaction 清理旧版本和 tombstone；它用更复杂的读取路径与后台合并成本，将大量随机写转换为顺序写，因此非常适合高并发写入的 NoSQL 和分布式数据库。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/%E5%AD%98%E5%82%A8%E7%B3%BB%E7%BB%9F/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    存储系统
+    
+</a>
+
+        
+        
+<a href="/tags/LSM-Tree/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    LSM-Tree
+    
+</a>
+
+        
+        
+<a href="/tags/MemTable/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    MemTable
+    
+</a>
+
+        
+        
+<a href="/tags/SSTable/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    SSTable
+    
+</a>
+
+        
+        
+<a href="/tags/WAL/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    WAL
+    
+</a>
+
+        
+        
+<a href="/tags/Compaction/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Compaction
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/19/%E5%85%B6%E4%BB%96NoSQL%E6%95%B0%E6%8D%AE%E5%BA%93%E6%80%BB%E7%BB%93/" class="post-nav-link group text-left" title="其他 NoSQL 数据库总结">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">其他 NoSQL 数据库总结</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/17/Redis%E6%80%BB%E7%BB%93/" class="post-nav-link group text-right" title="Redis 总结">
+            <span class="post-nav-title">Redis 总结</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>

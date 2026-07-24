@@ -1,0 +1,1164 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>DNS与HTTP DNS | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="今天我们来总结一下 客户端是如何找到机房入口 IP，并与后台服务建立连接的 。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, DNS, HTTP-DNS, 域名解析, 接入层" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="DNS与HTTP DNS | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="今天我们来总结一下 客户端是如何找到机房入口 IP，并与后台服务建立连接的 。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/10/DNS%E4%B8%8EHTTP-DNS/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-10T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-07-24T14:34:36.859Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="DNS" />
+    
+    <meta property="article:tag" content="HTTP-DNS" />
+    
+    <meta property="article:tag" content="域名解析" />
+    
+    <meta property="article:tag" content="接入层" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="DNS与HTTP DNS | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="今天我们来总结一下 客户端是如何找到机房入口 IP，并与后台服务建立连接的 。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/10/DNS%E4%B8%8EHTTP-DNS/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"DNS与HTTP DNS","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/10/DNS%E4%B8%8EHTTP-DNS/index.html"},"description":"今天我们来总结一下 客户端是如何找到机房入口 IP，并与后台服务建立连接的 。","datePublished":"2026-07-10T14:27:35.000Z","dateModified":"2026-07-24T14:34:36.859Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, DNS, HTTP-DNS, 域名解析, 接入层"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            DNS与HTTP DNS
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-10">2026/07/10</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="核心主线">核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-2-DNS%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BF%9E%E6%8E%A5%E6%9C%BA%E6%88%BF%E7%9A%84%E5%9F%BA%E7%A1%80%E6%8A%80%E6%9C%AF" data-target="1-2-DNS：客户端连接机房的基础技术">1.2 DNS：客户端连接机房的基础技术</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-DNS-%E7%9A%84%E6%84%8F%E4%B9%89" data-target="1-DNS-的意义">1. DNS 的意义</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%9F%9F%E5%90%8D%E7%BB%93%E6%9E%84" data-target="2-域名结构">2. 域名结构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%B1%BB%E5%9E%8B" data-target="3-域名服务器类型">3. 域名服务器类型</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-DNS-%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B" data-target="4-DNS-域名解析过程">4. DNS 域名解析过程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-DNS-%E8%A7%A3%E6%9E%90%E8%AE%B0%E5%BD%95%E4%B8%AD%E7%9A%84%E9%87%8D%E8%A6%81%E5%AD%97%E6%AE%B5" data-target="5-DNS-解析记录中的重要字段">5. DNS 解析记录中的重要字段</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-3-HTTP-DNS%EF%BC%9A%E5%AF%B9%E4%BC%A0%E7%BB%9F-DNS-%E7%9A%84%E5%A2%9E%E5%BC%BA" data-target="1-3-HTTP-DNS：对传统-DNS-的增强">1.3 HTTP DNS：对传统 DNS 的增强</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BC%A0%E7%BB%9F-DNS-%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98" data-target="1-传统-DNS-存在的问题">1. 传统 DNS 存在的问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-HTTP-DNS-%E7%9A%84%E5%8E%9F%E7%90%86" data-target="2-HTTP-DNS-的原理">2. HTTP DNS 的原理</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-HTTP-DNS-%E7%9A%84%E4%BC%98%E5%8A%BF" data-target="3-HTTP-DNS-的优势">3. HTTP DNS 的优势</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-HTTP-DNS-%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9A%84%E5%AE%B9%E7%81%BE%E8%AE%BE%E8%AE%A1" data-target="4-HTTP-DNS-实践中的容灾设计">4. HTTP DNS 实践中的容灾设计</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-HTTP-DNS-%E7%9A%84%E8%A1%A5%E5%85%85%E7%AD%96%E7%95%A5" data-target="5-HTTP-DNS-的补充策略">5. HTTP DNS 的补充策略</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#DNS-%E4%B8%8E-HTTP-DNS-%E5%AF%B9%E6%AF%94" data-target="DNS-与-HTTP-DNS-对比">DNS 与 HTTP DNS 对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="最重要的架构思想">最重要的架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="一句话总结">一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="核心主线">核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-2-DNS%EF%BC%9A%E5%AE%A2%E6%88%B7%E7%AB%AF%E8%BF%9E%E6%8E%A5%E6%9C%BA%E6%88%BF%E7%9A%84%E5%9F%BA%E7%A1%80%E6%8A%80%E6%9C%AF" data-target="1-2-DNS：客户端连接机房的基础技术">1.2 DNS：客户端连接机房的基础技术</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-DNS-%E7%9A%84%E6%84%8F%E4%B9%89" data-target="1-DNS-的意义">1. DNS 的意义</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%9F%9F%E5%90%8D%E7%BB%93%E6%9E%84" data-target="2-域名结构">2. 域名结构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%9F%9F%E5%90%8D%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%B1%BB%E5%9E%8B" data-target="3-域名服务器类型">3. 域名服务器类型</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-DNS-%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90%E8%BF%87%E7%A8%8B" data-target="4-DNS-域名解析过程">4. DNS 域名解析过程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-DNS-%E8%A7%A3%E6%9E%90%E8%AE%B0%E5%BD%95%E4%B8%AD%E7%9A%84%E9%87%8D%E8%A6%81%E5%AD%97%E6%AE%B5" data-target="5-DNS-解析记录中的重要字段">5. DNS 解析记录中的重要字段</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-3-HTTP-DNS%EF%BC%9A%E5%AF%B9%E4%BC%A0%E7%BB%9F-DNS-%E7%9A%84%E5%A2%9E%E5%BC%BA" data-target="1-3-HTTP-DNS：对传统-DNS-的增强">1.3 HTTP DNS：对传统 DNS 的增强</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BC%A0%E7%BB%9F-DNS-%E5%AD%98%E5%9C%A8%E7%9A%84%E9%97%AE%E9%A2%98" data-target="1-传统-DNS-存在的问题">1. 传统 DNS 存在的问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-HTTP-DNS-%E7%9A%84%E5%8E%9F%E7%90%86" data-target="2-HTTP-DNS-的原理">2. HTTP DNS 的原理</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-HTTP-DNS-%E7%9A%84%E4%BC%98%E5%8A%BF" data-target="3-HTTP-DNS-的优势">3. HTTP DNS 的优势</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-HTTP-DNS-%E5%AE%9E%E8%B7%B5%E4%B8%AD%E7%9A%84%E5%AE%B9%E7%81%BE%E8%AE%BE%E8%AE%A1" data-target="4-HTTP-DNS-实践中的容灾设计">4. HTTP DNS 实践中的容灾设计</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-HTTP-DNS-%E7%9A%84%E8%A1%A5%E5%85%85%E7%AD%96%E7%95%A5" data-target="5-HTTP-DNS-的补充策略">5. HTTP DNS 的补充策略</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#DNS-%E4%B8%8E-HTTP-DNS-%E5%AF%B9%E6%AF%94" data-target="DNS-与-HTTP-DNS-对比">DNS 与 HTTP DNS 对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="最重要的架构思想">最重要的架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="一句话总结">一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>今天我们来总结一下<strong>客户端是如何找到机房入口 IP，并与后台服务建立连接的</strong>。</p>
+<span id="more"></span>
+
+<h2 id="核心主线"><a href="#核心主线" class="headerlink" title="核心主线"></a>核心主线</h2><p>整体链路可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">用户输入/客户端访问域名</span><br><span class="line">        ↓</span><br><span class="line">DNS / HTTP DNS 解析域名</span><br><span class="line">        ↓</span><br><span class="line">获得机房入口公网 IP</span><br><span class="line">        ↓</span><br><span class="line">客户端通过 IP 访问机房入口</span><br><span class="line">        ↓</span><br><span class="line">后续进入 LVS、Nginx、业务服务等后台链路</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li><strong>DNS</strong> 是传统、通用的域名解析体系。</li>
+<li><strong>HTTP DNS</strong> 是为了解决传统 DNS 在延迟、劫持、调度精准度、变更生效速度等方面的问题而引入的增强方案。</li>
+</ul>
+<hr>
+<h2 id="1-2-DNS：客户端连接机房的基础技术"><a href="#1-2-DNS：客户端连接机房的基础技术" class="headerlink" title="1.2 DNS：客户端连接机房的基础技术"></a>1.2 DNS：客户端连接机房的基础技术</h2><h3 id="1-DNS-的意义"><a href="#1-DNS-的意义" class="headerlink" title="1. DNS 的意义"></a>1. DNS 的意义</h3><p>互联网通信的基础是 IP 地址。客户端要访问机房，就必须知道机房的公网 IP。</p>
+<p>但 IP 地址是一串数字，不方便记忆，也不方便在后台 IP 变更时对用户保持透明，因此引入了域名。</p>
+<p><strong>DNS（Domain Name System，域名系统）</strong> 的作用是：</p>
+<blockquote>
+<p>维护域名与 IP 地址之间的映射关系，并提供把域名翻译为 IP 地址的能力。</p>
+</blockquote>
+<p>DNS 给互联网应用带来的价值主要有：</p>
+<ul>
+<li><strong>降低用户记忆成本</strong>：用户只需要记住域名，而不需要记住 IP 地址。</li>
+<li><strong>屏蔽机房 IP 变更</strong>：公司更换公网 IP 时，只需修改 DNS 配置，用户无感知。</li>
+<li><strong>支持简单负载均衡</strong>：同一个域名可以映射到多个 IP，把不同用户解析到不同入口。</li>
+<li><strong>支持故障摘除</strong>：如果某个 IP 对应的入口不可用，DNS 可以将其从解析结果中移除。</li>
+</ul>
+<hr>
+<h3 id="2-域名结构"><a href="#2-域名结构" class="headerlink" title="2. 域名结构"></a>2. 域名结构</h3><p>域名采用层次化树形结构，从右向左层级逐渐变细。</p>
+<p>以 <code>mail.google.com</code> 为例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">根</span><br><span class="line"> └── .com              顶级域名</span><br><span class="line">      └── google.com   二级域名</span><br><span class="line">           └── mail.google.com  三级域名</span><br></pre></td></tr></table></figure>
+
+<p>常见层级：</p>
+<ul>
+<li><strong>根域名</strong>：域名体系的顶端。</li>
+<li><strong>顶级域名</strong>：如 <code>.com</code>、<code>.net</code>、<code>.cn</code>、<code>.us</code>。</li>
+<li><strong>二级域名</strong>：如 <code>google.com</code>、<code>apple.com</code>。</li>
+<li><strong>三级域名及更多级别</strong>：如 <code>mail.google.com</code>、<code>www.baidu.com</code>。</li>
+</ul>
+<p>重点理解：<strong>每一级域名负责控制下一级域名的分配和解析入口。</strong></p>
+<hr>
+<h3 id="3-域名服务器类型"><a href="#3-域名服务器类型" class="headerlink" title="3. 域名服务器类型"></a>3. 域名服务器类型</h3><p>DNS 系统中的域名服务器主要分为 4 类。</p>
+<table>
+<thead>
+<tr>
+<th>类型</th>
+<th>作用</th>
+<th>重点</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>根域名服务器</td>
+<td>负责顶级域名服务器地址的查找</td>
+<td>DNS 体系顶层入口</td>
+</tr>
+<tr>
+<td>顶级域名服务器</td>
+<td>负责某个顶级域名下二级域名的查找</td>
+<td>如 <code>.com</code>、<code>.cn</code> 对应服务器</td>
+</tr>
+<tr>
+<td>权威域名服务器</td>
+<td>真正决定某个域名最终解析成哪个 IP</td>
+<td>大公司常自建，中小公司常托管</td>
+</tr>
+<tr>
+<td>本地域名服务器</td>
+<td>客户端最先请求的 DNS 代理与缓存</td>
+<td>通常由运营商提供</td>
+</tr>
+</tbody></table>
+<p>其中最关键的两个角色：</p>
+<ul>
+<li><strong>权威 DNS 服务器</strong>：最终决定域名解析结果。</li>
+<li><strong>本地 DNS 服务器</strong>：客户端的 DNS 查询代理，会缓存解析结果，加速后续查询。</li>
+</ul>
+<hr>
+<h3 id="4-DNS-域名解析过程"><a href="#4-DNS-域名解析过程" class="headerlink" title="4. DNS 域名解析过程"></a>4. DNS 域名解析过程</h3><p>传统 DNS 解析通常采用递归查询。</p>
+<p>以访问 <code>www.baidu.com</code> 为例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">客户端</span><br><span class="line">  ↓ 查询本地缓存</span><br><span class="line">浏览器缓存 / Hosts / 系统 DNS 缓存</span><br><span class="line">  ↓ 未命中</span><br><span class="line">本地域名服务器</span><br><span class="line">  ↓ 查询</span><br><span class="line">根域名服务器</span><br><span class="line">  ↓ 返回 .com 顶级域名服务器地址</span><br><span class="line">.com 顶级域名服务器</span><br><span class="line">  ↓ 返回 baidu.com 权威域名服务器地址</span><br><span class="line">baidu.com 权威域名服务器</span><br><span class="line">  ↓ 返回 www.baidu.com 对应 IP</span><br><span class="line">本地域名服务器</span><br><span class="line">  ↓ 缓存并返回</span><br><span class="line">客户端获得 IP 地址</span><br></pre></td></tr></table></figure>
+
+<p>关键点：</p>
+<ol>
+<li>客户端会先查本地缓存，例如浏览器缓存、系统缓存、Hosts 文件。</li>
+<li>未命中后，请求本地域名服务器。</li>
+<li>本地域名服务器作为代理，依次查询根 DNS、顶级 DNS、权威 DNS。</li>
+<li>权威 DNS 返回最终 IP。</li>
+<li>本地 DNS 缓存解析记录，再返回给客户端。</li>
+</ol>
+<hr>
+<h3 id="5-DNS-解析记录中的重要字段"><a href="#5-DNS-解析记录中的重要字段" class="headerlink" title="5. DNS 解析记录中的重要字段"></a>5. DNS 解析记录中的重要字段</h3><p>DNS 解析结果会被缓存，常见字段包括：</p>
+<table>
+<thead>
+<tr>
+<th>字段</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Domain</td>
+<td>域名</td>
+</tr>
+<tr>
+<td>TTL</td>
+<td>生存周期，表示缓存多久</td>
+</tr>
+<tr>
+<td>Class</td>
+<td>协议类型，通常为 <code>IN</code>，表示 Internet</td>
+</tr>
+<tr>
+<td>Type</td>
+<td>记录类型，如 <code>A</code> 表示 IPv4，<code>AAAA</code> 表示 IPv6</td>
+</tr>
+<tr>
+<td>Rdata</td>
+<td>记录数据，即域名对应的 IP 地址</td>
+</tr>
+</tbody></table>
+<p>其中 <strong>TTL</strong> 很重要：</p>
+<ul>
+<li>TTL 越长，缓存命中率越高，解析压力越小。</li>
+<li>TTL 越长，IP 变更生效越慢。</li>
+<li>TTL 越短，变更更快，但 DNS 查询压力更大。</li>
+</ul>
+<hr>
+<h2 id="1-3-HTTP-DNS：对传统-DNS-的增强"><a href="#1-3-HTTP-DNS：对传统-DNS-的增强" class="headerlink" title="1.3 HTTP DNS：对传统 DNS 的增强"></a>1.3 HTTP DNS：对传统 DNS 的增强</h2><h3 id="1-传统-DNS-存在的问题"><a href="#1-传统-DNS-存在的问题" class="headerlink" title="1. 传统 DNS 存在的问题"></a>1. 传统 DNS 存在的问题</h3><p>虽然 DNS 是互联网基础设施，但在大型互联网应用中，它有明显不足。</p>
+<h4 id="问题一：解析延迟较高"><a href="#问题一：解析延迟较高" class="headerlink" title="问题一：解析延迟较高"></a>问题一：解析延迟较高</h4><p>传统 DNS 可能经历多级递归查询：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">本地缓存 → 本地 DNS → 根 DNS → 顶级 DNS → 权威 DNS</span><br></pre></td></tr></table></figure>
+
+<p>理想情况下解析只需几毫秒到几十毫秒，但实际场景中可能超过 1 秒，影响用户访问体验。</p>
+<h4 id="问题二：调度不够精准"><a href="#问题二：调度不够精准" class="headerlink" title="问题二：调度不够精准"></a>问题二：调度不够精准</h4><p>权威 DNS 看到的通常是<strong>本地 DNS 服务器的 IP</strong>，而不一定是真实客户端 IP。</p>
+<p>这会导致：</p>
+<ul>
+<li>权威 DNS 判断用户地理位置不准；</li>
+<li>用户可能被解析到距离较远的机房入口；</li>
+<li>不同运营商之间可能出现错误调度；</li>
+<li>运营商做“域名转发”时，用户可能拿到不符合自身运营商网络的 IP。</li>
+</ul>
+<p>最终表现为：<strong>用户访问路径变长，请求延迟升高。</strong></p>
+<h4 id="问题三：DNS-劫持"><a href="#问题三：DNS-劫持" class="headerlink" title="问题三：DNS 劫持"></a>问题三：DNS 劫持</h4><p>DNS 劫持是指域名解析结果被篡改，导致用户访问错误 IP。</p>
+<p>可能来源：</p>
+<ul>
+<li>运营商在本地 DNS 层面劫持；</li>
+<li>黑客篡改用户机器的 Hosts 文件；</li>
+<li>恶意网络环境返回错误解析结果。</li>
+</ul>
+<p>影响包括：</p>
+<ul>
+<li>用户无法访问目标网站；</li>
+<li>用户被引导到广告页面；</li>
+<li>用户被引导到钓鱼网站；</li>
+<li>企业业务流量受损。</li>
+</ul>
+<hr>
+<h3 id="2-HTTP-DNS-的原理"><a href="#2-HTTP-DNS-的原理" class="headerlink" title="2. HTTP DNS 的原理"></a>2. HTTP DNS 的原理</h3><p>HTTP DNS 的核心思想是：</p>
+<blockquote>
+<p>不再通过传统 DNS 协议访问本地 DNS 服务器，而是客户端直接用 HTTP 请求访问指定的 HTTP DNS 服务器 IP，由 HTTP DNS 服务返回域名对应的最优 IP。</p>
+</blockquote>
+<p>示例流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">客户端</span><br><span class="line">  ↓ HTTP 请求固定 IP</span><br><span class="line">HTTP DNS 服务器，例如 http://5.5.5.5/d?dn=go.friendy.com&amp;ip=客户端IP</span><br><span class="line">  ↓ 查询权威 DNS / 调度系统</span><br><span class="line">返回最优入口 IP</span><br><span class="line">  ↓</span><br><span class="line">客户端直接访问该 IP</span><br><span class="line">  ↓</span><br><span class="line">HTTP Header 中携带 Host: go.friendy.com</span><br></pre></td></tr></table></figure>
+
+<p>注意：HTTP DNS 服务本身一般不通过域名提供服务，而是通过固定 IP 提供服务。否则访问 HTTP DNS 前仍然需要 DNS 解析，就失去了意义。</p>
+<hr>
+<h3 id="3-HTTP-DNS-的优势"><a href="#3-HTTP-DNS-的优势" class="headerlink" title="3. HTTP DNS 的优势"></a>3. HTTP DNS 的优势</h3><table>
+<thead>
+<tr>
+<th>优势</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>降低解析延迟</td>
+<td>客户端直接访问 HTTP DNS，缩短传统 DNS 递归链路</td>
+</tr>
+<tr>
+<td>防止 DNS 劫持</td>
+<td>绕过运营商本地 DNS，降低解析结果被篡改的风险</td>
+</tr>
+<tr>
+<td>调度更精准</td>
+<td>HTTP DNS 能拿到真实客户端 IP，更容易做就近接入和运营商匹配</td>
+</tr>
+<tr>
+<td>变更生效更快</td>
+<td>不受传统 DNS 多级缓存影响，入口 IP 变更能更快覆盖客户端</td>
+</tr>
+<tr>
+<td>可结合业务策略</td>
+<td>客户端 SDK 可以按连通性、延迟、失败率等策略选择 IP</td>
+</tr>
+</tbody></table>
+<p>HTTP DNS 本质上并不神秘：<strong>它只是把域名解析从 DNS 协议迁移到 HTTP 服务接口上，同时把解析权和调度权更多地收回到业务方可控的系统中。</strong></p>
+<hr>
+<h3 id="4-HTTP-DNS-实践中的容灾设计"><a href="#4-HTTP-DNS-实践中的容灾设计" class="headerlink" title="4. HTTP DNS 实践中的容灾设计"></a>4. HTTP DNS 实践中的容灾设计</h3><p>HTTP DNS 有优势，但不能完全替代 DNS。因为域名解析是客户端访问后台的第一步，一旦失败，用户就会被挡在机房之外。</p>
+<p>因此，客户端网络 SDK 应该设计多级兜底策略：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">优先使用 HTTP DNS</span><br><span class="line">        ↓ 失败</span><br><span class="line">降级使用传统 DNS</span><br><span class="line">        ↓ 失败</span><br><span class="line">使用预留兜底 IP</span><br></pre></td></tr></table></figure>
+
+<p>具体流程：</p>
+<ol>
+<li>客户端优先使用 HTTP DNS 解析域名。</li>
+<li>如果 HTTP DNS 返回空数据或网络错误，则降级到本地 DNS。</li>
+<li>如果传统 DNS 也失败，则使用客户端内置或服务端下发的兜底 IP。</li>
+</ol>
+<p>这种设计的目标是：</p>
+<ul>
+<li>优先保证解析质量；</li>
+<li>其次保证解析可用；</li>
+<li>最后保证用户至少能进入后台入口。</li>
+</ul>
+<hr>
+<h3 id="5-HTTP-DNS-的补充策略"><a href="#5-HTTP-DNS-的补充策略" class="headerlink" title="5. HTTP DNS 的补充策略"></a>5. HTTP DNS 的补充策略</h3><p>实践中还可以进一步优化：</p>
+<h4 id="安全策略"><a href="#安全策略" class="headerlink" title="安全策略"></a>安全策略</h4><p>HTTP DNS 可以使用 HTTPS，避免解析请求和响应被中间人篡改。</p>
+<h4 id="多-IP-下发策略"><a href="#多-IP-下发策略" class="headerlink" title="多 IP 下发策略"></a>多 IP 下发策略</h4><p>HTTP DNS 服务可以一次返回多个候选 IP，并按优先级排序。</p>
+<p>客户端可以：</p>
+<ol>
+<li>默认使用第一个 IP；</li>
+<li>如果连通性差或访问失败，切换到下一个 IP；</li>
+<li>根据延迟、失败率等指标做动态选择。</li>
+</ol>
+<p>这样可以进一步提升客户端接入成功率和访问体验。</p>
+<hr>
+<h2 id="DNS-与-HTTP-DNS-对比"><a href="#DNS-与-HTTP-DNS-对比" class="headerlink" title="DNS 与 HTTP DNS 对比"></a>DNS 与 HTTP DNS 对比</h2><table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>DNS</th>
+<th>HTTP DNS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>协议</td>
+<td>DNS 协议</td>
+<td>HTTP &#x2F; HTTPS</td>
+</tr>
+<tr>
+<td>客户端访问对象</td>
+<td>本地域名服务器</td>
+<td>固定 IP 的 HTTP DNS 服务</td>
+</tr>
+<tr>
+<td>是否依赖运营商本地 DNS</td>
+<td>是</td>
+<td>否，通常绕过</td>
+</tr>
+<tr>
+<td>解析链路</td>
+<td>多级递归查询</td>
+<td>直接请求解析服务</td>
+</tr>
+<tr>
+<td>劫持风险</td>
+<td>较高</td>
+<td>较低</td>
+</tr>
+<tr>
+<td>调度精准度</td>
+<td>可能只能看到本地 DNS IP</td>
+<td>可以看到真实客户端 IP</td>
+</tr>
+<tr>
+<td>变更生效速度</td>
+<td>受多级缓存和 TTL 影响</td>
+<td>更可控、更快</td>
+</tr>
+<tr>
+<td>通用性</td>
+<td>浏览器和系统天然支持</td>
+<td>通常需要客户端 SDK 支持</td>
+</tr>
+<tr>
+<td>最佳实践</td>
+<td>作为基础兜底能力</td>
+<td>作为 App &#x2F; SDK 的优先解析能力</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="最重要的架构思想"><a href="#最重要的架构思想" class="headerlink" title="最重要的架构思想"></a>最重要的架构思想</h2><ol>
+<li><strong>客户端进入机房的第一步是域名解析</strong>：没有正确、快速的解析结果，后面的 LVS、Nginx、业务服务都无法发挥作用。</li>
+<li><strong>DNS 解决了 IP 不可读、IP 变更不透明、简单负载均衡等基础问题</strong>。</li>
+<li><strong>传统 DNS 的主要问题是延迟、劫持、调度不精准、变更不够快</strong>。</li>
+<li><strong>HTTP DNS 的核心价值是绕过本地 DNS，把解析过程变成业务方可控的 HTTP 服务调用</strong>。</li>
+<li><strong>HTTP DNS 不能单独作为唯一方案</strong>：客户端必须设计 DNS 降级和兜底 IP，保证接入链路高可用。</li>
+<li><strong>大型互联网接入设计的关键不是单点技术，而是多级容灾链路</strong>：HTTP DNS 优先，传统 DNS 兜底，预置 IP 保底。</li>
+</ol>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><strong>DNS 负责把用户可记忆的域名解析为机房入口 IP，是客户端连接后台的第一步；但传统 DNS 存在解析延迟、劫持、调度不精准和变更生效慢等问题，因此大型互联网应用常引入 HTTP DNS，通过客户端直接请求可控的解析服务来获得更精准、更安全、更快速的入口 IP，同时配合传统 DNS 和兜底 IP 构建高可用的接入解析链路。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/DNS/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    DNS
+    
+</a>
+
+        
+        
+<a href="/tags/HTTP-DNS/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    HTTP-DNS
+    
+</a>
+
+        
+        
+<a href="/tags/%E5%9F%9F%E5%90%8D%E8%A7%A3%E6%9E%90/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    域名解析
+    
+</a>
+
+        
+        
+<a href="/tags/%E6%8E%A5%E5%85%A5%E5%B1%82/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    接入层
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/12/%E6%8E%A5%E5%85%A5%E5%B1%82%E7%9A%84%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/" class="post-nav-link group text-left" title="接入层的技术演进">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">接入层的技术演进</span>
+        </a>
+        
+
+        
+        <a href="/2026/06/25/%E4%BB%8E-Prompt-%E5%88%B0-Harness%EF%BC%9AAI-%E5%B7%A5%E7%A8%8B%E5%88%B0%E5%BA%95%E5%9C%A8%E8%BF%9B%E5%8C%96%E4%BB%80%E4%B9%88%EF%BC%9F/" class="post-nav-link group text-right" title="从 Prompt 到 Harness：AI 工程到底在进化什么？">
+            <span class="post-nav-title">从 Prompt 到 Harness：AI 工程到底在进化什么？</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>

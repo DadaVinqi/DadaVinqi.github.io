@@ -1,0 +1,1254 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>Redis 总结 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="大型互联网系统如何将 Redis 从单机内存数据库，逐步演进为高性能、高可用、可水平扩展的分布式存储系统。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, 主从复制, Redis, NoSQL, Sentinel, Redis-Cluster, Codis" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="Redis 总结 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="大型互联网系统如何将 Redis 从单机内存数据库，逐步演进为高性能、高可用、可水平扩展的分布式存储系统。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/17/Redis%E6%80%BB%E7%BB%93/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-17T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-07-24T14:50:44.421Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="主从复制" />
+    
+    <meta property="article:tag" content="Redis" />
+    
+    <meta property="article:tag" content="NoSQL" />
+    
+    <meta property="article:tag" content="Sentinel" />
+    
+    <meta property="article:tag" content="Redis-Cluster" />
+    
+    <meta property="article:tag" content="Codis" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="Redis 总结 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="大型互联网系统如何将 Redis 从单机内存数据库，逐步演进为高性能、高可用、可水平扩展的分布式存储系统。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/17/Redis%E6%80%BB%E7%BB%93/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Redis 总结","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/17/Redis%E6%80%BB%E7%BB%93/index.html"},"description":"大型互联网系统如何将 Redis 从单机内存数据库，逐步演进为高性能、高可用、可水平扩展的分布式存储系统。","datePublished":"2026-07-17T14:27:35.000Z","dateModified":"2026-07-24T14:50:44.421Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 主从复制, Redis, NoSQL, Sentinel, Redis-Cluster, Codis"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            Redis 总结
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-17">2026/07/17</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81Redis-%E6%A6%82%E8%BF%B0" data-target="二、Redis-概述">二、Redis 概述</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-Redis-%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E7%89%B9%E7%82%B9" data-target="1-Redis-的定位与特点">1. Redis 的定位与特点</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81Redis-%E9%AB%98%E5%8F%AF%E7%94%A8%E4%B8%8E%E5%88%86%E5%B8%83%E5%BC%8F%E6%9E%B6%E6%9E%84" data-target="三、Redis-高可用与分布式架构">三、Redis 高可用与分布式架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F" data-target="1-主从模式">1. 主从模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F" data-target="2-哨兵模式">2. 哨兵模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-Redis-Cluster" data-target="3-Redis-Cluster">3. Redis Cluster</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E4%B8%AD%E5%BF%83%E5%8C%96%E9%9B%86%E7%BE%A4" data-target="4-中心化集群">4. 中心化集群</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Redis-%E6%9E%B6%E6%9E%84%E5%AF%B9%E6%AF%94" data-target="四、Redis-架构对比">四、Redis 架构对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="五、核心架构思想">五、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="六、一句话总结">六、一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81Redis-%E6%A6%82%E8%BF%B0" data-target="二、Redis-概述">二、Redis 概述</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-Redis-%E7%9A%84%E5%AE%9A%E4%BD%8D%E4%B8%8E%E7%89%B9%E7%82%B9" data-target="1-Redis-的定位与特点">1. Redis 的定位与特点</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81Redis-%E9%AB%98%E5%8F%AF%E7%94%A8%E4%B8%8E%E5%88%86%E5%B8%83%E5%BC%8F%E6%9E%B6%E6%9E%84" data-target="三、Redis-高可用与分布式架构">三、Redis 高可用与分布式架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F" data-target="1-主从模式">1. 主从模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%93%A8%E5%85%B5%E6%A8%A1%E5%BC%8F" data-target="2-哨兵模式">2. 哨兵模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-Redis-Cluster" data-target="3-Redis-Cluster">3. Redis Cluster</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E4%B8%AD%E5%BF%83%E5%8C%96%E9%9B%86%E7%BE%A4" data-target="4-中心化集群">4. 中心化集群</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Redis-%E6%9E%B6%E6%9E%84%E5%AF%B9%E6%AF%94" data-target="四、Redis-架构对比">四、Redis 架构对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="五、核心架构思想">五、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="六、一句话总结">六、一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p><strong>大型互联网系统如何将 Redis 从单机内存数据库，逐步演进为高性能、高可用、可水平扩展的分布式存储系统。</strong></p>
+<span id="more"></span>
+
+<h2 id="一、核心主线"><a href="#一、核心主线" class="headerlink" title="一、核心主线"></a>一、核心主线</h2><p>演进路径可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">单机 Redis</span><br><span class="line">   ↓</span><br><span class="line">主从模式：增加数据副本</span><br><span class="line">   ↓</span><br><span class="line">哨兵模式：自动监控和主从切换</span><br><span class="line">   ↓</span><br><span class="line">Redis Cluster：多主分片 + 自动故障转移</span><br><span class="line">   ↓</span><br><span class="line">中心化集群：Proxy + Redis 分片，支撑超大规模节点</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、Redis-概述"><a href="#二、Redis-概述" class="headerlink" title="二、Redis 概述"></a>二、Redis 概述</h2><h3 id="1-Redis-的定位与特点"><a href="#1-Redis-的定位与特点" class="headerlink" title="1. Redis 的定位与特点"></a>1. Redis 的定位与特点</h3><p>Redis 是一种支持网络访问、基于内存、可选持久化的开源键值型 NoSQL 数据库。</p>
+<p>主要特点：</p>
+<ul>
+<li><strong>性能高</strong>：数据主要存储在内存中；</li>
+<li><strong>数据结构丰富</strong>：支持 String、List、Hash、Set、Sorted Set 等；</li>
+<li><strong>支持分布式</strong>：提供主从、哨兵和集群模式；</li>
+<li><strong>操作具有原子性</strong>：基于单线程事件驱动模式处理数据操作；</li>
+<li><strong>应用范围广</strong>：可用于缓存、计数器、限流、排行榜和社交关系等场景。</li>
+</ul>
+<p>大型互联网系统使用 Redis 时，重点是同时满足：</p>
+<ol>
+<li>高性能；</li>
+<li>高可用；</li>
+<li>可扩展。</li>
+</ol>
+<hr>
+<h2 id="三、Redis-高可用与分布式架构"><a href="#三、Redis-高可用与分布式架构" class="headerlink" title="三、Redis 高可用与分布式架构"></a>三、Redis 高可用与分布式架构</h2><h3 id="1-主从模式"><a href="#1-主从模式" class="headerlink" title="1. 主从模式"></a>1. 主从模式</h3><h4 id="1-1-基本结构"><a href="#1-1-基本结构" class="headerlink" title="1.1 基本结构"></a>1.1 基本结构</h4><p>一个 Master 与若干 Slave 组成主从关系：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">              ┌── Slave 1</span><br><span class="line">Redis Master ─┼── Slave 2</span><br><span class="line">              └── Slave 3</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>Master 负责处理数据写入；</li>
+<li>Slave 从 Master 复制数据；</li>
+<li>Slave 保存数据副本，也可以承担部分读取请求。</li>
+</ul>
+<h4 id="1-2-Redis-主从复制流程"><a href="#1-2-Redis-主从复制流程" class="headerlink" title="1.2 Redis 主从复制流程"></a>1.2 Redis 主从复制流程</h4><p>Slave 首次连接 Master 时，先进行全量复制，再持续进行增量复制。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Slave 发送 PSYNC</span><br><span class="line">      ↓</span><br><span class="line">Master 执行 BGSAVE</span><br><span class="line">      ↓</span><br><span class="line">生成全量 RDB 快照</span><br><span class="line">      ↓</span><br><span class="line">Master 将 RDB 发送给 Slave</span><br><span class="line">      ↓</span><br><span class="line">Slave 加载 RDB 到内存</span><br><span class="line">      ↓</span><br><span class="line">Master 发送生成快照期间缓存的数据变更命令</span><br><span class="line">      ↓</span><br><span class="line">Slave 执行增量命令，持续与 Master 同步</span><br></pre></td></tr></table></figure>
+
+<p>详细步骤：</p>
+<ol>
+<li>Slave 连接 Master，并发送 <code>PSYNC</code> 命令；</li>
+<li>Master 执行 <code>BGSAVE</code>，生成当前数据的 RDB 快照；</li>
+<li>生成和发送快照期间，Master 使用缓冲区记录新的数据变更；</li>
+<li>Slave 收到 RDB 后先保存到磁盘，再将数据加载到内存；</li>
+<li>Master 把缓冲区内的增量命令发送给 Slave；</li>
+<li>Slave 执行这些命令，使数据逐渐与 Master 保持一致。</li>
+</ol>
+<h4 id="1-3-通用复制规律"><a href="#1-3-通用复制规律" class="headerlink" title="1.3 通用复制规律"></a>1.3 通用复制规律</h4><p>Redis 与 MySQL 等存储系统的主从复制具有相似思路：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">全量复制 + 增量复制</span><br></pre></td></tr></table></figure>
+
+<p>如果一个 Master 向过多 Slave 复制数据，同样会产生<strong>复制风暴</strong>，增加 Master 的网络和处理压力。</p>
+<hr>
+<h3 id="2-哨兵模式"><a href="#2-哨兵模式" class="headerlink" title="2. 哨兵模式"></a>2. 哨兵模式</h3><h4 id="2-1-主从模式的问题"><a href="#2-1-主从模式的问题" class="headerlink" title="2.1 主从模式的问题"></a>2.1 主从模式的问题</h4><p>单纯的主从模式存在一个明显缺点：</p>
+<blockquote>
+<p>Master 宕机后，需要人工选择一个 Slave 并将其切换为新 Master。</p>
+</blockquote>
+<p>人工切换费时费力，还会造成 Redis 在一段时间内无法写入。</p>
+<h4 id="2-2-Sentinel-的作用"><a href="#2-2-Sentinel-的作用" class="headerlink" title="2.2 Sentinel 的作用"></a>2.2 Sentinel 的作用</h4><p>Redis Sentinel（哨兵）负责：</p>
+<ul>
+<li>监控 Master 和 Slave 的健康状态；</li>
+<li>判断 Master 是否宕机；</li>
+<li>在多个 Slave 中选举新的 Master；</li>
+<li>通知其他 Slave 改为复制新 Master；</li>
+<li>向客户端提供新的 Master 地址。</li>
+</ul>
+<p>典型结构：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Sentinel 集群</span><br><span class="line">      ↓ 监控</span><br><span class="line">Redis Master</span><br><span class="line">      ↓ 复制</span><br><span class="line">多个 Slave</span><br></pre></td></tr></table></figure>
+
+<h4 id="2-3-自动故障转移流程"><a href="#2-3-自动故障转移流程" class="headerlink" title="2.3 自动故障转移流程"></a>2.3 自动故障转移流程</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">多个 Sentinel 持续监控 Master</span><br><span class="line">        ↓</span><br><span class="line">超过指定数量的 Sentinel 判断 Master 宕机</span><br><span class="line">        ↓</span><br><span class="line">Sentinel 协商并选择一个 Slave</span><br><span class="line">        ↓</span><br><span class="line">将该 Slave 提升为新 Master</span><br><span class="line">        ↓</span><br><span class="line">其他 Slave 改为复制新 Master</span><br><span class="line">        ↓</span><br><span class="line">客户端从 Sentinel 获取新的 Master 地址</span><br></pre></td></tr></table></figure>
+
+<p>哨兵模式的本质是：</p>
+<blockquote>
+<p>在主从复制基础上，增加自动监控、选主和故障转移能力。</p>
+</blockquote>
+<hr>
+<h3 id="3-Redis-Cluster"><a href="#3-Redis-Cluster" class="headerlink" title="3. Redis Cluster"></a>3. Redis Cluster</h3><h4 id="3-1-为什么需要集群模式"><a href="#3-1-为什么需要集群模式" class="headerlink" title="3.1 为什么需要集群模式"></a>3.1 为什么需要集群模式</h4><p>主从模式和哨兵模式都只有一个 Master 处理主要读写请求，因此存在两个瓶颈：</p>
+<ul>
+<li>单个 Master 的内存有限，无法保存海量数据；</li>
+<li>单个 Master 的处理能力有限，无法承受海量请求。</li>
+</ul>
+<p>解决方式是<strong>数据分片</strong>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">全量数据</span><br><span class="line">  ↓ 拆分</span><br><span class="line">Master 1 + Slave</span><br><span class="line">Master 2 + Slave</span><br><span class="line">Master 3 + Slave</span><br></pre></td></tr></table></figure>
+
+<p>多个 Master 分别保存部分数据，并共同提供服务。</p>
+<h4 id="3-2-Redis-Cluster-基本结构"><a href="#3-2-Redis-Cluster-基本结构" class="headerlink" title="3.2 Redis Cluster 基本结构"></a>3.2 Redis Cluster 基本结构</h4><p>Redis Cluster 从 Redis 3.0 开始提供分布式存储能力。</p>
+<ul>
+<li>集群至少需要 3 个 Master；</li>
+<li>每个 Master 管理一个数据分片；</li>
+<li>每个 Master 最好至少配置一个 Slave；</li>
+<li>同一分片通过主从复制保证高可用；</li>
+<li>集群节点之间可以相互通信。</li>
+</ul>
+<hr>
+<h4 id="3-3-哈希槽与数据路由"><a href="#3-3-哈希槽与数据路由" class="headerlink" title="3.3 哈希槽与数据路由"></a>3.3 哈希槽与数据路由</h4><p>Redis Cluster 将整个数据库划分为 <strong>16384 个哈希槽</strong>。</p>
+<p>每个 Master 负责其中一部分槽位。例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">Master 1：0～5461</span><br><span class="line">Master 2：5462～10922</span><br><span class="line">Master 3：10923～16383</span><br></pre></td></tr></table></figure>
+
+<p>数据所属槽位的计算方式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">slot = CRC16(Key) mod 16384</span><br></pre></td></tr></table></figure>
+
+<p><strong>客户端访问流程</strong></p>
+<ol>
+<li>客户端连接集群中的任意节点；</li>
+<li>获取并缓存“槽位—Master”的映射关系；</li>
+<li>访问数据时，根据 Key 计算槽位；</li>
+<li>根据槽位找到对应 Master；</li>
+<li>将请求发送给正确的数据分片。</li>
+</ol>
+<p>哈希槽的价值是：</p>
+<ul>
+<li>将数据分片抽象为槽位；</li>
+<li>数据与具体机器解耦；</li>
+<li>扩容、缩容时可以迁移槽位，而不是重新设计整体路由规则。</li>
+</ul>
+<hr>
+<h4 id="3-4-Gossip-协议"><a href="#3-4-Gossip-协议" class="headerlink" title="3.4 Gossip 协议"></a>3.4 Gossip 协议</h4><p>Redis Cluster 使用 Gossip 协议在节点之间传播集群元信息。</p>
+<p>需要传播的信息包括：</p>
+<ul>
+<li>新节点加入；</li>
+<li>节点地址和状态；</li>
+<li>槽位归属；</li>
+<li>槽位迁移；</li>
+<li>Master 宕机；</li>
+<li>Slave 提升为新 Master。</li>
+</ul>
+<p><strong>Gossip 的传播方式</strong></p>
+<p>Gossip 类似“流言传播”：</p>
+<ol>
+<li>每个节点周期性选择部分节点通信；</li>
+<li>收到信息的节点再将信息传播给其他节点；</li>
+<li>经过多轮传播，最终所有节点的信息趋于一致。</li>
+</ol>
+<p>它不是一次广播给所有节点，而是通过多轮局部通信扩散。</p>
+<p><strong>主要消息类型</strong></p>
+<table>
+<thead>
+<tr>
+<th>消息</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>meet</code></td>
+<td>邀请新节点加入集群</td>
+</tr>
+<tr>
+<td><code>ping</code></td>
+<td>发送自身状态、槽位信息并探测其他节点</td>
+</tr>
+<tr>
+<td><code>pong</code></td>
+<td>响应 <code>ping</code> 或 <code>meet</code>，返回自身信息</td>
+</tr>
+<tr>
+<td><code>fail</code></td>
+<td>通知集群某节点已经宕机</td>
+</tr>
+</tbody></table>
+<p>Gossip 的优点是去中心化，没有单独的元信息管理中心；缺点是信息需要多轮传播，因此只能保证<strong>最终一致性</strong>。</p>
+<hr>
+<h4 id="3-5-新节点加入"><a href="#3-5-新节点加入" class="headerlink" title="3.5 新节点加入"></a>3.5 新节点加入</h4><p>新节点加入集群时，可以向集群内任意节点发送 <code>CLUSTER MEET</code> 命令。</p>
+<p>简化流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">客户端通知节点 A：节点 B 要加入</span><br><span class="line">        ↓</span><br><span class="line">A 保存 B 的地址并发送 meet</span><br><span class="line">        ↓</span><br><span class="line">B 保存 A 的信息并返回 pong</span><br><span class="line">        ↓</span><br><span class="line">A、B 完成握手</span><br><span class="line">        ↓</span><br><span class="line">通过 Gossip 将 B 的信息传播到整个集群</span><br></pre></td></tr></table></figure>
+
+<p>因此，新节点只需要先认识集群中的一个节点，之后便可通过 Gossip 逐渐被整个集群发现。</p>
+<hr>
+<h4 id="3-6-节点故障检测与转移"><a href="#3-6-节点故障检测与转移" class="headerlink" title="3.6 节点故障检测与转移"></a>3.6 节点故障检测与转移</h4><p>Redis Cluster 区分两种下线状态。</p>
+<p><strong>主观下线</strong></p>
+<p>节点 A 向节点 B 发送 <code>ping</code>，但在指定时间内没有收到 <code>pong</code>，于是 A 主观认为 B 已下线。</p>
+<p>单个节点的判断可能受到局部网络异常影响，因此不能直接触发故障转移。</p>
+<p><strong>客观下线</strong></p>
+<p>如果集群中超过半数的节点都认为 B 主观下线，那么 B 被认定为客观下线。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">单节点判断失败 → 主观下线</span><br><span class="line">超过半数节点达成判断 → 客观下线</span><br></pre></td></tr></table></figure>
+
+<p><strong>故障转移</strong></p>
+<p>如果被客观判定下线的是 Master：</p>
+<ol>
+<li>集群广播 <code>fail</code> 消息；</li>
+<li>该 Master 的 Slave 停止复制；</li>
+<li>一个 Slave 接管原 Master 的槽位；</li>
+<li>Slave 提升为新 Master；</li>
+<li>新 Master 广播 <code>pong</code>，通知整个集群更新状态。</li>
+</ol>
+<hr>
+<h4 id="3-7-Redis-Cluster-的优势"><a href="#3-7-Redis-Cluster-的优势" class="headerlink" title="3.7 Redis Cluster 的优势"></a>3.7 Redis Cluster 的优势</h4><ul>
+<li><strong>去中心化</strong>：各节点地位对等；</li>
+<li><strong>数据分片清晰</strong>：通过槽位管理数据；</li>
+<li><strong>扩展性较强</strong>：可以增加节点并迁移槽位；</li>
+<li><strong>高可用</strong>：支持自动故障发现与主从切换；</li>
+<li><strong>人工干预少</strong>：集群可以自动恢复；</li>
+<li><strong>官方支持</strong>：对 Redis 命令的兼容和支持较全面。</li>
+</ul>
+<hr>
+<h4 id="3-8-Redis-Cluster-的局限：Gossip-风暴"><a href="#3-8-Redis-Cluster-的局限：Gossip-风暴" class="headerlink" title="3.8 Redis Cluster 的局限：Gossip 风暴"></a>3.8 Redis Cluster 的局限：Gossip 风暴</h4><p>Gossip 依赖节点间扩散式通信。</p>
+<p>当集群只有数百个节点时，一般可以正常运行；但如果扩展到成千上万个节点，节点之间的通信量会急剧增加，形成 <strong>Gossip 风暴</strong>。</p>
+<p>可能带来的问题：</p>
+<ul>
+<li>占用大量网络带宽；</li>
+<li>集群内部通信成本过高；</li>
+<li>元信息传播链路过大；</li>
+<li>集群规模继续扩大时受到限制。</li>
+</ul>
+<p>对于需要数千甚至上万个 Redis 节点的亿级用户系统，更推荐放弃完全去中心化的元信息传播方式，转向<strong>中心化 Proxy 架构</strong>。</p>
+<hr>
+<h3 id="4-中心化集群"><a href="#4-中心化集群" class="headerlink" title="4. 中心化集群"></a>4. 中心化集群</h3><p>中心化架构的核心思想是：</p>
+<blockquote>
+<p>使用中间代理统一维护数据路由和集群元信息，客户端不直接参与 Redis 分片寻址。</p>
+</blockquote>
+<p>基本结构：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Redis 客户端</span><br><span class="line">     ↓</span><br><span class="line">Proxy 集群</span><br><span class="line">     ↓ 路由</span><br><span class="line">多个 Redis 数据分片</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>避免大规模节点间的 Gossip 通信；</li>
+<li>客户端无须了解槽位和节点拓扑；</li>
+<li>可以代理到成千上万台 Redis 服务器；</li>
+<li>更适合超大规模 Redis 集群。</li>
+</ul>
+<hr>
+<h4 id="4-1-Twemproxy"><a href="#4-1-Twemproxy" class="headerlink" title="4.1 Twemproxy"></a>4.1 Twemproxy</h4><p>Twemproxy 是 Twitter 开源的 Redis 中间代理。</p>
+<p>访问流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">客户端 → Twemproxy → 根据路由规则选择 Redis 节点</span><br><span class="line">                    ← 汇总结果后返回客户端</span><br></pre></td></tr></table></figure>
+
+<p><strong>优势</strong></p>
+<ul>
+<li>客户端像连接普通 Redis 一样连接 Twemproxy，改造成本低；</li>
+<li>Twemproxy 与 Redis 保持长连接，减少 Redis 节点的连接数；</li>
+<li>数据路由由代理完成，客户端和 Redis 节点无须参与。</li>
+</ul>
+<p><strong>不足</strong></p>
+<ul>
+<li>缺少友好的管理后台；</li>
+<li>运维和监控不够方便；</li>
+<li>不支持 Redis 集群平滑扩缩容；</li>
+<li>增加节点时的数据迁移成本较高。</li>
+</ul>
+<p>Twemproxy 提供了中心化代理的基本思路，但不是完善的超大规模集群管理方案。</p>
+<hr>
+<h4 id="4-2-Codis-架构"><a href="#4-2-Codis-架构" class="headerlink" title="4.2 Codis 架构"></a>4.2 Codis 架构</h4><p>Codis 是借鉴 Twemproxy 思路发展出的中心化 Redis 集群方案。</p>
+<p>Codis 默认把数据划分为 <strong>1024 个槽位</strong>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">slot = CRC32(Key) mod N</span><br></pre></td></tr></table></figure>
+
+<p>其中 <code>N</code> 默认是 1024。</p>
+<p><strong>Codis 核心组件</strong></p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Codis Server</td>
+<td>二次开发的 Redis 服务器，负责数据读写并支持数据迁移</td>
+</tr>
+<tr>
+<td>Codis Proxy</td>
+<td>接收客户端请求并路由到正确的 Codis Server</td>
+</tr>
+<tr>
+<td>ZooKeeper</td>
+<td>保存槽位、分片、节点和 Proxy 等集群元信息</td>
+</tr>
+<tr>
+<td>Codis Dashboard</td>
+<td>执行扩缩容、槽位迁移和 Proxy 管理</td>
+</tr>
+<tr>
+<td>Codis Fe</td>
+<td>为 Dashboard 提供 Web 管理页面</td>
+</tr>
+</tbody></table>
+<p><strong>Redis Server Group</strong></p>
+<p>Codis 将一个数据分片称为 Redis Server Group：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">Redis Server Group</span><br><span class="line">  ├── Master</span><br><span class="line">  ├── Slave 1</span><br><span class="line">  └── Slave 2</span><br></pre></td></tr></table></figure>
+
+<p>每个 Group 通过主从复制保证分片高可用，新版本可为每个 Group 配置 Sentinel 完成自动主从切换。</p>
+<hr>
+<h4 id="4-3-Codis-数据访问流程"><a href="#4-3-Codis-数据访问流程" class="headerlink" title="4.3 Codis 数据访问流程"></a>4.3 Codis 数据访问流程</h4><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br></pre></td><td class="code"><pre><span class="line">客户端从 ZooKeeper 获取 Codis Proxy 地址</span><br><span class="line">        ↓</span><br><span class="line">选择一个 Proxy 建立连接</span><br><span class="line">        ↓</span><br><span class="line">向 Proxy 发送读写请求</span><br><span class="line">        ↓</span><br><span class="line">Proxy 根据 Key 计算槽位</span><br><span class="line">        ↓</span><br><span class="line">从集群元信息中找到对应 Redis Server Group</span><br><span class="line">        ↓</span><br><span class="line">将请求转发给相应 Redis 节点</span><br><span class="line">        ↓</span><br><span class="line">Redis 返回结果给 Proxy</span><br><span class="line">        ↓</span><br><span class="line">Proxy 将结果返回客户端</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li>Master 可以处理读写请求；</li>
+<li>Slave 可以承担读取请求；</li>
+<li>Proxy 负责屏蔽底层分片与节点变化。</li>
+</ul>
+<hr>
+<h4 id="4-4-Codis-平滑扩容与槽位迁移"><a href="#4-4-Codis-平滑扩容与槽位迁移" class="headerlink" title="4.4 Codis 平滑扩容与槽位迁移"></a>4.4 Codis 平滑扩容与槽位迁移</h4><p>Codis 以槽位为单位迁移数据。</p>
+<p>假设要把节点 A 的槽位 S 迁移到新节点 B：</p>
+<ol>
+<li>A 将槽位 S 的关联数据复制到 B；</li>
+<li>迁移过程中 A 继续提供服务；</li>
+<li>如果请求的数据不属于 S，A 正常处理；</li>
+<li>如果请求的数据属于正在迁移的 S，为确保数据已经位于 B，会先将该数据强制迁移到 B；</li>
+<li>数据迁移完成后，请求被转发到 B 处理。</li>
+</ol>
+<p>这种方式保证：</p>
+<ul>
+<li>扩容期间集群仍可提供服务；</li>
+<li>数据可以逐步迁移；</li>
+<li>避免一次性停机搬迁全部数据。</li>
+</ul>
+<hr>
+<h2 id="四、Redis-架构对比"><a href="#四、Redis-架构对比" class="headerlink" title="四、Redis 架构对比"></a>四、Redis 架构对比</h2><table>
+<thead>
+<tr>
+<th>架构</th>
+<th>解决的问题</th>
+<th>优点</th>
+<th>局限</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>主从模式</td>
+<td>数据副本</td>
+<td>简单，具备基础容灾能力</td>
+<td>Master 故障需人工切换，单主容量有限</td>
+</tr>
+<tr>
+<td>哨兵模式</td>
+<td>自动故障转移</td>
+<td>自动监控、选主和切换</td>
+<td>仍然只有一个 Master，不能解决分片和容量问题</td>
+</tr>
+<tr>
+<td>Redis Cluster</td>
+<td>分布式存储与自动恢复</td>
+<td>多主分片、去中心化、官方支持</td>
+<td>超大规模下可能产生 Gossip 风暴</td>
+</tr>
+<tr>
+<td>中心化 Proxy</td>
+<td>超大规模分片管理</td>
+<td>客户端简单，可代理大量 Redis 节点</td>
+<td>Proxy 和元信息系统的设计、运维更复杂</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="五、核心架构思想"><a href="#五、核心架构思想" class="headerlink" title="五、核心架构思想"></a>五、核心架构思想</h2><ol>
+<li><strong>Redis 的价值不只是快，还包括丰富数据结构、原子操作和分布式能力。</strong></li>
+<li><strong>主从复制采用全量复制加增量复制，是高可用的基础。</strong></li>
+<li><strong>哨兵模式解决的是单个 Master 故障后的自动选主和切换问题。</strong></li>
+<li><strong>哨兵不能解决单 Master 的容量和吞吐瓶颈，数据分片必须依靠集群模式。</strong></li>
+<li><strong>Redis Cluster 通过 16384 个哈希槽实现数据分片和路由。</strong></li>
+<li><strong>Gossip 让 Redis Cluster 去中心化，但只能保证元信息最终一致。</strong></li>
+<li><strong>主观下线不能直接代表节点故障，需要多数节点确认后才形成客观下线。</strong></li>
+<li><strong>Redis Cluster 适合一般规模的分布式 Redis，但节点过多时可能出现 Gossip 风暴。</strong></li>
+<li><strong>中心化 Proxy 架构牺牲部分去中心化特性，换取更强的超大规模扩展能力。</strong></li>
+<li><strong>Codis 通过 Proxy、ZooKeeper、槽位和 Server Group 实现集中路由、集群管理和平滑扩缩容。</strong></li>
+<li><strong>Redis 架构选型需要综合考虑数据量、请求量、节点规模、故障恢复和运维复杂度。</strong></li>
+</ol>
+<hr>
+<h2 id="六、一句话总结"><a href="#六、一句话总结" class="headerlink" title="六、一句话总结"></a>六、一句话总结</h2><p><strong>Redis 从主从复制、Sentinel 自动切主，演进到 Redis Cluster 多主分片，再到 Codis 等中心化 Proxy 架构，逐步解决数据副本、故障恢复、容量扩展和超大规模节点管理问题；中小规模集群可优先使用官方 Redis Cluster，而节点达到数千甚至上万时，中心化代理架构更有利于避免 Gossip 风暴并实现可控的平滑扩缩容。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    主从复制
+    
+</a>
+
+        
+        
+<a href="/tags/Redis/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Redis
+    
+</a>
+
+        
+        
+<a href="/tags/NoSQL/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    NoSQL
+    
+</a>
+
+        
+        
+<a href="/tags/Sentinel/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Sentinel
+    
+</a>
+
+        
+        
+<a href="/tags/Redis-Cluster/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Redis-Cluster
+    
+</a>
+
+        
+        
+<a href="/tags/Codis/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Codis
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/18/LSM%20Tree%E6%80%BB%E7%BB%93/" class="post-nav-link group text-left" title="LSM Tree 总结">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">LSM Tree 总结</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/16/MySQL%E6%80%BB%E7%BB%93/" class="post-nav-link group text-right" title="MySQL 总结">
+            <span class="post-nav-title">MySQL 总结</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>
