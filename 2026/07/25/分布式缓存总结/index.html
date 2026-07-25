@@ -1,0 +1,1220 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>分布式缓存 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。 一、核心主线 本节讲的是高并发读场景的第三种通用方案： 分布式缓存 。 本地缓存性能很高，但存在明显限制：..." />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, 高并发, Redis, 分布式缓存, 缓存穿透, 缓存雪崩, 缓存更新" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="分布式缓存 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。 一、核心主线 本节讲的是高并发读场景的第三种通用方案： 分布式缓存 。 本地缓存性能很高，但存在明显限制：..." />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-25T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-07-25T04:03:15.751Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="高并发" />
+    
+    <meta property="article:tag" content="Redis" />
+    
+    <meta property="article:tag" content="分布式缓存" />
+    
+    <meta property="article:tag" content="缓存穿透" />
+    
+    <meta property="article:tag" content="缓存雪崩" />
+    
+    <meta property="article:tag" content="缓存更新" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="分布式缓存 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。 一、核心主线 本节讲的是高并发读场景的第三种通用方案： 分布式缓存 。 本地缓存性能很高，但存在明显限制：..." />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"分布式缓存","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/index.html"},"description":"分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。 一、核心主线 本节讲的是高并发读场景的第三种通用方案： 分布式缓存 。 本地缓存性能很高，但存在明显限制：...","datePublished":"2026-07-25T14:27:35.000Z","dateModified":"2026-07-25T04:03:15.751Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 高并发, Redis, 分布式缓存, 缓存穿透, 缓存雪崩, 缓存更新"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            分布式缓存
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-25">2026/07/25</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E9%80%89%E5%9E%8B" data-target="二、分布式缓存选型">二、分布式缓存选型</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-Memcached-%E4%B8%8E-Redis" data-target="1-Memcached-与-Redis">1. Memcached 与 Redis</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-Redis-%E6%9B%B4%E6%B5%81%E8%A1%8C%E7%9A%84%E5%8E%9F%E5%9B%A0" data-target="2-Redis-更流行的原因">2. Redis 更流行的原因</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81Redis-%E7%BC%93%E5%AD%98%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F" data-target="三、Redis-缓存基本使用方式">三、Redis 缓存基本使用方式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%85%B8%E5%9E%8B%E8%AF%BB%E5%8F%96%E6%B5%81%E7%A8%8B" data-target="1-典型读取流程">1. 典型读取流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E8%AE%BE%E7%BD%AE%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4" data-target="2-为什么要设置过期时间">2. 为什么要设置过期时间</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F" data-target="四、缓存穿透">四、缓存穿透</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F" data-target="1-什么是缓存穿透">1. 什么是缓存穿透</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E7%BC%93%E5%AD%98%E7%A9%BA%E5%80%BC" data-target="2-缓存空值">2. 缓存空值</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8" data-target="3-布隆过滤器">3. 布隆过滤器</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E9%98%B2%E7%A9%BF%E9%80%8F%E6%B5%81%E7%A8%8B" data-target="4-布隆过滤器防穿透流程">4. 布隆过滤器防穿透流程</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9" data-target="五、缓存雪崩">五、缓存雪崩</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9" data-target="1-什么是缓存雪崩">1. 什么是缓存雪崩</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E8%AF%B1%E5%9B%A0%E4%B8%80%EF%BC%9A%E5%A4%A7%E9%87%8F%E6%95%B0%E6%8D%AE%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4%E7%9B%B8%E5%90%8C" data-target="2-诱因一：大量数据过期时间相同">2. 诱因一：大量数据过期时间相同</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E8%AF%B1%E5%9B%A0%E4%BA%8C%EF%BC%9ARedis-%E6%9C%8D%E5%8A%A1%E5%AE%95%E6%9C%BA" data-target="3-诱因二：Redis-服务宕机">3. 诱因二：Redis 服务宕机</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0%E9%97%AE%E9%A2%98" data-target="六、缓存更新问题">六、缓存更新问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0%E5%A4%8D%E6%9D%82" data-target="1-为什么缓存更新复杂">1. 为什么缓存更新复杂</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9A%E5%85%88%E4%BF%AE%E6%94%B9%E7%BC%93%E5%AD%98%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93" data-target="2-方案一：先修改缓存，再更新数据库">2. 方案一：先修改缓存，再更新数据库</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9A%E5%85%88%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%8C%E5%86%8D%E4%BF%AE%E6%94%B9%E7%BC%93%E5%AD%98" data-target="3-方案二：先更新数据库，再修改缓存">3. 方案二：先更新数据库，再修改缓存</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%9A%E5%85%88%E5%88%A0%E9%99%A4%E7%BC%93%E5%AD%98%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93" data-target="4-方案三：先删除缓存，再更新数据库">4. 方案三：先删除缓存，再更新数据库</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-%E6%96%B9%E6%A1%88%E5%9B%9B%EF%BC%9A%E5%85%88%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%8C%E5%86%8D%E5%88%A0%E9%99%A4%E7%BC%93%E5%AD%98" data-target="5-方案四：先更新数据库，再删除缓存">5. 方案四：先更新数据库，再删除缓存</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#6-%E5%88%A0%E9%99%A4%E7%BC%93%E5%AD%98%E5%A4%B1%E8%B4%A5%E6%80%8E%E4%B9%88%E5%8A%9E" data-target="6-删除缓存失败怎么办">6. 删除缓存失败怎么办</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%9B%9B%E7%A7%8D%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94" data-target="七、四种缓存更新方案对比">七、四种缓存更新方案对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="八、核心架构思想">八、核心架构思想</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E9%80%89%E5%9E%8B" data-target="二、分布式缓存选型">二、分布式缓存选型</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-Memcached-%E4%B8%8E-Redis" data-target="1-Memcached-与-Redis">1. Memcached 与 Redis</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-Redis-%E6%9B%B4%E6%B5%81%E8%A1%8C%E7%9A%84%E5%8E%9F%E5%9B%A0" data-target="2-Redis-更流行的原因">2. Redis 更流行的原因</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81Redis-%E7%BC%93%E5%AD%98%E5%9F%BA%E6%9C%AC%E4%BD%BF%E7%94%A8%E6%96%B9%E5%BC%8F" data-target="三、Redis-缓存基本使用方式">三、Redis 缓存基本使用方式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%85%B8%E5%9E%8B%E8%AF%BB%E5%8F%96%E6%B5%81%E7%A8%8B" data-target="1-典型读取流程">1. 典型读取流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E8%AE%BE%E7%BD%AE%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4" data-target="2-为什么要设置过期时间">2. 为什么要设置过期时间</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F" data-target="四、缓存穿透">四、缓存穿透</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F" data-target="1-什么是缓存穿透">1. 什么是缓存穿透</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E7%BC%93%E5%AD%98%E7%A9%BA%E5%80%BC" data-target="2-缓存空值">2. 缓存空值</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8" data-target="3-布隆过滤器">3. 布隆过滤器</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E5%B8%83%E9%9A%86%E8%BF%87%E6%BB%A4%E5%99%A8%E9%98%B2%E7%A9%BF%E9%80%8F%E6%B5%81%E7%A8%8B" data-target="4-布隆过滤器防穿透流程">4. 布隆过滤器防穿透流程</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9" data-target="五、缓存雪崩">五、缓存雪崩</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BB%80%E4%B9%88%E6%98%AF%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9" data-target="1-什么是缓存雪崩">1. 什么是缓存雪崩</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E8%AF%B1%E5%9B%A0%E4%B8%80%EF%BC%9A%E5%A4%A7%E9%87%8F%E6%95%B0%E6%8D%AE%E8%BF%87%E6%9C%9F%E6%97%B6%E9%97%B4%E7%9B%B8%E5%90%8C" data-target="2-诱因一：大量数据过期时间相同">2. 诱因一：大量数据过期时间相同</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E8%AF%B1%E5%9B%A0%E4%BA%8C%EF%BC%9ARedis-%E6%9C%8D%E5%8A%A1%E5%AE%95%E6%9C%BA" data-target="3-诱因二：Redis-服务宕机">3. 诱因二：Redis 服务宕机</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0%E9%97%AE%E9%A2%98" data-target="六、缓存更新问题">六、缓存更新问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0%E5%A4%8D%E6%9D%82" data-target="1-为什么缓存更新复杂">1. 为什么缓存更新复杂</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E6%96%B9%E6%A1%88%E4%B8%80%EF%BC%9A%E5%85%88%E4%BF%AE%E6%94%B9%E7%BC%93%E5%AD%98%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93" data-target="2-方案一：先修改缓存，再更新数据库">2. 方案一：先修改缓存，再更新数据库</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E6%96%B9%E6%A1%88%E4%BA%8C%EF%BC%9A%E5%85%88%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%8C%E5%86%8D%E4%BF%AE%E6%94%B9%E7%BC%93%E5%AD%98" data-target="3-方案二：先更新数据库，再修改缓存">3. 方案二：先更新数据库，再修改缓存</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#4-%E6%96%B9%E6%A1%88%E4%B8%89%EF%BC%9A%E5%85%88%E5%88%A0%E9%99%A4%E7%BC%93%E5%AD%98%EF%BC%8C%E5%86%8D%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93" data-target="4-方案三：先删除缓存，再更新数据库">4. 方案三：先删除缓存，再更新数据库</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#5-%E6%96%B9%E6%A1%88%E5%9B%9B%EF%BC%9A%E5%85%88%E6%9B%B4%E6%96%B0%E6%95%B0%E6%8D%AE%E5%BA%93%EF%BC%8C%E5%86%8D%E5%88%A0%E9%99%A4%E7%BC%93%E5%AD%98" data-target="5-方案四：先更新数据库，再删除缓存">5. 方案四：先更新数据库，再删除缓存</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#6-%E5%88%A0%E9%99%A4%E7%BC%93%E5%AD%98%E5%A4%B1%E8%B4%A5%E6%80%8E%E4%B9%88%E5%8A%9E" data-target="6-删除缓存失败怎么办">6. 删除缓存失败怎么办</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E5%9B%9B%E7%A7%8D%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94" data-target="七、四种缓存更新方案对比">七、四种缓存更新方案对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="八、核心架构思想">八、核心架构思想</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p><strong>分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。</strong></p>
+<!--  more -->
+
+<h2 id="一、核心主线"><a href="#一、核心主线" class="headerlink" title="一、核心主线"></a>一、核心主线</h2><p>本节讲的是高并发读场景的第三种通用方案：<strong>分布式缓存</strong>。</p>
+<p>本地缓存性能很高，但存在明显限制：</p>
+<ul>
+<li>多个服务进程之间无法共享；</li>
+<li>与编程语言和进程绑定；</li>
+<li>服务进程携带缓存数据后变成有状态服务，可扩展性变差；</li>
+<li>服务进程重启后，本地缓存全部丢失。</li>
+</ul>
+<p>因此，需要一种<strong>支持多进程共享、语言无关、可扩展、可持久化的缓存系统</strong>，这就是分布式缓存。</p>
+<p>典型链路：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">读请求</span><br><span class="line">  ↓</span><br><span class="line">查询 Redis 缓存</span><br><span class="line">  ├─ 命中：直接返回</span><br><span class="line">  └─ 未命中：查询数据库 → 写入 Redis → 返回</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、分布式缓存选型"><a href="#二、分布式缓存选型" class="headerlink" title="二、分布式缓存选型"></a>二、分布式缓存选型</h2><h3 id="1-Memcached-与-Redis"><a href="#1-Memcached-与-Redis" class="headerlink" title="1. Memcached 与 Redis"></a>1. Memcached 与 Redis</h3><p>主流分布式缓存包括：</p>
+<ul>
+<li>Memcached；</li>
+<li>Redis。</li>
+</ul>
+<p>二者都可以实现缓存数据共享，并且与编程语言无关。</p>
+<p>但在互联网应用中，Redis 更常见。</p>
+<h3 id="2-Redis-更流行的原因"><a href="#2-Redis-更流行的原因" class="headerlink" title="2. Redis 更流行的原因"></a>2. Redis 更流行的原因</h3><table>
+<thead>
+<tr>
+<th>能力</th>
+<th>Memcached</th>
+<th>Redis</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>数据类型</td>
+<td>主要支持字符串</td>
+<td>支持 String、List、Set、Hash、Sorted Set 等</td>
+</tr>
+<tr>
+<td>数据持久化</td>
+<td>不支持</td>
+<td>支持 RDB 和 AOF</td>
+</tr>
+<tr>
+<td>高可用</td>
+<td>能力较弱</td>
+<td>支持主从复制、主从切换</td>
+</tr>
+<tr>
+<td>分布式能力</td>
+<td>依赖客户端一致性哈希</td>
+<td>支持 Redis Cluster，也有 Codis、Twemproxy 等方案</td>
+</tr>
+</tbody></table>
+<p>Redis 的优势可以概括为：</p>
+<ul>
+<li>数据结构丰富；</li>
+<li>可持久化；</li>
+<li>高可用能力较强；</li>
+<li>可扩展能力较强。</li>
+</ul>
+<p>因此，Redis 通常是互联网应用分布式缓存的首选。</p>
+<hr>
+<h2 id="三、Redis-缓存基本使用方式"><a href="#三、Redis-缓存基本使用方式" class="headerlink" title="三、Redis 缓存基本使用方式"></a>三、Redis 缓存基本使用方式</h2><h3 id="1-典型读取流程"><a href="#1-典型读取流程" class="headerlink" title="1. 典型读取流程"></a>1. 典型读取流程</h3><p>使用 Redis 缓存时，常见逻辑如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">查询 Redis</span><br><span class="line">  ├─ 命中：返回缓存数据</span><br><span class="line">  └─ 未命中：</span><br><span class="line">       ↓</span><br><span class="line">     查询数据库</span><br><span class="line">       ↓</span><br><span class="line">     将数据写入 Redis，并设置过期时间</span><br><span class="line">       ↓</span><br><span class="line">     返回数据</span><br></pre></td></tr></table></figure>
+
+<p>这种模式可以让热点数据尽量停留在 Redis 中，减少数据库读请求压力。</p>
+<h3 id="2-为什么要设置过期时间"><a href="#2-为什么要设置过期时间" class="headerlink" title="2. 为什么要设置过期时间"></a>2. 为什么要设置过期时间</h3><p>缓存数据必须设置合适的过期时间。</p>
+<p>主要原因有两个。</p>
+<h4 id="2-1-避免无效数据长期占用内存"><a href="#2-1-避免无效数据长期占用内存" class="headerlink" title="2.1 避免无效数据长期占用内存"></a>2.1 避免无效数据长期占用内存</h4><p>如果缓存数据永不过期，访问频率极低甚至不再访问的数据会一直占用 Redis 内存。</p>
+<p>设置过期时间后：</p>
+<ul>
+<li>不再访问的数据会自动删除；</li>
+<li>经常访问的数据可以通过刷新过期时间继续保留；</li>
+<li>Redis 内存可以被更有效利用。</li>
+</ul>
+<h4 id="2-2-作为数据不一致的兜底机制"><a href="#2-2-作为数据不一致的兜底机制" class="headerlink" title="2.2 作为数据不一致的兜底机制"></a>2.2 作为数据不一致的兜底机制</h4><p>数据库和 Redis 之间可能因为故障、并发或更新失败产生短暂不一致。</p>
+<p>如果缓存过期时间是 10 秒，那么即使发生不一致，最多也只持续约 10 秒。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">缓存与数据库不一致</span><br><span class="line">       ↓</span><br><span class="line">等待缓存过期</span><br><span class="line">       ↓</span><br><span class="line">重新从数据库加载最新数据</span><br><span class="line">       ↓</span><br><span class="line">最终一致</span><br></pre></td></tr></table></figure>
+
+<p>过期时间可以帮助系统实现最终一致性兜底。</p>
+<hr>
+<h2 id="四、缓存穿透"><a href="#四、缓存穿透" class="headerlink" title="四、缓存穿透"></a>四、缓存穿透</h2><h3 id="1-什么是缓存穿透"><a href="#1-什么是缓存穿透" class="headerlink" title="1. 什么是缓存穿透"></a>1. 什么是缓存穿透</h3><p>缓存穿透指的是：请求访问的数据既不在 Redis 中，也不在数据库中。</p>
+<p>流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">请求非法数据</span><br><span class="line">  ↓</span><br><span class="line">Redis 未命中</span><br><span class="line">  ↓</span><br><span class="line">查询数据库</span><br><span class="line">  ↓</span><br><span class="line">数据库也不存在</span><br><span class="line">  ↓</span><br><span class="line">返回空</span><br></pre></td></tr></table></figure>
+
+<p>如果黑客持续请求不存在的数据，所有请求都会绕过缓存直接访问数据库，可能导致数据库被压垮。</p>
+<h3 id="2-缓存空值"><a href="#2-缓存空值" class="headerlink" title="2. 缓存空值"></a>2. 缓存空值</h3><p>一种解决方式是：当数据库中也找不到数据时，在 Redis 中缓存一个空值。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">数据库不存在</span><br><span class="line">  ↓</span><br><span class="line">Redis 缓存空值</span><br><span class="line">  ↓</span><br><span class="line">后续请求直接被 Redis 拦截</span><br></pre></td></tr></table></figure>
+
+<p>优点：</p>
+<ul>
+<li>实现简单；</li>
+<li>可以阻止对同一条非法数据的重复数据库访问。</li>
+</ul>
+<p>缺点：</p>
+<ul>
+<li>如果攻击者请求大量不同非法 Key，会在 Redis 中写入大量空值；</li>
+<li>无用空值可能挤掉正常缓存；</li>
+<li>缓存命中率下降；</li>
+<li>数据库仍然可能面临风险。</li>
+</ul>
+<h3 id="3-布隆过滤器"><a href="#3-布隆过滤器" class="headerlink" title="3. 布隆过滤器"></a>3. 布隆过滤器</h3><p>布隆过滤器适合解决大量非法 Key 导致的缓存穿透。</p>
+<p>它由两部分组成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">固定长度为 m 的二进制向量</span><br><span class="line">        +</span><br><span class="line">k 个哈希函数</span><br></pre></td></tr></table></figure>
+
+<h4 id="3-1-写入数据"><a href="#3-1-写入数据" class="headerlink" title="3.1 写入数据"></a>3.1 写入数据</h4><p>当某个数据加入布隆过滤器：</p>
+<ol>
+<li>使用 k 个哈希函数计算 k 个哈希值；</li>
+<li>每个哈希值对 m 取模；</li>
+<li>将二进制向量中对应的 k 个位置设置为 1。</li>
+</ol>
+<h4 id="3-2-查询数据"><a href="#3-2-查询数据" class="headerlink" title="3.2 查询数据"></a>3.2 查询数据</h4><p>查询某数据是否存在时：</p>
+<ol>
+<li>使用相同 k 个哈希函数计算位置；</li>
+<li>检查二进制向量对应位置。</li>
+</ol>
+<p>判断规则：</p>
+<table>
+<thead>
+<tr>
+<th>检查结果</th>
+<th>结论</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>任意位置为 0</td>
+<td>数据一定不存在</td>
+</tr>
+<tr>
+<td>所有位置为 1</td>
+<td>数据可能存在</td>
+</tr>
+</tbody></table>
+<p>布隆过滤器会有“误判存在”的可能，但不会把不存在的数据误判为一定不存在。</p>
+<h3 id="4-布隆过滤器防穿透流程"><a href="#4-布隆过滤器防穿透流程" class="headerlink" title="4. 布隆过滤器防穿透流程"></a>4. 布隆过滤器防穿透流程</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">请求数据</span><br><span class="line">  ↓</span><br><span class="line">查询 Redis</span><br><span class="line">  ├─ 命中：返回</span><br><span class="line">  └─ 未命中：</span><br><span class="line">       ↓</span><br><span class="line">     查询布隆过滤器</span><br><span class="line">       ├─ 一定不存在：直接返回空，不查数据库</span><br><span class="line">       └─ 可能存在：继续查数据库</span><br></pre></td></tr></table></figure>
+
+<p>如果数据库仍查不到，再在 Redis 中写入空值。</p>
+<p>这样可以大幅减少非法请求对数据库的访问。</p>
+<hr>
+<h2 id="五、缓存雪崩"><a href="#五、缓存雪崩" class="headerlink" title="五、缓存雪崩"></a>五、缓存雪崩</h2><h3 id="1-什么是缓存雪崩"><a href="#1-什么是缓存雪崩" class="headerlink" title="1. 什么是缓存雪崩"></a>1. 什么是缓存雪崩</h3><p>缓存雪崩指的是：大量缓存数据在同一时间失效，导致请求同时涌向数据库。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">大量缓存同时过期</span><br><span class="line">       ↓</span><br><span class="line">Redis 大面积未命中</span><br><span class="line">       ↓</span><br><span class="line">请求集中访问数据库</span><br><span class="line">       ↓</span><br><span class="line">数据库被压垮</span><br></pre></td></tr></table></figure>
+
+<p>缓存雪崩和缓存穿透的区别：</p>
+<table>
+<thead>
+<tr>
+<th>问题</th>
+<th>原因</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>缓存穿透</td>
+<td>请求的数据不存在，绕过缓存打到数据库</td>
+</tr>
+<tr>
+<td>缓存雪崩</td>
+<td>大量缓存同时失效，请求集中打到数据库</td>
+</tr>
+</tbody></table>
+<h3 id="2-诱因一：大量数据过期时间相同"><a href="#2-诱因一：大量数据过期时间相同" class="headerlink" title="2. 诱因一：大量数据过期时间相同"></a>2. 诱因一：大量数据过期时间相同</h3><p>如果大量缓存设置了相同过期时间，就可能在某一时刻同时失效。</p>
+<p>解决方案：</p>
+<blockquote>
+<p>设置过期时间时增加小范围随机值。</p>
+</blockquote>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">基础过期时间：10 分钟</span><br><span class="line">随机扰动：0～60 秒</span><br><span class="line">实际过期时间：10～11 分钟</span><br></pre></td></tr></table></figure>
+
+<p>这样可以让缓存过期时间分散，避免同一时刻大面积失效。</p>
+<h3 id="3-诱因二：Redis-服务宕机"><a href="#3-诱因二：Redis-服务宕机" class="headerlink" title="3. 诱因二：Redis 服务宕机"></a>3. 诱因二：Redis 服务宕机</h3><p>如果 Redis 整体不可用，所有读请求都会回源数据库。</p>
+<p>解决方案：</p>
+<ul>
+<li>使用高可用 Redis 集群架构；</li>
+<li>采用主从、哨兵或 Redis Cluster；</li>
+<li>降低 Redis 单点故障概率；</li>
+<li>必要时配合限流和降级保护数据库。</li>
+</ul>
+<hr>
+<h2 id="六、缓存更新问题"><a href="#六、缓存更新问题" class="headerlink" title="六、缓存更新问题"></a>六、缓存更新问题</h2><h3 id="1-为什么缓存更新复杂"><a href="#1-为什么缓存更新复杂" class="headerlink" title="1. 为什么缓存更新复杂"></a>1. 为什么缓存更新复杂</h3><p>当数据库中的数据发生变化时，缓存也需要随之变化。</p>
+<p>看似只有两步：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">更新数据库</span><br><span class="line">更新缓存</span><br></pre></td></tr></table></figure>
+
+<p>但实际会遇到很多问题：</p>
+<ul>
+<li>先更新数据库还是先更新缓存？</li>
+<li>修改缓存数据，还是直接删除缓存？</li>
+<li>并发读写是否会导致数据不一致？</li>
+<li>第一步成功、第二步失败时怎么办？</li>
+</ul>
+<p>本节分析了四种方案。</p>
+<hr>
+<h3 id="2-方案一：先修改缓存，再更新数据库"><a href="#2-方案一：先修改缓存，再更新数据库" class="headerlink" title="2. 方案一：先修改缓存，再更新数据库"></a>2. 方案一：先修改缓存，再更新数据库</h3><p>流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">修改缓存</span><br><span class="line">  ↓</span><br><span class="line">更新数据库</span><br></pre></td></tr></table></figure>
+
+<p>问题：</p>
+<ul>
+<li>并发写请求可能导致缓存和数据库顺序不一致；</li>
+<li>如果缓存修改成功但数据库更新失败，需要回滚缓存；</li>
+<li>Redis 不支持类似数据库事务的完整回滚能力。</li>
+</ul>
+<p>结论：<strong>不推荐。</strong></p>
+<hr>
+<h3 id="3-方案二：先更新数据库，再修改缓存"><a href="#3-方案二：先更新数据库，再修改缓存" class="headerlink" title="3. 方案二：先更新数据库，再修改缓存"></a>3. 方案二：先更新数据库，再修改缓存</h3><p>流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">更新数据库</span><br><span class="line">  ↓</span><br><span class="line">修改缓存为最新值</span><br></pre></td></tr></table></figure>
+
+<p>问题：</p>
+<p>并发写请求可能出现顺序错乱。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">请求 A：数据库写 b</span><br><span class="line">请求 B：数据库写 c</span><br><span class="line">请求 B：缓存写 c</span><br><span class="line">请求 A：缓存写 b</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">数据库 = c</span><br><span class="line">缓存 = b</span><br></pre></td></tr></table></figure>
+
+<p>缓存变成旧值。</p>
+<p>结论：<strong>不推荐。</strong></p>
+<hr>
+<h3 id="4-方案三：先删除缓存，再更新数据库"><a href="#4-方案三：先删除缓存，再更新数据库" class="headerlink" title="4. 方案三：先删除缓存，再更新数据库"></a>4. 方案三：先删除缓存，再更新数据库</h3><p>流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">删除缓存</span><br><span class="line">  ↓</span><br><span class="line">更新数据库</span><br></pre></td></tr></table></figure>
+
+<p>问题：</p>
+<p>并发读写可能导致旧数据重新写回缓存。</p>
+<p>典型过程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">写请求 A 删除缓存</span><br><span class="line">读请求 B 读缓存未命中</span><br><span class="line">读请求 B 查数据库，读到旧值 a</span><br><span class="line">读请求 B 将旧值 a 写入缓存</span><br><span class="line">写请求 A 更新数据库为 b</span><br></pre></td></tr></table></figure>
+
+<p>结果：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">数据库 = b</span><br><span class="line">缓存 = a</span><br></pre></td></tr></table></figure>
+
+<p>缓存仍然是旧数据。</p>
+<p>结论：<strong>存在风险，不推荐作为首选。</strong></p>
+<hr>
+<h3 id="5-方案四：先更新数据库，再删除缓存"><a href="#5-方案四：先更新数据库，再删除缓存" class="headerlink" title="5. 方案四：先更新数据库，再删除缓存"></a>5. 方案四：先更新数据库，再删除缓存</h3><p>流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">更新数据库</span><br><span class="line">  ↓</span><br><span class="line">删除缓存</span><br></pre></td></tr></table></figure>
+
+<p>这是本节推荐方案。</p>
+<h4 id="5-1-为什么推荐删除缓存，而不是修改缓存"><a href="#5-1-为什么推荐删除缓存，而不是修改缓存" class="headerlink" title="5.1 为什么推荐删除缓存，而不是修改缓存"></a>5.1 为什么推荐删除缓存，而不是修改缓存</h4><p>删除缓存后，下一次读请求会：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">缓存未命中</span><br><span class="line">  ↓</span><br><span class="line">读取数据库最新值</span><br><span class="line">  ↓</span><br><span class="line">重新写入缓存</span><br></pre></td></tr></table></figure>
+
+<p>这样可以避免并发写请求直接把旧值写入缓存。</p>
+<h4 id="5-2-并发场景下的优势"><a href="#5-2-并发场景下的优势" class="headerlink" title="5.2 并发场景下的优势"></a>5.2 并发场景下的优势</h4><p>无论并发写顺序如何，最后都会删除缓存。</p>
+<p>因此，后续读请求要么：</p>
+<ul>
+<li>读不到缓存，回源数据库拿最新值；</li>
+<li>或者由读请求重新写入最新数据。</li>
+</ul>
+<p>这样可以大概率保证缓存和数据库一致。</p>
+<h3 id="6-删除缓存失败怎么办"><a href="#6-删除缓存失败怎么办" class="headerlink" title="6. 删除缓存失败怎么办"></a>6. 删除缓存失败怎么办</h3><p>如果数据库更新成功，但删除缓存失败，可以进行重试。</p>
+<p>可选方案：</p>
+<ol>
+<li>写请求中启动异步线程重试删除；</li>
+<li>使用消息队列监听数据库变更并删除缓存；</li>
+<li>依赖缓存过期时间兜底。</li>
+</ol>
+<p>更推荐简单做法：</p>
+<blockquote>
+<p>删除缓存失败时执行一次异步重试；如果重试也失败，则依赖缓存过期时间兜底。</p>
+</blockquote>
+<p>原因是：</p>
+<ul>
+<li>删除失败概率很低；</li>
+<li>为缓存设置过期时间已经可以保证最终一致；</li>
+<li>没必要为低概率问题引入过重的系统复杂度。</li>
+</ul>
+<hr>
+<h2 id="七、四种缓存更新方案对比"><a href="#七、四种缓存更新方案对比" class="headerlink" title="七、四种缓存更新方案对比"></a>七、四种缓存更新方案对比</h2><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>流程</th>
+<th>主要问题</th>
+<th>是否推荐</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>先修改缓存，再更新数据库</td>
+<td>Cache → DB</td>
+<td>数据库失败时缓存回滚困难，并发写不一致</td>
+<td>不推荐</td>
+</tr>
+<tr>
+<td>先更新数据库，再修改缓存</td>
+<td>DB → Cache</td>
+<td>并发写可能导致旧值覆盖新值</td>
+<td>不推荐</td>
+</tr>
+<tr>
+<td>先删除缓存，再更新数据库</td>
+<td>Delete Cache → DB</td>
+<td>并发读可能把旧数据写回缓存</td>
+<td>不推荐首选</td>
+</tr>
+<tr>
+<td>先更新数据库，再删除缓存</td>
+<td>DB → Delete Cache</td>
+<td>删除失败需重试或过期兜底</td>
+<td>推荐</td>
+</tr>
+</tbody></table>
+<p>推荐方案：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">更新数据库成功</span><br><span class="line">        ↓</span><br><span class="line">删除缓存</span><br><span class="line">        ↓</span><br><span class="line">删除失败则异步重试一次</span><br><span class="line">        ↓</span><br><span class="line">仍失败则等待缓存过期兜底</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="八、核心架构思想"><a href="#八、核心架构思想" class="headerlink" title="八、核心架构思想"></a>八、核心架构思想</h2><ol>
+<li><strong>分布式缓存解决了本地缓存无法共享、语言绑定、状态化和重启丢失的问题。</strong></li>
+<li><strong>Redis 因为数据类型丰富、可持久化、高可用和分布式能力强，常作为分布式缓存首选。</strong></li>
+<li><strong>缓存读取流程通常是先查缓存，未命中再查数据库，并把结果写回缓存。</strong></li>
+<li><strong>缓存数据应设置过期时间，用于释放无效数据和兜底最终一致性。</strong></li>
+<li><strong>缓存穿透是非法请求绕过缓存直接打到数据库。</strong></li>
+<li><strong>缓存空值可以拦截同一非法 Key，但无法很好应对大量不同非法 Key。</strong></li>
+<li><strong>布隆过滤器适合在访问数据库前判断数据是否一定不存在。</strong></li>
+<li><strong>缓存雪崩是大量缓存同时失效或 Redis 宕机导致请求集中打到数据库。</strong></li>
+<li><strong>随机化过期时间可以避免大量缓存同一时刻过期。</strong></li>
+<li><strong>Redis 高可用架构可以降低缓存系统整体不可用的概率。</strong></li>
+<li><strong>缓存更新不能简单地同时修改数据库和缓存，必须考虑并发读写顺序。</strong></li>
+<li><strong>推荐策略是先更新数据库，再删除缓存。</strong></li>
+<li><strong>删除缓存失败时，可以异步重试，并用缓存过期时间兜底。</strong></li>
+<li><strong>分布式缓存设计的核心权衡是性能、可用性、一致性和复杂度。</strong></li>
+</ol>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高并发
+    
+</a>
+
+        
+        
+<a href="/tags/Redis/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Redis
+    
+</a>
+
+        
+        
+<a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    分布式缓存
+    
+</a>
+
+        
+        
+<a href="/tags/%E7%BC%93%E5%AD%98%E7%A9%BF%E9%80%8F/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    缓存穿透
+    
+</a>
+
+        
+        
+<a href="/tags/%E7%BC%93%E5%AD%98%E9%9B%AA%E5%B4%A9/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    缓存雪崩
+    
+</a>
+
+        
+        
+<a href="/tags/%E7%BC%93%E5%AD%98%E6%9B%B4%E6%96%B0/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    缓存更新
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/25/CQRS%E6%80%BB%E7%BB%93/" class="post-nav-link group text-left" title="CQRS">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">CQRS</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/24/%E6%9C%AC%E5%9C%B0%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/" class="post-nav-link group text-right" title="本地缓存">
+            <span class="post-nav-title">本地缓存</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>

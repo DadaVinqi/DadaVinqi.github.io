@@ -1,0 +1,1083 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>高并发架构设计要点 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="高并发并不只是“能扛很多请求”，而是系统在海量请求下仍然具备高性能、高可用性和可扩展性。 一、核心主线 本节主要回答三个问题： 二、形成高并发系统的三个必要条件 1. 高性能 高性能表示系统具备较强的并行处理能力。 它的价值体现在两个方面： 节约硬件资源 ：同样硬件条件下，性能越高，能处理的请求越多； 保障用户体验 ：响应时间越短，用户感知越流畅。 如果系统响应时间过长，即使最终没有报错，用户体验..." />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, 高并发, 高可用, 高性能, 可扩展性" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="高并发架构设计要点 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="高并发并不只是“能扛很多请求”，而是系统在海量请求下仍然具备高性能、高可用性和可扩展性。 一、核心主线 本节主要回答三个问题： 二、形成高并发系统的三个必要条件 1. 高性能 高性能表示系统具备较强的并行处理能力。 它的价值体现在两个方面： 节约硬件资源 ：同样硬件条件下，性能越高，能处理的请求越多； 保障用户体验 ：响应时间越短，用户感知越流畅。 如果系统响应时间过长，即使最终没有报错，用户体验..." />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/22/%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E8%A6%81%E7%82%B9/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-22T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-07-25T03:57:50.141Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="高并发" />
+    
+    <meta property="article:tag" content="高可用" />
+    
+    <meta property="article:tag" content="高性能" />
+    
+    <meta property="article:tag" content="可扩展性" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="高并发架构设计要点 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="高并发并不只是“能扛很多请求”，而是系统在海量请求下仍然具备高性能、高可用性和可扩展性。 一、核心主线 本节主要回答三个问题： 二、形成高并发系统的三个必要条件 1. 高性能 高性能表示系统具备较强的并行处理能力。 它的价值体现在两个方面： 节约硬件资源 ：同样硬件条件下，性能越高，能处理的请求越多； 保障用户体验 ：响应时间越短，用户感知越流畅。 如果系统响应时间过长，即使最终没有报错，用户体验..." />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/22/%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E8%A6%81%E7%82%B9/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"高并发架构设计要点","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/22/%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E8%A6%81%E7%82%B9/index.html"},"description":"高并发并不只是“能扛很多请求”，而是系统在海量请求下仍然具备高性能、高可用性和可扩展性。 一、核心主线 本节主要回答三个问题： 二、形成高并发系统的三个必要条件 1. 高性能 高性能表示系统具备较强的并行处理能力。 它的价值体现在两个方面： 节约硬件资源 ：同样硬件条件下，性能越高，能处理的请求越多； 保障用户体验 ：响应时间越短，用户感知越流畅。 如果系统响应时间过长，即使最终没有报错，用户体验...","datePublished":"2026-07-22T14:27:35.000Z","dateModified":"2026-07-25T03:57:50.141Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 高并发, 高可用, 高性能, 可扩展性"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            高并发架构设计要点
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-22">2026/07/22</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%BD%A2%E6%88%90%E9%AB%98%E5%B9%B6%E5%8F%91%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%B8%89%E4%B8%AA%E5%BF%85%E8%A6%81%E6%9D%A1%E4%BB%B6" data-target="二、形成高并发系统的三个必要条件">二、形成高并发系统的三个必要条件</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%AB%98%E6%80%A7%E8%83%BD" data-target="1-高性能">1. 高性能</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7" data-target="2-高可用性">2. 高可用性</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7" data-target="3-可扩展性">3. 可扩展性</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E9%AB%98%E5%B9%B6%E5%8F%91%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%A1%A1%E9%87%8F%E6%8C%87%E6%A0%87" data-target="三、高并发系统的衡量指标">三、高并发系统的衡量指标</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%AB%98%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87" data-target="1-高性能指标">1. 高性能指标</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7%E6%8C%87%E6%A0%87" data-target="2-高可用性指标">2. 高可用性指标</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7%E6%8C%87%E6%A0%87" data-target="3-可扩展性指标">3. 可扩展性指标</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%AB%98%E5%B9%B6%E5%8F%91%E5%9C%BA%E6%99%AF%E5%88%86%E7%B1%BB" data-target="四、高并发场景分类">四、高并发场景分类</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%AB%98%E5%B9%B6%E5%8F%91%E8%AF%BB" data-target="1-高并发读">1. 高并发读</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E9%AB%98%E5%B9%B6%E5%8F%91%E5%86%99" data-target="2-高并发写">2. 高并发写</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E8%AF%BB%E5%A4%9A%E5%86%99%E5%A4%9A" data-target="3-读多写多">3. 读多写多</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="五、核心架构思想">五、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="六、一句话总结">六、一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%BD%A2%E6%88%90%E9%AB%98%E5%B9%B6%E5%8F%91%E7%B3%BB%E7%BB%9F%E7%9A%84%E4%B8%89%E4%B8%AA%E5%BF%85%E8%A6%81%E6%9D%A1%E4%BB%B6" data-target="二、形成高并发系统的三个必要条件">二、形成高并发系统的三个必要条件</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%AB%98%E6%80%A7%E8%83%BD" data-target="1-高性能">1. 高性能</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7" data-target="2-高可用性">2. 高可用性</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7" data-target="3-可扩展性">3. 可扩展性</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E9%AB%98%E5%B9%B6%E5%8F%91%E7%B3%BB%E7%BB%9F%E7%9A%84%E8%A1%A1%E9%87%8F%E6%8C%87%E6%A0%87" data-target="三、高并发系统的衡量指标">三、高并发系统的衡量指标</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%AB%98%E6%80%A7%E8%83%BD%E6%8C%87%E6%A0%87" data-target="1-高性能指标">1. 高性能指标</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%80%A7%E6%8C%87%E6%A0%87" data-target="2-高可用性指标">2. 高可用性指标</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7%E6%8C%87%E6%A0%87" data-target="3-可扩展性指标">3. 可扩展性指标</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E9%AB%98%E5%B9%B6%E5%8F%91%E5%9C%BA%E6%99%AF%E5%88%86%E7%B1%BB" data-target="四、高并发场景分类">四、高并发场景分类</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%AB%98%E5%B9%B6%E5%8F%91%E8%AF%BB" data-target="1-高并发读">1. 高并发读</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E9%AB%98%E5%B9%B6%E5%8F%91%E5%86%99" data-target="2-高并发写">2. 高并发写</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E8%AF%BB%E5%A4%9A%E5%86%99%E5%A4%9A" data-target="3-读多写多">3. 读多写多</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="五、核心架构思想">五、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="六、一句话总结">六、一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>高并发并不只是“能扛很多请求”，而是系统在海量请求下仍然具备高性能、高可用性和可扩展性。</p>
+<!--  more -->
+
+<h2 id="一、核心主线"><a href="#一、核心主线" class="headerlink" title="一、核心主线"></a>一、核心主线</h2><p>本节主要回答三个问题：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">什么样的系统才算高并发系统？</span><br><span class="line">        ↓</span><br><span class="line">如何衡量高并发系统设计得好不好？</span><br><span class="line">        ↓</span><br><span class="line">高并发场景应该如何分类？</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、形成高并发系统的三个必要条件"><a href="#二、形成高并发系统的三个必要条件" class="headerlink" title="二、形成高并发系统的三个必要条件"></a>二、形成高并发系统的三个必要条件</h2><h3 id="1-高性能"><a href="#1-高性能" class="headerlink" title="1. 高性能"></a>1. 高性能</h3><p>高性能表示系统具备较强的并行处理能力。</p>
+<p>它的价值体现在两个方面：</p>
+<ul>
+<li><strong>节约硬件资源</strong>：同样硬件条件下，性能越高，能处理的请求越多；</li>
+<li><strong>保障用户体验</strong>：响应时间越短，用户感知越流畅。</li>
+</ul>
+<p>如果系统响应时间过长，即使最终没有报错，用户体验也会明显下降。</p>
+<h3 id="2-高可用性"><a href="#2-高可用性" class="headerlink" title="2. 高可用性"></a>2. 高可用性</h3><p>高可用性表示系统可以长期稳定、正常地对外提供服务。</p>
+<p>一个高并发系统不能只是“高峰时跑得快”，还要做到：</p>
+<ul>
+<li>不频繁故障；</li>
+<li>不经常宕机；</li>
+<li>不容易崩溃；</li>
+<li>出现问题后能快速恢复。</li>
+</ul>
+<p>高并发场景下，请求量大、影响用户多，因此系统故障的业务影响会被放大。</p>
+<h3 id="3-可扩展性"><a href="#3-可扩展性" class="headerlink" title="3. 可扩展性"></a>3. 可扩展性</h3><p>可扩展性表示系统可以通过水平扩容来应对请求量增长。</p>
+<p>当请求量持续增长或突发激增时，系统应该能通过增加机器、节点或实例来提升处理能力，而不是每次都要重新做架构改造。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">请求量增加</span><br><span class="line">   ↓</span><br><span class="line">增加服务节点</span><br><span class="line">   ↓</span><br><span class="line">系统吞吐能力随之提升</span><br></pre></td></tr></table></figure>
+
+<p>可扩展性是高并发系统应对未来增长的关键。</p>
+<hr>
+<h2 id="三、高并发系统的衡量指标"><a href="#三、高并发系统的衡量指标" class="headerlink" title="三、高并发系统的衡量指标"></a>三、高并发系统的衡量指标</h2><h3 id="1-高性能指标"><a href="#1-高性能指标" class="headerlink" title="1. 高性能指标"></a>1. 高性能指标</h3><h4 id="1-1-平均响应时间的问题"><a href="#1-1-平均响应时间的问题" class="headerlink" title="1.1 平均响应时间的问题"></a>1.1 平均响应时间的问题</h4><p>平均响应时间是一个容易想到的指标：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">平均响应时间 = 所有请求响应时间之和 / 请求数量</span><br></pre></td></tr></table></figure>
+
+<p>但平均值容易被极端值掩盖问题。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">9900 个请求响应时间：1 ms</span><br><span class="line">100 个请求响应时间：100 ms</span><br></pre></td></tr></table></figure>
+
+<p>平均响应时间只有约 1.99 ms，看起来很好，但实际上仍有一部分用户经历了明显更慢的响应。</p>
+<p>因此，平均响应时间不足以完整反映系统性能。</p>
+<h4 id="1-2-PCTn-分位值"><a href="#1-2-PCTn-分位值" class="headerlink" title="1.2 PCTn 分位值"></a>1.2 PCTn 分位值</h4><p>推荐使用 <strong>PCTn</strong> 衡量响应时间。</p>
+<p>PCTn 表示：</p>
+<blockquote>
+<p>将请求响应时间从小到大排序后，第 n 分位对应的响应时间。</p>
+</blockquote>
+<p>例如：</p>
+<table>
+<thead>
+<tr>
+<th>指标</th>
+<th>含义</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>PCT50 &#x3D; 1 ms</td>
+<td>50% 的请求响应时间在 1 ms 以内</td>
+</tr>
+<tr>
+<td>PCT99 &#x3D; 800 ms</td>
+<td>99% 的请求响应时间在 800 ms 以内</td>
+</tr>
+<tr>
+<td>PCT999 &#x3D; 1.2 s</td>
+<td>99.9% 的请求响应时间在 1.2 s 以内</td>
+</tr>
+</tbody></table>
+<p>分位值越高，越能反映长尾请求的性能问题。</p>
+<h4 id="1-3-推荐性能标准"><a href="#1-3-推荐性能标准" class="headerlink" title="1.3 推荐性能标准"></a>1.3 推荐性能标准</h4><p>给出的经验判断是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">平均响应时间 ≈ 200 ms</span><br><span class="line">且 PCT99 ≈ 1 s</span><br></pre></td></tr></table></figure>
+
+<p>这样的高并发系统基本可以满足高性能要求。</p>
+<p>原因是：</p>
+<ul>
+<li>响应时间在 200 ms 以内，用户通常不容易感受到延迟；</li>
+<li>响应时间超过 1 s，用户会明显感受到卡顿。</li>
+</ul>
+<hr>
+<h3 id="2-高可用性指标"><a href="#2-高可用性指标" class="headerlink" title="2. 高可用性指标"></a>2. 高可用性指标</h3><p>可用性表示系统正常运行时间占总运行时间的比例：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">可用性 = 系统正常运行时间 / 系统总运行时间</span><br></pre></td></tr></table></figure>
+
+<p>通常使用“几个 9”描述系统可用性。</p>
+<table>
+<thead>
+<tr>
+<th>可用性</th>
+<th align="right">一年内故障时间</th>
+<th align="right">一天内故障时间</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>90%（1 个 9）</td>
+<td align="right">36.5 天</td>
+<td align="right">2.4 小时</td>
+</tr>
+<tr>
+<td>99%（2 个 9）</td>
+<td align="right">3.65 天</td>
+<td align="right">14.4 分钟</td>
+</tr>
+<tr>
+<td>99.9%（3 个 9）</td>
+<td align="right">8 小时</td>
+<td align="right">1.44 分钟</td>
+</tr>
+<tr>
+<td>99.99%（4 个 9）</td>
+<td align="right">52 分钟</td>
+<td align="right">8.6 秒</td>
+</tr>
+<tr>
+<td>99.999%（5 个 9）</td>
+<td align="right">5 分钟</td>
+<td align="right">0.86 秒</td>
+</tr>
+</tbody></table>
+<p>高可用系统通常至少要求：</p>
+<ul>
+<li>3 个 9；</li>
+<li>或 4 个 9。</li>
+</ul>
+<p>很多公司会使用 <strong>99.95%</strong> 作为可用性监控阈值。</p>
+<p>当系统可用性低于阈值时，应及时告警，并推动：</p>
+<ul>
+<li>故障恢复；</li>
+<li>容量扩容；</li>
+<li>故障原因分析；</li>
+<li>系统架构改造。</li>
+</ul>
+<hr>
+<h3 id="3-可扩展性指标"><a href="#3-可扩展性指标" class="headerlink" title="3. 可扩展性指标"></a>3. 可扩展性指标</h3><p>可扩展性衡量的是：增加节点后，系统吞吐能力能提升多少。</p>
+<p>公式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">可扩展性 = 吞吐量提升比例 / 集群节点增加比例</span><br></pre></td></tr></table></figure>
+
+<p>理想情况是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">节点增加 N 倍</span><br><span class="line">   ↓</span><br><span class="line">吞吐量也增加 N 倍</span><br></pre></td></tr></table></figure>
+
+<p>但现实系统中，扩容通常会受到共享资源、网络、存储、锁竞争、调度开销等因素影响，很难做到 100% 线性增长。</p>
+<p>经验标准是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">70%～80% 的可扩展性</span><br></pre></td></tr></table></figure>
+
+<p>基本可以满足可扩展性要求。</p>
+<hr>
+<h2 id="四、高并发场景分类"><a href="#四、高并发场景分类" class="headerlink" title="四、高并发场景分类"></a>四、高并发场景分类</h2><p>计算机系统中的业务功能最终都会落到数据操作上，而数据操作主要分为两类：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">读</span><br><span class="line">写</span><br></pre></td></tr></table></figure>
+
+<p>因此，高并发场景也可以分为：</p>
+<h3 id="1-高并发读"><a href="#1-高并发读" class="headerlink" title="1. 高并发读"></a>1. 高并发读</h3><p>读请求远多于写请求。</p>
+<p>典型场景：</p>
+<ul>
+<li>刷帖子；</li>
+<li>浏览商品；</li>
+<li>浏览 Feed；</li>
+<li>查看文章；</li>
+<li>搜索内容。</li>
+</ul>
+<p>这类场景的重点是提升数据读取能力。</p>
+<p>后续常见方案包括：</p>
+<ul>
+<li>数据库读写分离；</li>
+<li>本地缓存；</li>
+<li>分布式缓存；</li>
+<li>CQRS。</li>
+</ul>
+<h3 id="2-高并发写"><a href="#2-高并发写" class="headerlink" title="2. 高并发写"></a>2. 高并发写</h3><p>写请求压力较大。</p>
+<p>典型场景：</p>
+<ul>
+<li>发帖；</li>
+<li>点赞；</li>
+<li>评论；</li>
+<li>下单；</li>
+<li>计数更新；</li>
+<li>IM 消息写入。</li>
+</ul>
+<p>这类场景的重点是提升写入吞吐能力，并控制写入热点。</p>
+<p>后续常见方案包括：</p>
+<ul>
+<li>数据分片；</li>
+<li>分库分表；</li>
+<li>异步写；</li>
+<li>写聚合。</li>
+</ul>
+<h3 id="3-读多写多"><a href="#3-读多写多" class="headerlink" title="3. 读多写多"></a>3. 读多写多</h3><p>部分业务同时存在大量读请求和大量写请求。</p>
+<p>这类系统需要同时解决：</p>
+<ul>
+<li>读扩展；</li>
+<li>写扩展；</li>
+<li>数据一致性；</li>
+<li>缓存更新；</li>
+<li>存储扩容；</li>
+<li>热点数据处理。</li>
+</ul>
+<hr>
+<h2 id="五、核心架构思想"><a href="#五、核心架构思想" class="headerlink" title="五、核心架构思想"></a>五、核心架构思想</h2><ol>
+<li><strong>高并发不是单纯的高请求量，而是高请求量下仍能保持高性能、高可用和可扩展。</strong></li>
+<li><strong>高性能关注响应时间，尤其要关注 PCT99、PCT999 等长尾延迟。</strong></li>
+<li><strong>平均响应时间容易掩盖极端慢请求，不适合作为唯一性能指标。</strong></li>
+<li><strong>高可用关注系统长期稳定运行的概率，通常用几个 9 衡量。</strong></li>
+<li><strong>高并发系统至少应追求 3 个 9 或 4 个 9 的可用性。</strong></li>
+<li><strong>可扩展性关注水平扩容后吞吐量是否能同步提升。</strong></li>
+<li><strong>理想扩展是线性扩展，现实中达到 70%～80% 已基本可接受。</strong></li>
+<li><strong>高并发问题应先按读、写场景分类，再选择对应架构方案。</strong></li>
+<li><strong>读多写少、写多读少、读多写多对应的架构重点不同。</strong></li>
+<li><strong>高并发架构设计的本质是围绕性能、可用性、扩展性做系统性权衡。</strong></li>
+</ol>
+<hr>
+<h2 id="六、一句话总结"><a href="#六、一句话总结" class="headerlink" title="六、一句话总结"></a>六、一句话总结</h2><p><strong>高并发系统不仅要能处理海量请求，还必须同时具备高性能、高可用性和可扩展性；性能应关注 PCT 分位响应时间，可用性用几个 9 衡量，可扩展性用吞吐提升比例与节点增加比例衡量，而具体高并发方案应先按高并发读和高并发写场景进行分类。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高并发
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高可用
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E6%80%A7%E8%83%BD/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高性能
+    
+</a>
+
+        
+        
+<a href="/tags/%E5%8F%AF%E6%89%A9%E5%B1%95%E6%80%A7/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    可扩展性
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/23/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/" class="post-nav-link group text-left" title="数据库读写分离">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">数据库读写分离</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/19/%E6%B6%88%E6%81%AF%E4%B8%AD%E9%97%B4%E4%BB%B6%E6%8A%80%E6%9C%AF/" class="post-nav-link group text-right" title="消息中间件技术">
+            <span class="post-nav-title">消息中间件技术</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>
