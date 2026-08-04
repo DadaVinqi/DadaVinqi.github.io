@@ -1,0 +1,1092 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>接入层的技术演进 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="本次要讲的是： 用户请求进入机房后，如何从“业务服务器裸奔”逐步演进为高可用、高性能、可扩展的接入层架构 。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, 接入层, 负载均衡, Nginx, LVS" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="接入层的技术演进 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="本次要讲的是： 用户请求进入机房后，如何从“业务服务器裸奔”逐步演进为高可用、高性能、可扩展的接入层架构 。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/12/%E6%8E%A5%E5%85%A5%E5%B1%82%E7%9A%84%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-12T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-08-01T15:37:04.123Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="接入层" />
+    
+    <meta property="article:tag" content="负载均衡" />
+    
+    <meta property="article:tag" content="Nginx" />
+    
+    <meta property="article:tag" content="LVS" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="接入层的技术演进 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="本次要讲的是： 用户请求进入机房后，如何从“业务服务器裸奔”逐步演进为高可用、高性能、可扩展的接入层架构 。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/12/%E6%8E%A5%E5%85%A5%E5%B1%82%E7%9A%84%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"接入层的技术演进","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/12/%E6%8E%A5%E5%85%A5%E5%B1%82%E7%9A%84%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/index.html"},"description":"本次要讲的是： 用户请求进入机房后，如何从“业务服务器裸奔”逐步演进为高可用、高性能、可扩展的接入层架构 。","datePublished":"2026-07-12T14:27:35.000Z","dateModified":"2026-08-01T15:37:04.123Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 接入层, 负载均衡, Nginx, LVS"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            接入层的技术演进
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-12">2026/07/12</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="核心主线">核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E8%AE%A9%E4%B8%9A%E5%8A%A1%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9B%B4%E6%8E%A5%E6%9A%B4%E9%9C%B2%E5%85%AC%E7%BD%91" data-target="1-为什么不能让业务服务器直接暴露公网">1. 为什么不能让业务服务器直接暴露公网</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-Nginx%EF%BC%9A%E4%B8%83%E5%B1%82%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1" data-target="2-Nginx：七层反向代理与负载均衡">2. Nginx：七层反向代理与负载均衡</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Nginx-%E7%9A%84%E8%A7%92%E8%89%B2" data-target="Nginx-的角色">Nginx 的角色</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E6%AD%A3%E5%90%91%E4%BB%A3%E7%90%86-vs-%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86" data-target="正向代理-vs-反向代理">正向代理 vs 反向代理</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Nginx-%E7%9A%84%E5%85%B3%E9%94%AE%E9%85%8D%E7%BD%AE%E6%A6%82%E5%BF%B5" data-target="Nginx-的关键配置概念">Nginx 的关键配置概念</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5" data-target="常见负载均衡策略">常见负载均衡策略</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Nginx-%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%94%B6%E7%9B%8A" data-target="Nginx-带来的收益">Nginx 带来的收益</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-LVS%EF%BC%9A%E5%9B%9B%E5%B1%82%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%EF%BC%8C%E7%94%A8%E6%9D%A5%E6%89%A9%E5%B1%95-Nginx-%E9%9B%86%E7%BE%A4" data-target="3-LVS：四层负载均衡，用来扩展-Nginx-集群">3. LVS：四层负载均衡，用来扩展 Nginx 集群</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E9%9C%80%E8%A6%81-LVS" data-target="为什么还需要-LVS">为什么还需要 LVS</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E4%B8%8E-Nginx-%E7%9A%84%E5%8C%BA%E5%88%AB" data-target="LVS-与-Nginx-的区别">LVS 与 Nginx 的区别</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E5%B8%B8%E7%94%A8%E6%A6%82%E5%BF%B5" data-target="LVS-常用概念">LVS 常用概念</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-LVS-%E7%9A%84-4-%E7%A7%8D%E8%BD%AC%E5%8F%91%E6%A8%A1%E5%BC%8F" data-target="4-LVS-的-4-种转发模式">4. LVS 的 4 种转发模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#NAT-%E6%A8%A1%E5%BC%8F" data-target="NAT-模式">NAT 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#FULLNAT-%E6%A8%A1%E5%BC%8F" data-target="FULLNAT-模式">FULLNAT 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#TUN-%E6%A8%A1%E5%BC%8F" data-target="TUN-模式">TUN 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#DR-%E6%A8%A1%E5%BC%8F" data-target="DR-模式">DR 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E6%A8%A1%E5%BC%8F%E9%80%89%E6%8B%A9" data-target="模式选择">模式选择</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-LVS-Nginx-%E7%9A%84%E6%9C%80%E7%BB%88%E6%8E%A5%E5%85%A5%E5%B1%82%E6%9E%B6%E6%9E%84" data-target="5-LVS-Nginx-的最终接入层架构">5. LVS + Nginx 的最终接入层架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E7%BB%84%E5%90%88" data-target="基础组合">基础组合</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E5%8D%95%E7%82%B9%E9%97%AE%E9%A2%98" data-target="LVS-单点问题">LVS 单点问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E6%B0%B4%E5%B9%B3%E6%89%A9%E5%B1%95" data-target="LVS-水平扩展">LVS 水平扩展</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E6%9C%AC%E8%8A%82%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="6-本节最重要的架构思想">6. 本节最重要的架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="一句话总结">一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="核心主线">核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E8%AE%A9%E4%B8%9A%E5%8A%A1%E6%9C%8D%E5%8A%A1%E5%99%A8%E7%9B%B4%E6%8E%A5%E6%9A%B4%E9%9C%B2%E5%85%AC%E7%BD%91" data-target="1-为什么不能让业务服务器直接暴露公网">1. 为什么不能让业务服务器直接暴露公网</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-Nginx%EF%BC%9A%E4%B8%83%E5%B1%82%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86%E4%B8%8E%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1" data-target="2-Nginx：七层反向代理与负载均衡">2. Nginx：七层反向代理与负载均衡</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Nginx-%E7%9A%84%E8%A7%92%E8%89%B2" data-target="Nginx-的角色">Nginx 的角色</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E6%AD%A3%E5%90%91%E4%BB%A3%E7%90%86-vs-%E5%8F%8D%E5%90%91%E4%BB%A3%E7%90%86" data-target="正向代理-vs-反向代理">正向代理 vs 反向代理</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Nginx-%E7%9A%84%E5%85%B3%E9%94%AE%E9%85%8D%E7%BD%AE%E6%A6%82%E5%BF%B5" data-target="Nginx-的关键配置概念">Nginx 的关键配置概念</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%B8%B8%E8%A7%81%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%E7%AD%96%E7%95%A5" data-target="常见负载均衡策略">常见负载均衡策略</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#Nginx-%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%94%B6%E7%9B%8A" data-target="Nginx-带来的收益">Nginx 带来的收益</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-LVS%EF%BC%9A%E5%9B%9B%E5%B1%82%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1%EF%BC%8C%E7%94%A8%E6%9D%A5%E6%89%A9%E5%B1%95-Nginx-%E9%9B%86%E7%BE%A4" data-target="3-LVS：四层负载均衡，用来扩展-Nginx-集群">3. LVS：四层负载均衡，用来扩展 Nginx 集群</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E9%9C%80%E8%A6%81-LVS" data-target="为什么还需要-LVS">为什么还需要 LVS</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E4%B8%8E-Nginx-%E7%9A%84%E5%8C%BA%E5%88%AB" data-target="LVS-与-Nginx-的区别">LVS 与 Nginx 的区别</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E5%B8%B8%E7%94%A8%E6%A6%82%E5%BF%B5" data-target="LVS-常用概念">LVS 常用概念</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-LVS-%E7%9A%84-4-%E7%A7%8D%E8%BD%AC%E5%8F%91%E6%A8%A1%E5%BC%8F" data-target="4-LVS-的-4-种转发模式">4. LVS 的 4 种转发模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#NAT-%E6%A8%A1%E5%BC%8F" data-target="NAT-模式">NAT 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#FULLNAT-%E6%A8%A1%E5%BC%8F" data-target="FULLNAT-模式">FULLNAT 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#TUN-%E6%A8%A1%E5%BC%8F" data-target="TUN-模式">TUN 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#DR-%E6%A8%A1%E5%BC%8F" data-target="DR-模式">DR 模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E6%A8%A1%E5%BC%8F%E9%80%89%E6%8B%A9" data-target="模式选择">模式选择</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-LVS-Nginx-%E7%9A%84%E6%9C%80%E7%BB%88%E6%8E%A5%E5%85%A5%E5%B1%82%E6%9E%B6%E6%9E%84" data-target="5-LVS-Nginx-的最终接入层架构">5. LVS + Nginx 的最终接入层架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%9F%BA%E7%A1%80%E7%BB%84%E5%90%88" data-target="基础组合">基础组合</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E5%8D%95%E7%82%B9%E9%97%AE%E9%A2%98" data-target="LVS-单点问题">LVS 单点问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#LVS-%E6%B0%B4%E5%B9%B3%E6%89%A9%E5%B1%95" data-target="LVS-水平扩展">LVS 水平扩展</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E6%9C%AC%E8%8A%82%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="6-本节最重要的架构思想">6. 本节最重要的架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="一句话总结">一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>本次要讲的是：<strong>用户请求进入机房后，如何从“业务服务器裸奔”逐步演进为高可用、高性能、可扩展的接入层架构</strong>。</p>
+<span id="more"></span>
+
+<h2 id="核心主线"><a href="#核心主线" class="headerlink" title="核心主线"></a>核心主线</h2><p>演进路径可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">业务服务器直接暴露公网 IP</span><br><span class="line">        ↓</span><br><span class="line">引入 Nginx 做七层反向代理与负载均衡</span><br><span class="line">        ↓</span><br><span class="line">引入 LVS 做四层负载均衡，扩展 Nginx 集群</span><br><span class="line">        ↓</span><br><span class="line">Keepalived + VIP 解决 LVS 单点</span><br><span class="line">        ↓</span><br><span class="line">DNS 轮询 + 多组 LVS，实现接入层水平扩展</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="1-为什么不能让业务服务器直接暴露公网"><a href="#1-为什么不能让业务服务器直接暴露公网" class="headerlink" title="1. 为什么不能让业务服务器直接暴露公网"></a>1. 为什么不能让业务服务器直接暴露公网</h2><p>早期简单架构中，HTTP 业务服务器直接绑定公网 IP，DNS 直接把域名解析到业务服务器。</p>
+<p>这种方式虽然简单，但不适合工业级互联网架构，主要问题有：</p>
+<ul>
+<li><strong>可用性低</strong>：业务实例宕机后，DNS 很难及时感知并摘除故障 IP，用户请求可能继续打到不可用机器。</li>
+<li><strong>可扩展性差</strong>：业务扩容需要修改 DNS，而 DNS 生效受缓存和 TTL 影响，不适合快速扩缩容。</li>
+<li><strong>安全风险高</strong>：所有业务服务器 IP 暴露在公网，攻击面大，内部服务缺乏保护。</li>
+</ul>
+<p>解决思路是：<strong>在客户端和业务服务之间增加接入层中间件</strong>，由它统一承接外部流量、转发请求、屏蔽内部服务。</p>
+<hr>
+<h2 id="2-Nginx：七层反向代理与负载均衡"><a href="#2-Nginx：七层反向代理与负载均衡" class="headerlink" title="2. Nginx：七层反向代理与负载均衡"></a>2. Nginx：七层反向代理与负载均衡</h2><h3 id="Nginx-的角色"><a href="#Nginx-的角色" class="headerlink" title="Nginx 的角色"></a>Nginx 的角色</h3><p>Nginx 可以作为：</p>
+<ul>
+<li>HTTP 服务器；</li>
+<li>反向代理服务器；</li>
+<li>七层负载均衡器。</li>
+</ul>
+<p>在接入层中，它更重要的角色是：<strong>对外承接 HTTP 请求，对内根据域名、URL 路径等应用层信息，把请求转发给不同业务服务实例</strong>。</p>
+<h3 id="正向代理-vs-反向代理"><a href="#正向代理-vs-反向代理" class="headerlink" title="正向代理 vs 反向代理"></a>正向代理 vs 反向代理</h3><ul>
+<li><strong>正向代理</strong>：代理客户端访问外部网络，例如 VPN。</li>
+<li><strong>反向代理</strong>：代理服务端接收客户端请求，客户端并不知道真实后端服务器是谁。</li>
+</ul>
+<p>接入层使用的是反向代理。</p>
+<h3 id="Nginx-的关键配置概念"><a href="#Nginx-的关键配置概念" class="headerlink" title="Nginx 的关键配置概念"></a>Nginx 的关键配置概念</h3><ul>
+<li><code>server</code>：定义一个对外的 HTTP 服务，例如监听端口、匹配域名。</li>
+<li><code>location</code>：根据 URL 路径定义转发规则，例如 <code>/feed</code>、<code>/like</code>、<code>/comment</code>。</li>
+<li><code>upstream</code>：定义后端服务池，包含多个业务服务实例地址。</li>
+<li><code>proxy_pass</code>：指定某类请求要转发到哪个后端服务池。</li>
+</ul>
+<h3 id="常见负载均衡策略"><a href="#常见负载均衡策略" class="headerlink" title="常见负载均衡策略"></a>常见负载均衡策略</h3><table>
+<thead>
+<tr>
+<th>策略</th>
+<th>说明</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>轮询</td>
+<td>默认策略，按顺序分发请求</td>
+<td>后端实例能力相近</td>
+</tr>
+<tr>
+<td>加权轮询</td>
+<td>按权重分配流量</td>
+<td>后端机器配置不同</td>
+</tr>
+<tr>
+<td><code>ip_hash</code></td>
+<td>同一客户端 IP 尽量落到同一实例</td>
+<td>需要会话粘滞，但负载可能不均</td>
+</tr>
+<tr>
+<td><code>least_conn</code></td>
+<td>转发给连接数最少的实例</td>
+<td>请求耗时差异较大</td>
+</tr>
+<tr>
+<td><code>url_hash</code></td>
+<td>按 URL 哈希分发</td>
+<td>提高缓存命中率</td>
+</tr>
+<tr>
+<td><code>fair</code></td>
+<td>综合响应时间、失败数、请求量选择较空闲实例</td>
+<td>更精细的动态负载均衡</td>
+</tr>
+</tbody></table>
+<h3 id="Nginx-带来的收益"><a href="#Nginx-带来的收益" class="headerlink" title="Nginx 带来的收益"></a>Nginx 带来的收益</h3><ul>
+<li>DNS 只需指向 Nginx，业务服务器地址变化不影响 DNS。</li>
+<li>业务服务只走内网，不再直接暴露公网 IP。</li>
+<li>Nginx 统一做流量调度，提升业务服务的可用性和可扩展性。</li>
+<li>某个业务实例故障时，请求可以转移到其他实例。</li>
+<li>结合服务注册中心、Lua 脚本、<code>ngx_http_dyups_module</code>，Nginx 可以热更新 <code>upstream</code>，准实时感知服务扩缩容。</li>
+</ul>
+<hr>
+<h2 id="3-LVS：四层负载均衡，用来扩展-Nginx-集群"><a href="#3-LVS：四层负载均衡，用来扩展-Nginx-集群" class="headerlink" title="3. LVS：四层负载均衡，用来扩展 Nginx 集群"></a>3. LVS：四层负载均衡，用来扩展 Nginx 集群</h2><h3 id="为什么还需要-LVS"><a href="#为什么还需要-LVS" class="headerlink" title="为什么还需要 LVS"></a>为什么还需要 LVS</h3><p>Nginx 性能高于业务服务器，但它仍是应用层软件，单台 Nginx 也有性能上限。</p>
+<p>当流量继续增长时，需要多个 Nginx 组成集群，此时又需要一个更高性能的上层调度器来分发流量，这就是 <strong>LVS</strong>。</p>
+<h3 id="LVS-与-Nginx-的区别"><a href="#LVS-与-Nginx-的区别" class="headerlink" title="LVS 与 Nginx 的区别"></a>LVS 与 Nginx 的区别</h3><table>
+<thead>
+<tr>
+<th>对比项</th>
+<th>Nginx</th>
+<th>LVS</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>所在层次</td>
+<td>OSI 第七层，应用层</td>
+<td>OSI 第四层，网络层&#x2F;传输层附近</td>
+</tr>
+<tr>
+<td>核心动作</td>
+<td>代理</td>
+<td>转发</td>
+</tr>
+<tr>
+<td>处理方式</td>
+<td>与客户端、后端分别建立连接</td>
+<td>修改数据包地址或链路层信息后转发</td>
+</tr>
+<tr>
+<td>功能能力</td>
+<td>能按域名、URL、Header 等做路由</td>
+<td>更偏底层转发，不理解 HTTP 语义</td>
+</tr>
+<tr>
+<td>性能</td>
+<td>高</td>
+<td>更高</td>
+</tr>
+<tr>
+<td>典型用途</td>
+<td>业务 HTTP 服务的七层负载均衡</td>
+<td>Nginx 集群的四层负载均衡</td>
+</tr>
+</tbody></table>
+<p>一句话：<strong>LVS 负责高性能入口转发，Nginx 负责灵活的应用层路由。</strong></p>
+<h3 id="LVS-常用概念"><a href="#LVS-常用概念" class="headerlink" title="LVS 常用概念"></a>LVS 常用概念</h3><ul>
+<li><strong>DS &#x2F; Director Server</strong>：运行 LVS 的负载均衡节点。</li>
+<li><strong>RS &#x2F; Real Server</strong>：真实处理请求的后端服务器，这里通常是 Nginx。</li>
+<li><strong>VIP</strong>：对外提供服务的虚拟 IP，也是客户端访问目标。</li>
+<li><strong>DIP</strong>：DS 与 RS 通信使用的内网 IP。</li>
+<li><strong>RIP</strong>：RS 的真实 IP。</li>
+<li><strong>CIP</strong>：客户端 IP。</li>
+</ul>
+<hr>
+<h2 id="4-LVS-的-4-种转发模式"><a href="#4-LVS-的-4-种转发模式" class="headerlink" title="4. LVS 的 4 种转发模式"></a>4. LVS 的 4 种转发模式</h2><h3 id="NAT-模式"><a href="#NAT-模式" class="headerlink" title="NAT 模式"></a>NAT 模式</h3><p>DS 修改请求包的目标 IP 和端口，把请求转发给某个 RS；响应也必须回到 DS，再由 DS 改写后返回客户端。</p>
+<p>特点：</p>
+<ul>
+<li>RS 不需要配置 VIP。</li>
+<li>DS 需要作为 RS 网关。</li>
+<li>请求和响应都经过 DS，响应流量通常更大，DS 容易成为带宽瓶颈。</li>
+</ul>
+<h3 id="FULLNAT-模式"><a href="#FULLNAT-模式" class="headerlink" title="FULLNAT 模式"></a>FULLNAT 模式</h3><p>在 NAT 基础上，DS 同时修改请求的源 IP 和目标 IP，使 RS 响应能正常路由回 DS，而不要求 DS 是网关。</p>
+<p>特点：</p>
+<ul>
+<li>RS 不需要配置 VIP。</li>
+<li>对网络环境要求较低，适应性更强。</li>
+<li>缺点是 RS 会丢失真实客户端 IP。</li>
+<li>更推荐这种模式用于通用场景。</li>
+</ul>
+<h3 id="TUN-模式"><a href="#TUN-模式" class="headerlink" title="TUN 模式"></a>TUN 模式</h3><p>DS 使用 IP 隧道把原请求包封装成新包发给 RS；RS 解包后处理请求，响应直接返回客户端。</p>
+<p>特点：</p>
+<ul>
+<li>响应不经过 DS，性能优于 NAT。</li>
+<li>DS 和 RS 不必处于同一网络。</li>
+<li>网络环境需要支持 IP 隧道。</li>
+<li>RS 需要在本地配置 VIP。</li>
+</ul>
+<h3 id="DR-模式"><a href="#DR-模式" class="headerlink" title="DR 模式"></a>DR 模式</h3><p>DS 通过修改请求包的目标 MAC 地址，把请求转发给同一物理网络中的 RS；RS 处理后响应直接返回客户端。</p>
+<p>特点：</p>
+<ul>
+<li>响应不经过 DS，性能好。</li>
+<li>不涉及 TUN 的隧道封装&#x2F;解封装，性能通常优于 TUN。</li>
+<li>DS 和 RS 需要在同一物理网络。</li>
+<li>RS 需要配置 VIP。</li>
+</ul>
+<h3 id="模式选择"><a href="#模式选择" class="headerlink" title="模式选择"></a>模式选择</h3><ul>
+<li><strong>追求网络适应性</strong>：优先 FULLNAT。</li>
+<li><strong>追求极致性能</strong>：优先 DR。</li>
+</ul>
+<hr>
+<h2 id="5-LVS-Nginx-的最终接入层架构"><a href="#5-LVS-Nginx-的最终接入层架构" class="headerlink" title="5. LVS + Nginx 的最终接入层架构"></a>5. LVS + Nginx 的最终接入层架构</h2><h3 id="基础组合"><a href="#基础组合" class="headerlink" title="基础组合"></a>基础组合</h3><p>完整链路如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">客户端</span><br><span class="line">  ↓ DNS / HTTP DNS</span><br><span class="line">LVS VIP</span><br><span class="line">  ↓ 四层负载均衡</span><br><span class="line">Nginx 集群</span><br><span class="line">  ↓ 七层 URL / 域名路由</span><br><span class="line">业务 HTTP 服务集群</span><br></pre></td></tr></table></figure>
+
+<p>这种组合的分工是：</p>
+<ul>
+<li><strong>LVS</strong>：扩展 Nginx 集群的吞吐能力。</li>
+<li><strong>Nginx</strong>：根据 HTTP URL、域名等应用层信息，把请求路由到具体业务服务。</li>
+<li><strong>业务服务</strong>：专注业务逻辑处理，不直接暴露公网。</li>
+</ul>
+<h3 id="LVS-单点问题"><a href="#LVS-单点问题" class="headerlink" title="LVS 单点问题"></a>LVS 单点问题</h3><p>如果只有一台 LVS，LVS 宕机会导致整个机房入口不可用。因此需要做 LVS 高可用。</p>
+<p>常见方案是：<strong>Keepalived + VIP 主从热备</strong>。</p>
+<p>工作方式：</p>
+<ol>
+<li>主 LVS 节点持有 VIP，对外提供服务。</li>
+<li>从 LVS 节点持续探活主节点。</li>
+<li>主节点宕机后，从节点接管 VIP。</li>
+<li>网络设备通过新的 ARP 响应把访问 VIP 的流量切到从节点。</li>
+</ol>
+<h3 id="LVS-水平扩展"><a href="#LVS-水平扩展" class="headerlink" title="LVS 水平扩展"></a>LVS 水平扩展</h3><p>单台 LVS 即使高可用，性能仍有上限。更进一步的做法是：</p>
+<ul>
+<li>部署多组 LVS；</li>
+<li>每组 LVS 通过 Keepalived 做主从高可用；</li>
+<li>每组 LVS 绑定一个 VIP；</li>
+<li>同一域名配置多个 VIP；</li>
+<li>客户端通过 DNS 轮询访问不同 LVS。</li>
+</ul>
+<p>最终达到：</p>
+<ul>
+<li>DNS 轮询扩展 LVS；</li>
+<li>Keepalived 保证 LVS 高可用；</li>
+<li>LVS 扩展 Nginx；</li>
+<li>Nginx 扩展业务 HTTP 服务。</li>
+</ul>
+<hr>
+<h2 id="6-本节最重要的架构思想"><a href="#6-本节最重要的架构思想" class="headerlink" title="6. 本节最重要的架构思想"></a>6. 本节最重要的架构思想</h2><ol>
+<li><strong>不要让业务服务器直接暴露公网</strong>：公网入口应该尽量收敛到接入层。</li>
+<li><strong>用中间层解决可用性、扩展性和安全问题</strong>：接入层就是客户端与业务服务之间的关键中间层。</li>
+<li><strong>七层负载均衡负责“智能路由”</strong>：Nginx 理解 HTTP，可按 URL、域名等业务语义调度。</li>
+<li><strong>四层负载均衡负责“高性能转发”</strong>：LVS 更底层、更高性能，适合放在 Nginx 集群前面。</li>
+<li><strong>单点必须消除</strong>：LVS 自身也需要通过 Keepalived + VIP 做主从热备。</li>
+<li><strong>性能瓶颈要水平扩展</strong>：多组 LVS + DNS 轮询，让接入层具备横向扩展能力。</li>
+<li><strong>接入层最终目标</strong>：高可用、高性能、可扩展，同时保护内部业务服务。</li>
+</ol>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><strong>大型互联网系统的接入层从业务服务器直连公网，逐步演进为“DNS → 多组高可用 LVS → Nginx 集群 → 业务服务集群”的分层负载均衡架构，其中 LVS 负责四层高性能转发，Nginx 负责七层灵活路由，共同提升系统的可用性、性能、安全性和扩展性。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/%E6%8E%A5%E5%85%A5%E5%B1%82/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    接入层
+    
+</a>
+
+        
+        
+<a href="/tags/%E8%B4%9F%E8%BD%BD%E5%9D%87%E8%A1%A1/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    负载均衡
+    
+</a>
+
+        
+        
+<a href="/tags/Nginx/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Nginx
+    
+</a>
+
+        
+        
+<a href="/tags/LVS/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    LVS
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/14/%E6%9C%8D%E5%8A%A1%E5%8F%91%E7%8E%B0/" class="post-nav-link group text-left" title="服务发现">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">服务发现</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/10/DNS%E4%B8%8EHTTP-DNS/" class="post-nav-link group text-right" title="DNS与HTTP DNS">
+            <span class="post-nav-title">DNS与HTTP DNS</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>

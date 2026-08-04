@@ -1,0 +1,1129 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>数据库读写分离 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="数据库读写分离通过 Master 承担写请求、Slave 承担读请求来扩展高并发读能力，但主从复制会带来主从延迟问题，因此需要根据业务一致性要求选择同步复制、强制读主或会话分离等方案，在读性能、写性能和数据一致性之间做权衡。 一、核心主线 高并发读场景的第一种通用方案： 数据库读/写分离 。 大多数互联网应用都是读多写少： 因此，数据库承受的高并发压力通常主要来自读请求。 读写分离的核心思路是： ..." />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, 主从复制, 高并发, 高并发读, 读写分离, 主从延迟" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="数据库读写分离 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="数据库读写分离通过 Master 承担写请求、Slave 承担读请求来扩展高并发读能力，但主从复制会带来主从延迟问题，因此需要根据业务一致性要求选择同步复制、强制读主或会话分离等方案，在读性能、写性能和数据一致性之间做权衡。 一、核心主线 高并发读场景的第一种通用方案： 数据库读/写分离 。 大多数互联网应用都是读多写少： 因此，数据库承受的高并发压力通常主要来自读请求。 读写分离的核心思路是： ..." />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/23/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-23T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-08-01T15:37:04.126Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="主从复制" />
+    
+    <meta property="article:tag" content="高并发" />
+    
+    <meta property="article:tag" content="高并发读" />
+    
+    <meta property="article:tag" content="读写分离" />
+    
+    <meta property="article:tag" content="主从延迟" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="数据库读写分离 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="数据库读写分离通过 Master 承担写请求、Slave 承担读请求来扩展高并发读能力，但主从复制会带来主从延迟问题，因此需要根据业务一致性要求选择同步复制、强制读主或会话分离等方案，在读性能、写性能和数据一致性之间做权衡。 一、核心主线 高并发读场景的第一种通用方案： 数据库读/写分离 。 大多数互联网应用都是读多写少： 因此，数据库承受的高并发压力通常主要来自读请求。 读写分离的核心思路是： ..." />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/23/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"数据库读写分离","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/23/%E6%95%B0%E6%8D%AE%E5%BA%93%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/index.html"},"description":"数据库读写分离通过 Master 承担写请求、Slave 承担读请求来扩展高并发读能力，但主从复制会带来主从延迟问题，因此需要根据业务一致性要求选择同步复制、强制读主或会话分离等方案，在读性能、写性能和数据一致性之间做权衡。 一、核心主线 高并发读场景的第一种通用方案： 数据库读/写分离 。 大多数互联网应用都是读多写少： 因此，数据库承受的高并发压力通常主要来自读请求。 读写分离的核心思路是： ...","datePublished":"2026-07-23T14:27:35.000Z","dateModified":"2026-08-01T15:37:04.126Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 主从复制, 高并发, 高并发读, 读写分离, 主从延迟"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            数据库读写分离
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-23">2026/07/23</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E6%9E%B6%E6%9E%84" data-target="二、读写分离架构">二、读写分离架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84" data-target="1-基本结构">1. 基本结构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E7%9A%84%E4%BB%B7%E5%80%BC" data-target="2-读写分离的价值">2. 读写分离的价值</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%AF%BB%E5%86%99%E8%AF%B7%E6%B1%82%E8%B7%AF%E7%94%B1%E6%96%B9%E5%BC%8F" data-target="三、读写请求路由方式">三、读写请求路由方式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E5%BA%93-Proxy-%E7%9A%84%E6%96%B9%E5%BC%8F" data-target="1-基于数据库-Proxy-的方式">1. 基于数据库 Proxy 的方式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%9F%BA%E4%BA%8E%E5%BA%94%E7%94%A8%E5%86%85%E5%B5%8C%E7%9A%84%E6%96%B9%E5%BC%8F" data-target="2-基于应用内嵌的方式">2. 基于应用内嵌的方式</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E9%97%AE%E9%A2%98" data-target="四、主从延迟问题">四、主从延迟问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E6%98%AF%E4%BB%80%E4%B9%88" data-target="1-主从延迟是什么">1. 主从延迟是什么</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E5%B8%A6%E6%9D%A5%E7%9A%84%E9%97%AE%E9%A2%98" data-target="2-主从延迟带来的问题">2. 主从延迟带来的问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E7%9A%84%E4%B8%89%E7%A7%8D%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88" data-target="五、主从延迟的三种解决方案">五、主从延迟的三种解决方案</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%90%8C%E6%AD%A5%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6" data-target="1-同步数据复制">1. 同步数据复制</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%BC%BA%E5%88%B6%E8%AF%BB%E4%B8%BB" data-target="2-强制读主">2. 强制读主</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E4%BC%9A%E8%AF%9D%E5%88%86%E7%A6%BB" data-target="3-会话分离">3. 会话分离</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%89%E7%A7%8D%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94" data-target="六、三种主从延迟方案对比">六、三种主从延迟方案对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="七、核心架构思想">七、核心架构思想</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E6%9E%B6%E6%9E%84" data-target="二、读写分离架构">二、读写分离架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84" data-target="1-基本结构">1. 基本结构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB%E7%9A%84%E4%BB%B7%E5%80%BC" data-target="2-读写分离的价值">2. 读写分离的价值</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E8%AF%BB%E5%86%99%E8%AF%B7%E6%B1%82%E8%B7%AF%E7%94%B1%E6%96%B9%E5%BC%8F" data-target="三、读写请求路由方式">三、读写请求路由方式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E5%BA%93-Proxy-%E7%9A%84%E6%96%B9%E5%BC%8F" data-target="1-基于数据库-Proxy-的方式">1. 基于数据库 Proxy 的方式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%9F%BA%E4%BA%8E%E5%BA%94%E7%94%A8%E5%86%85%E5%B5%8C%E7%9A%84%E6%96%B9%E5%BC%8F" data-target="2-基于应用内嵌的方式">2. 基于应用内嵌的方式</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E9%97%AE%E9%A2%98" data-target="四、主从延迟问题">四、主从延迟问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E6%98%AF%E4%BB%80%E4%B9%88" data-target="1-主从延迟是什么">1. 主从延迟是什么</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E5%B8%A6%E6%9D%A5%E7%9A%84%E9%97%AE%E9%A2%98" data-target="2-主从延迟带来的问题">2. 主从延迟带来的问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E7%9A%84%E4%B8%89%E7%A7%8D%E8%A7%A3%E5%86%B3%E6%96%B9%E6%A1%88" data-target="五、主从延迟的三种解决方案">五、主从延迟的三种解决方案</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%90%8C%E6%AD%A5%E6%95%B0%E6%8D%AE%E5%A4%8D%E5%88%B6" data-target="1-同步数据复制">1. 同步数据复制</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%BC%BA%E5%88%B6%E8%AF%BB%E4%B8%BB" data-target="2-强制读主">2. 强制读主</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E4%BC%9A%E8%AF%9D%E5%88%86%E7%A6%BB" data-target="3-会话分离">3. 会话分离</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E4%B8%89%E7%A7%8D%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94" data-target="六、三种主从延迟方案对比">六、三种主从延迟方案对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="七、核心架构思想">七、核心架构思想</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p><strong>数据库读写分离通过 Master 承担写请求、Slave 承担读请求来扩展高并发读能力，但主从复制会带来主从延迟问题，因此需要根据业务一致性要求选择同步复制、强制读主或会话分离等方案，在读性能、写性能和数据一致性之间做权衡。</strong></p>
+<!--  more -->
+
+<h2 id="一、核心主线"><a href="#一、核心主线" class="headerlink" title="一、核心主线"></a>一、核心主线</h2><p>高并发读场景的第一种通用方案：<strong>数据库读&#x2F;写分离</strong>。</p>
+<p>大多数互联网应用都是读多写少：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">刷帖请求 &gt; 发帖请求</span><br><span class="line">浏览商品请求 &gt; 下单请求</span><br><span class="line">浏览内容请求 &gt; 发布内容请求</span><br></pre></td></tr></table></figure>
+
+<p>因此，数据库承受的高并发压力通常主要来自读请求。</p>
+<p>读写分离的核心思路是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">写请求 → 写库 Master</span><br><span class="line">读请求 → 读库 Slave</span><br><span class="line"></span><br><span class="line">Master 通过主从复制将数据同步给 Slave</span><br></pre></td></tr></table></figure>
+
+<p>这样可以把大量读请求从主库中分流出去，降低数据库访问压力，缩短请求响应时间。</p>
+<hr>
+<h2 id="二、读写分离架构"><a href="#二、读写分离架构" class="headerlink" title="二、读写分离架构"></a>二、读写分离架构</h2><h3 id="1-基本结构"><a href="#1-基本结构" class="headerlink" title="1. 基本结构"></a>1. 基本结构</h3><p>读写分离通常基于数据库主从复制实现：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">业务服务器</span><br><span class="line">   ↓</span><br><span class="line">数据访问层</span><br><span class="line">   ├─ 写请求 → Master</span><br><span class="line">   └─ 读请求 → Slave</span><br><span class="line"></span><br><span class="line">Master ──主从复制──&gt; Slave</span><br></pre></td></tr></table></figure>
+
+<p>其中：</p>
+<ul>
+<li><strong>Master</strong>：数据库主节点，作为写库，处理写请求；</li>
+<li><strong>Slave</strong>：数据库从节点，作为读库，处理读请求；</li>
+<li><strong>主从复制</strong>：Master 将写入后的最新数据同步到 Slave。</li>
+</ul>
+<p>一个 Master 可以连接多个 Slave，从而扩展读能力。</p>
+<h3 id="2-读写分离的价值"><a href="#2-读写分离的价值" class="headerlink" title="2. 读写分离的价值"></a>2. 读写分离的价值</h3><p>读写分离主要解决两个问题：</p>
+<ol>
+<li><strong>降低主库压力</strong>：读请求不再全部打到 Master；</li>
+<li><strong>提升读吞吐量</strong>：多个 Slave 可以共同承担读请求。</li>
+</ol>
+<p>适合场景：</p>
+<ul>
+<li>读多写少；</li>
+<li>读请求压力明显高于写请求；</li>
+<li>可以容忍一定程度的主从同步延迟；</li>
+<li>业务读写路径比较清晰。</li>
+</ul>
+<hr>
+<h2 id="三、读写请求路由方式"><a href="#三、读写请求路由方式" class="headerlink" title="三、读写请求路由方式"></a>三、读写请求路由方式</h2><p>读写分离的关键问题是：</p>
+<blockquote>
+<p>谁来判断一个请求应该访问 Master 还是 Slave？</p>
+</blockquote>
+<p>本节介绍了两种常见路由方式。</p>
+<hr>
+<h3 id="1-基于数据库-Proxy-的方式"><a href="#1-基于数据库-Proxy-的方式" class="headerlink" title="1. 基于数据库 Proxy 的方式"></a>1. 基于数据库 Proxy 的方式</h3><p>在业务服务和数据库之间增加数据库代理层：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">业务服务</span><br><span class="line">   ↓ SQL 请求</span><br><span class="line">数据库 Proxy</span><br><span class="line">   ├─ 写 SQL → Master</span><br><span class="line">   └─ 读 SQL → Slave</span><br></pre></td></tr></table></figure>
+
+<p>Proxy 会根据 SQL 类型进行路由：</p>
+<table>
+<thead>
+<tr>
+<th>SQL 类型</th>
+<th>路由目标</th>
+</tr>
+</thead>
+<tbody><tr>
+<td><code>insert</code></td>
+<td>Master</td>
+</tr>
+<tr>
+<td><code>delete</code></td>
+<td>Master</td>
+</tr>
+<tr>
+<td><code>update</code></td>
+<td>Master</td>
+</tr>
+<tr>
+<td><code>select</code></td>
+<td>Slave</td>
+</tr>
+</tbody></table>
+<p>常见实现包括：</p>
+<ul>
+<li>MySQL-Proxy；</li>
+<li>MyCat；</li>
+<li>MySQL-Router。</li>
+</ul>
+<h4 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>读写分离逻辑集中在 Proxy；</li>
+<li>业务代码改造较少；</li>
+<li>对业务服务相对透明；</li>
+<li>适合统一治理数据库访问。</li>
+</ul>
+<h4 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h4><ul>
+<li>Proxy 本身可能成为性能瓶颈；</li>
+<li>Proxy 需要保证高可用；</li>
+<li>SQL 解析和路由逻辑可能增加复杂度；</li>
+<li>业务侧对细粒度路由控制能力较弱。</li>
+</ul>
+<hr>
+<h3 id="2-基于应用内嵌的方式"><a href="#2-基于应用内嵌的方式" class="headerlink" title="2. 基于应用内嵌的方式"></a>2. 基于应用内嵌的方式</h3><p>读写路由逻辑直接嵌入业务服务进程中：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">业务服务内部数据库访问框架</span><br><span class="line">   ├─ 写请求 → Master</span><br><span class="line">   └─ 读请求 → Slave</span><br></pre></td></tr></table></figure>
+
+<p>常见数据库连接框架或组件包括：</p>
+<ul>
+<li>gorm；</li>
+<li>shardingjdbc。</li>
+</ul>
+<h4 id="优点-1"><a href="#优点-1" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>少一层网络代理；</li>
+<li>路由控制更灵活；</li>
+<li>可以结合业务语义做更精细的读写选择；</li>
+<li>不会引入中心化 Proxy 瓶颈。</li>
+</ul>
+<h4 id="缺点-1"><a href="#缺点-1" class="headerlink" title="缺点"></a>缺点</h4><ul>
+<li>业务服务需要引入读写分离逻辑；</li>
+<li>多语言、多框架环境下治理成本更高；</li>
+<li>路由规则分散在应用侧，统一管理难度较大。</li>
+</ul>
+<hr>
+<h2 id="四、主从延迟问题"><a href="#四、主从延迟问题" class="headerlink" title="四、主从延迟问题"></a>四、主从延迟问题</h2><h3 id="1-主从延迟是什么"><a href="#1-主从延迟是什么" class="headerlink" title="1. 主从延迟是什么"></a>1. 主从延迟是什么</h3><p>读写分离依赖主从复制，而主从复制通常不是瞬时完成的。</p>
+<p>当 Master 写入成功后，Slave 可能还没有同步到最新数据：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">写请求 → Master 写入成功</span><br><span class="line">        ↓</span><br><span class="line">主从复制存在延迟</span><br><span class="line">        ↓</span><br><span class="line">读请求 → Slave 读取不到最新数据</span><br></pre></td></tr></table></figure>
+
+<p>这就是<strong>主从延迟</strong>。</p>
+<h3 id="2-主从延迟带来的问题"><a href="#2-主从延迟带来的问题" class="headerlink" title="2. 主从延迟带来的问题"></a>2. 主从延迟带来的问题</h3><p>主从延迟会造成短时间内的主从数据不一致。</p>
+<p>典型表现：</p>
+<ul>
+<li>用户刚发布内容，刷新页面却看不到；</li>
+<li>用户刚修改资料，读取时还是旧资料；</li>
+<li>用户刚完成操作，下一个查询请求读到了旧状态。</li>
+</ul>
+<p>所以，读写分离提升了读性能，但引入了一致性问题。</p>
+<hr>
+<h2 id="五、主从延迟的三种解决方案"><a href="#五、主从延迟的三种解决方案" class="headerlink" title="五、主从延迟的三种解决方案"></a>五、主从延迟的三种解决方案</h2><h3 id="1-同步数据复制"><a href="#1-同步数据复制" class="headerlink" title="1. 同步数据复制"></a>1. 同步数据复制</h3><h4 id="原理"><a href="#原理" class="headerlink" title="原理"></a>原理</h4><p>默认主从复制通常是异步模式：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">Master 写完数据 → 直接返回成功</span><br></pre></td></tr></table></figure>
+
+<p>同步复制则要求：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Master 写完数据</span><br><span class="line">   ↓</span><br><span class="line">等待全部 Slave 收到数据</span><br><span class="line">   ↓</span><br><span class="line">再返回写入成功</span><br></pre></td></tr></table></figure>
+
+<h4 id="优点-2"><a href="#优点-2" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>Master 和 Slave 能在写操作成功后同时读取到最新数据；</li>
+<li>主从一致性更强；</li>
+<li>业务服务改造较少。</li>
+</ul>
+<h4 id="缺点-2"><a href="#缺点-2" class="headerlink" title="缺点"></a>缺点</h4><ul>
+<li>Master 必须等待全部 Slave；</li>
+<li>写请求延迟明显增加；</li>
+<li>数据库吞吐量下降；</li>
+<li>某个 Slave 慢或异常会影响整体写入。</li>
+</ul>
+<h4 id="适用场景"><a href="#适用场景" class="headerlink" title="适用场景"></a>适用场景</h4><p>同步复制实用价值较低，更适合：</p>
+<ul>
+<li>低并发场景；</li>
+<li>对一致性要求极高；</li>
+<li>写入吞吐压力不大的业务。</li>
+</ul>
+<hr>
+<h3 id="2-强制读主"><a href="#2-强制读主" class="headerlink" title="2. 强制读主"></a>2. 强制读主</h3><h4 id="原理-1"><a href="#原理-1" class="headerlink" title="原理"></a>原理</h4><p>不同业务场景对主从延迟的容忍度不同。</p>
+<p>对于不能容忍主从延迟的读请求，直接路由到 Master：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">普通读请求 → Slave</span><br><span class="line">强一致读请求 → Master</span><br><span class="line">写请求 → Master</span><br></pre></td></tr></table></figure>
+
+<h4 id="示例"><a href="#示例" class="headerlink" title="示例"></a>示例</h4><p>用户 A 刚发布一条状态：</p>
+<ul>
+<li>A 自己刷新个人主页时，应该立刻看到新状态；</li>
+<li>好友 B 查看 A 的主页时，可以暂时看不到这条新状态。</li>
+</ul>
+<p>因此：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">A 自己读自己的新状态 → 强制读 Master</span><br><span class="line">B 查看 A 的状态 → 可以读 Slave</span><br></pre></td></tr></table></figure>
+
+<h4 id="优点-3"><a href="#优点-3" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>针对关键场景保证读到最新数据；</li>
+<li>不需要所有读请求都访问主库；</li>
+<li>在一致性和读扩展之间做平衡。</li>
+</ul>
+<h4 id="缺点-3"><a href="#缺点-3" class="headerlink" title="缺点"></a>缺点</h4><ul>
+<li>需要识别哪些场景不能容忍延迟；</li>
+<li>强制读主过多会削弱读写分离效果；</li>
+<li>业务逻辑复杂度增加。</li>
+</ul>
+<hr>
+<h3 id="3-会话分离"><a href="#3-会话分离" class="headerlink" title="3. 会话分离"></a>3. 会话分离</h3><h4 id="原理-2"><a href="#原理-2" class="headerlink" title="原理"></a>原理</h4><p>如果某个会话刚执行过写操作，那么在接下来很短的一段时间内，该会话的读请求临时路由到 Master。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">用户会话发生写操作</span><br><span class="line">        ↓</span><br><span class="line">短时间内该会话读请求强制读 Master</span><br><span class="line">        ↓</span><br><span class="line">超过主从复制延迟窗口后恢复读 Slave</span><br></pre></td></tr></table></figure>
+
+<h4 id="设计关键"><a href="#设计关键" class="headerlink" title="设计关键"></a>设计关键</h4><p>强制读主的时间窗口应略高于主从复制延迟。</p>
+<p>例如：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">主从复制通常延迟 200 ms</span><br><span class="line">        ↓</span><br><span class="line">会话写入后 300 ms 内读主</span><br></pre></td></tr></table></figure>
+
+<p>这样可以尽量覆盖主从数据复制的实际延迟时间。</p>
+<h4 id="优点-4"><a href="#优点-4" class="headerlink" title="优点"></a>优点</h4><ul>
+<li>保证“自己写的数据自己立刻可见”；</li>
+<li>不需要所有用户都强制读主；</li>
+<li>对主库压力影响相对可控。</li>
+</ul>
+<h4 id="缺点-4"><a href="#缺点-4" class="headerlink" title="缺点"></a>缺点</h4><ul>
+<li>需要维护会话状态；</li>
+<li>需要估算合理的主从延迟时间窗口；</li>
+<li>如果实际延迟超过窗口，仍可能读到旧数据；</li>
+<li>实现复杂度高于普通读写分离。</li>
+</ul>
+<hr>
+<h2 id="六、三种主从延迟方案对比"><a href="#六、三种主从延迟方案对比" class="headerlink" title="六、三种主从延迟方案对比"></a>六、三种主从延迟方案对比</h2><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>核心思路</th>
+<th>优点</th>
+<th>缺点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>同步数据复制</td>
+<td>Master 等所有 Slave 收到数据后再返回</td>
+<td>一致性强，业务改造少</td>
+<td>写延迟高，吞吐下降</td>
+<td>低并发、强一致</td>
+</tr>
+<tr>
+<td>强制读主</td>
+<td>不能容忍延迟的读请求访问 Master</td>
+<td>精准保证关键读一致性</td>
+<td>需要业务识别场景，读主过多会压垮 Master</td>
+<td>局部强一致场景</td>
+</tr>
+<tr>
+<td>会话分离</td>
+<td>写后短时间内，同一会话读 Master</td>
+<td>保证用户读到自己的写入</td>
+<td>需要维护会话和时间窗口</td>
+<td>写后读一致性场景</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="七、核心架构思想"><a href="#七、核心架构思想" class="headerlink" title="七、核心架构思想"></a>七、核心架构思想</h2><ol>
+<li><strong>大部分互联网系统是读多写少，数据库压力主要来自读请求。</strong></li>
+<li><strong>读写分离通过 Master 处理写、Slave 处理读来扩展读能力。</strong></li>
+<li><strong>读写分离通常依赖数据库主从复制。</strong></li>
+<li><strong>读写路由可以放在数据库 Proxy，也可以放在应用内部。</strong></li>
+<li><strong>Proxy 方式对业务更透明，但需要治理代理层的性能和高可用。</strong></li>
+<li><strong>应用内嵌方式更灵活，但会增加业务代码和框架治理复杂度。</strong></li>
+<li><strong>读写分离的核心副作用是主从延迟。</strong></li>
+<li><strong>主从延迟会导致写后立即读时读取不到最新数据。</strong></li>
+<li><strong>同步复制增强一致性，但牺牲写性能和吞吐量。</strong></li>
+<li><strong>强制读主适合不能容忍延迟的关键业务场景。</strong></li>
+<li><strong>会话分离适合保证用户“自己写后自己可见”。</strong></li>
+<li><strong>读写分离的本质权衡是：读性能扩展与数据一致性之间的平衡。</strong></li>
+</ol>
+<h2 id=""><a href="#" class="headerlink" title=""></a></h2>
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    主从复制
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高并发
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91%E8%AF%BB/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高并发读
+    
+</a>
+
+        
+        
+<a href="/tags/%E8%AF%BB%E5%86%99%E5%88%86%E7%A6%BB/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    读写分离
+    
+</a>
+
+        
+        
+<a href="/tags/%E4%B8%BB%E4%BB%8E%E5%BB%B6%E8%BF%9F/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    主从延迟
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/24/%E6%9C%AC%E5%9C%B0%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/" class="post-nav-link group text-left" title="本地缓存">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">本地缓存</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/22/%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E8%A6%81%E7%82%B9/" class="post-nav-link group text-right" title="高并发架构设计要点">
+            <span class="post-nav-title">高并发架构设计要点</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>

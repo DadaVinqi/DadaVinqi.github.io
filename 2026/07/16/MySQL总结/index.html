@@ -1,0 +1,1194 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>MySQL 总结 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="大型互联网后台中，MySQL 作为关系型数据库如何承担核心数据存储，以及如何通过主从复制、MHA、MMM、MGR 等方案构建高可用架构 。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, MySQL, 数据库, 主从复制, 高可用, MHA, MMM, MGR" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="MySQL 总结 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="大型互联网后台中，MySQL 作为关系型数据库如何承担核心数据存储，以及如何通过主从复制、MHA、MMM、MGR 等方案构建高可用架构 。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/07/16/MySQL%E6%80%BB%E7%BB%93/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-07-16T14:27:35.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-08-01T15:37:04.125Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="MySQL" />
+    
+    <meta property="article:tag" content="数据库" />
+    
+    <meta property="article:tag" content="主从复制" />
+    
+    <meta property="article:tag" content="高可用" />
+    
+    <meta property="article:tag" content="MHA" />
+    
+    <meta property="article:tag" content="MMM" />
+    
+    <meta property="article:tag" content="MGR" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="MySQL 总结 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="大型互联网后台中，MySQL 作为关系型数据库如何承担核心数据存储，以及如何通过主从复制、MHA、MMM、MGR 等方案构建高可用架构 。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/07/16/MySQL%E6%80%BB%E7%BB%93/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"MySQL 总结","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/16/MySQL%E6%80%BB%E7%BB%93/index.html"},"description":"大型互联网后台中，MySQL 作为关系型数据库如何承担核心数据存储，以及如何通过主从复制、MHA、MMM、MGR 等方案构建高可用架构 。","datePublished":"2026-07-16T14:27:35.000Z","dateModified":"2026-08-01T15:37:04.125Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, MySQL, 数据库, 主从复制, 高可用, MHA, MMM, MGR"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            MySQL 总结
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-16">2026/07/16</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="核心主线">核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5" data-target="1-关系型数据库的基本概念">1. 关系型数据库的基本概念</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BB%E9%94%AE%E7%9A%84%E4%BD%9C%E7%94%A8" data-target="2-主键的作用">2. 主键的作用</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-MySQL-%E7%9A%84%E4%BC%98%E5%8A%BF" data-target="3-MySQL-的优势">3. MySQL 的优势</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E4%B8%80%EF%BC%9A%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F" data-target="4-MySQL-高可用架构一：主从模式">4. MySQL 高可用架构一：主从模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84" data-target="基本结构">基本结构</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-MySQL-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8E%9F%E7%90%86" data-target="5-MySQL-主从复制原理">5. MySQL 主从复制原理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6%E4%B8%8E%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E9%A3%8E%E9%99%A9" data-target="6-异步复制与数据丢失风险">6. 异步复制与数据丢失风险</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-%E5%8D%8A%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6" data-target="7-半同步复制">7. 半同步复制</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#8-%E5%A4%8D%E5%88%B6%E9%A3%8E%E6%9A%B4%E9%97%AE%E9%A2%98" data-target="8-复制风暴问题">8. 复制风暴问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#9-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E4%BA%8C%EF%BC%9AMHA" data-target="9-MySQL-高可用架构二：MHA">9. MySQL 高可用架构二：MHA</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MHA-%E7%9A%84%E5%AE%9A%E4%BD%8D" data-target="MHA-的定位">MHA 的定位</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MHA-%E7%9A%84%E7%BB%84%E6%88%90" data-target="MHA-的组成">MHA 的组成</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MHA-%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB%E6%B5%81%E7%A8%8B" data-target="MHA-故障转移流程">MHA 故障转移流程</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#10-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E4%B8%89%EF%BC%9AMMM" data-target="10-MySQL-高可用架构三：MMM">10. MySQL 高可用架构三：MMM</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MMM-%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84" data-target="MMM-基本架构">MMM 基本架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MMM-%E6%95%85%E9%9A%9C%E5%88%87%E6%8D%A2%E6%B5%81%E7%A8%8B" data-target="MMM-故障切换流程">MMM 故障切换流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MMM-%E7%9A%84%E5%B1%80%E9%99%90" data-target="MMM-的局限">MMM 的局限</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#11-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E5%9B%9B%EF%BC%9AMGR" data-target="11-MySQL-高可用架构四：MGR">11. MySQL 高可用架构四：MGR</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MGR-%E7%9A%84%E4%B8%BB%E8%A6%81%E7%89%B9%E6%80%A7" data-target="MGR-的主要特性">MGR 的主要特性</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MGR-%E7%9A%84%E6%8F%90%E4%BA%A4%E6%9C%BA%E5%88%B6" data-target="MGR-的提交机制">MGR 的提交机制</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#12-MGR-%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E4%B8%8E%E5%A4%9A%E4%B8%BB%E6%A8%A1%E5%BC%8F" data-target="12-MGR-单主模式与多主模式">12. MGR 单主模式与多主模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F" data-target="单主模式">单主模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%A4%9A%E4%B8%BB%E6%A8%A1%E5%BC%8F" data-target="多主模式">多主模式</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#13-MGR-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9" data-target="13-MGR-的优缺点">13. MGR 的优缺点</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E4%BC%98%E7%82%B9" data-target="优点">优点</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9" data-target="缺点">缺点</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#14-%E5%87%A0%E7%A7%8D-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94" data-target="14-几种-MySQL-高可用方案对比">14. 几种 MySQL 高可用方案对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%9C%AC%E8%8A%82%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="本节最重要的架构思想">本节最重要的架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="一句话总结">一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="核心主线">核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%B3%E7%B3%BB%E5%9E%8B%E6%95%B0%E6%8D%AE%E5%BA%93%E7%9A%84%E5%9F%BA%E6%9C%AC%E6%A6%82%E5%BF%B5" data-target="1-关系型数据库的基本概念">1. 关系型数据库的基本概念</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BB%E9%94%AE%E7%9A%84%E4%BD%9C%E7%94%A8" data-target="2-主键的作用">2. 主键的作用</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-MySQL-%E7%9A%84%E4%BC%98%E5%8A%BF" data-target="3-MySQL-的优势">3. MySQL 的优势</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E4%B8%80%EF%BC%9A%E4%B8%BB%E4%BB%8E%E6%A8%A1%E5%BC%8F" data-target="4-MySQL-高可用架构一：主从模式">4. MySQL 高可用架构一：主从模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%9F%BA%E6%9C%AC%E7%BB%93%E6%9E%84" data-target="基本结构">基本结构</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-MySQL-%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6%E5%8E%9F%E7%90%86" data-target="5-MySQL-主从复制原理">5. MySQL 主从复制原理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%BC%82%E6%AD%A5%E5%A4%8D%E5%88%B6%E4%B8%8E%E6%95%B0%E6%8D%AE%E4%B8%A2%E5%A4%B1%E9%A3%8E%E9%99%A9" data-target="6-异步复制与数据丢失风险">6. 异步复制与数据丢失风险</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-%E5%8D%8A%E5%90%8C%E6%AD%A5%E5%A4%8D%E5%88%B6" data-target="7-半同步复制">7. 半同步复制</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#8-%E5%A4%8D%E5%88%B6%E9%A3%8E%E6%9A%B4%E9%97%AE%E9%A2%98" data-target="8-复制风暴问题">8. 复制风暴问题</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#9-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E4%BA%8C%EF%BC%9AMHA" data-target="9-MySQL-高可用架构二：MHA">9. MySQL 高可用架构二：MHA</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MHA-%E7%9A%84%E5%AE%9A%E4%BD%8D" data-target="MHA-的定位">MHA 的定位</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MHA-%E7%9A%84%E7%BB%84%E6%88%90" data-target="MHA-的组成">MHA 的组成</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MHA-%E6%95%85%E9%9A%9C%E8%BD%AC%E7%A7%BB%E6%B5%81%E7%A8%8B" data-target="MHA-故障转移流程">MHA 故障转移流程</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#10-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E4%B8%89%EF%BC%9AMMM" data-target="10-MySQL-高可用架构三：MMM">10. MySQL 高可用架构三：MMM</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MMM-%E5%9F%BA%E6%9C%AC%E6%9E%B6%E6%9E%84" data-target="MMM-基本架构">MMM 基本架构</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MMM-%E6%95%85%E9%9A%9C%E5%88%87%E6%8D%A2%E6%B5%81%E7%A8%8B" data-target="MMM-故障切换流程">MMM 故障切换流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MMM-%E7%9A%84%E5%B1%80%E9%99%90" data-target="MMM-的局限">MMM 的局限</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#11-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%9E%B6%E6%9E%84%E5%9B%9B%EF%BC%9AMGR" data-target="11-MySQL-高可用架构四：MGR">11. MySQL 高可用架构四：MGR</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MGR-%E7%9A%84%E4%B8%BB%E8%A6%81%E7%89%B9%E6%80%A7" data-target="MGR-的主要特性">MGR 的主要特性</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#MGR-%E7%9A%84%E6%8F%90%E4%BA%A4%E6%9C%BA%E5%88%B6" data-target="MGR-的提交机制">MGR 的提交机制</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#12-MGR-%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F%E4%B8%8E%E5%A4%9A%E4%B8%BB%E6%A8%A1%E5%BC%8F" data-target="12-MGR-单主模式与多主模式">12. MGR 单主模式与多主模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8D%95%E4%B8%BB%E6%A8%A1%E5%BC%8F" data-target="单主模式">单主模式</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%A4%9A%E4%B8%BB%E6%A8%A1%E5%BC%8F" data-target="多主模式">多主模式</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#13-MGR-%E7%9A%84%E4%BC%98%E7%BC%BA%E7%82%B9" data-target="13-MGR-的优缺点">13. MGR 的优缺点</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E4%BC%98%E7%82%B9" data-target="优点">优点</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%BC%BA%E7%82%B9" data-target="缺点">缺点</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#14-%E5%87%A0%E7%A7%8D-MySQL-%E9%AB%98%E5%8F%AF%E7%94%A8%E6%96%B9%E6%A1%88%E5%AF%B9%E6%AF%94" data-target="14-几种-MySQL-高可用方案对比">14. 几种 MySQL 高可用方案对比</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E6%9C%AC%E8%8A%82%E6%9C%80%E9%87%8D%E8%A6%81%E7%9A%84%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="本节最重要的架构思想">本节最重要的架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="一句话总结">一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p><strong>大型互联网后台中，MySQL 作为关系型数据库如何承担核心数据存储，以及如何通过主从复制、MHA、MMM、MGR 等方案构建高可用架构</strong>。</p>
+<span id="more"></span>
+
+<h2 id="核心主线"><a href="#核心主线" class="headerlink" title="核心主线"></a>核心主线</h2><p>整体逻辑可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">用户请求最终表现为数据读/写</span><br><span class="line">        ↓</span><br><span class="line">RPC 服务访问存储层</span><br><span class="line">        ↓</span><br><span class="line">MySQL 承担核心关系型数据存储</span><br><span class="line">        ↓</span><br><span class="line">通过主从复制保证副本数据同步</span><br><span class="line">        ↓</span><br><span class="line">通过 MHA / MMM / MGR 等方案实现故障切换和高可用</span><br></pre></td></tr></table></figure>
+
+<p><strong>MySQL 是大型互联网后台最常见的核心持久化存储，重点不只是会用 SQL，而是要理解它在生产环境中的高可用架构。</strong></p>
+<hr>
+<h2 id="1-关系型数据库的基本概念"><a href="#1-关系型数据库的基本概念" class="headerlink" title="1. 关系型数据库的基本概念"></a>1. 关系型数据库的基本概念</h2><p>关系型数据库使用<strong>关系模型</strong>组织数据，最直观的表现形式就是二维表。</p>
+<p>在关系型数据库中：</p>
+<ul>
+<li><strong>行</strong>：表示一条实体记录，或实体之间的一条关系记录；</li>
+<li><strong>列</strong>：表示记录的属性；</li>
+<li><strong>表</strong>：由一组行和列组成；</li>
+<li><strong>数据库</strong>：由一组数据表组成；</li>
+<li><strong>SQL</strong>：用于定义和操作数据的结构化查询语言。</li>
+</ul>
+<p>例如学生选课系统中，可以有：</p>
+<ul>
+<li>学生信息表；</li>
+<li>教师信息表；</li>
+<li>课程信息表；</li>
+<li>选课信息表；</li>
+<li>教课信息表。</li>
+</ul>
+<p>其中实体和实体之间的关系都可以被表达为二维表。</p>
+<hr>
+<h2 id="2-主键的作用"><a href="#2-主键的作用" class="headerlink" title="2. 主键的作用"></a>2. 主键的作用</h2><p>关系型数据库中的一个重要概念是<strong>主键</strong>。</p>
+<p>主键用于唯一标识一行记录，可以由：</p>
+<ul>
+<li>单个字段组成；</li>
+<li>多个字段共同组成。</li>
+</ul>
+<p>例如：</p>
+<ul>
+<li>学生信息表中，<code>学号</code> 可以作为主键；</li>
+<li>选课信息表中，<code>学号 + 课号</code> 可以共同作为主键，因为它们共同唯一标识一条选课关系。</li>
+</ul>
+<p>主键的核心意义是：<strong>唯一定位数据记录。</strong></p>
+<hr>
+<h2 id="3-MySQL-的优势"><a href="#3-MySQL-的优势" class="headerlink" title="3. MySQL 的优势"></a>3. MySQL 的优势</h2><p>MySQL 是最典型、最常用的开源关系型数据库之一，在大型互联网后台中应用非常广泛。</p>
+<p>它的主要优势包括：</p>
+<ul>
+<li><strong>易于使用</strong>：生态成熟，工具丰富；</li>
+<li><strong>功能强大</strong>：支持事务、触发器、存储过程等；</li>
+<li><strong>可承载较大规模数据</strong>：可以作为千万级记录量的大型数据库；</li>
+<li><strong>开源可定制</strong>：采用 GPL 开源协议，工程师可以基于源码进行定制；</li>
+<li><strong>事务可靠</strong>：InnoDB 存储引擎符合 ACID 模型，能保证数据完整性和可靠性。</li>
+</ul>
+<hr>
+<h2 id="4-MySQL-高可用架构一：主从模式"><a href="#4-MySQL-高可用架构一：主从模式" class="headerlink" title="4. MySQL 高可用架构一：主从模式"></a>4. MySQL 高可用架构一：主从模式</h2><h3 id="基本结构"><a href="#基本结构" class="headerlink" title="基本结构"></a>基本结构</h3><p>最基础的 MySQL 高可用方案是<strong>主从模式</strong>：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Master：处理写请求</span><br><span class="line">  ↓ 复制数据</span><br><span class="line">Slave 1：保存副本</span><br><span class="line">Slave 2：保存副本</span><br><span class="line">...</span><br></pre></td></tr></table></figure>
+
+<p>正常情况下：</p>
+<ul>
+<li>Master 负责写数据；</li>
+<li>Slave 从 Master 复制数据；</li>
+<li>Master 宕机后，可以将某个 Slave 提升为新的 Master。</li>
+</ul>
+<p>主从模式的高可用基础是：<strong>主从复制。</strong></p>
+<hr>
+<h2 id="5-MySQL-主从复制原理"><a href="#5-MySQL-主从复制原理" class="headerlink" title="5. MySQL 主从复制原理"></a>5. MySQL 主从复制原理</h2><p>MySQL 主从复制的核心流程如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br></pre></td><td class="code"><pre><span class="line">Master 数据变更</span><br><span class="line">  ↓</span><br><span class="line">写入 binlog</span><br><span class="line">  ↓</span><br><span class="line">Slave I/O 线程读取 Master binlog</span><br><span class="line">  ↓</span><br><span class="line">写入 Slave relay log</span><br><span class="line">  ↓</span><br><span class="line">Slave SQL 线程读取 relay log</span><br><span class="line">  ↓</span><br><span class="line">在 Slave 本地回放 SQL</span><br><span class="line">  ↓</span><br><span class="line">Slave 数据与 Master 保持一致</span><br></pre></td></tr></table></figure>
+
+<p>关键组件：</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>binlog</td>
+<td>Master 记录数据变更日志</td>
+</tr>
+<tr>
+<td>I&#x2F;O 线程</td>
+<td>Slave 从 Master 拉取 binlog</td>
+</tr>
+<tr>
+<td>relay log</td>
+<td>Slave 保存从 Master 拉到的日志</td>
+</tr>
+<tr>
+<td>SQL 线程</td>
+<td>Slave 回放 relay log 中的 SQL</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="6-异步复制与数据丢失风险"><a href="#6-异步复制与数据丢失风险" class="headerlink" title="6. 异步复制与数据丢失风险"></a>6. 异步复制与数据丢失风险</h2><p>默认的 MySQL 主从复制是<strong>异步复制</strong>。</p>
+<p>也就是说：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">Master 提交事务后直接返回</span><br><span class="line">不会等待 Slave 确认是否收到 binlog</span><br></pre></td></tr></table></figure>
+
+<p>这会带来一个风险：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Master 提交事务成功</span><br><span class="line">  ↓</span><br><span class="line">还没把 binlog 发给 Slave</span><br><span class="line">  ↓</span><br><span class="line">Master 宕机</span><br><span class="line">  ↓</span><br><span class="line">Slave 被提升为新 Master</span><br><span class="line">  ↓</span><br><span class="line">这笔事务数据丢失</span><br></pre></td></tr></table></figure>
+
+<p>因此，异步复制性能好，但一致性风险更高。</p>
+<hr>
+<h2 id="7-半同步复制"><a href="#7-半同步复制" class="headerlink" title="7. 半同步复制"></a>7. 半同步复制</h2><p>为降低数据丢失风险，MySQL 5.5 引入了<strong>半同步复制</strong>。</p>
+<p>半同步复制的流程是：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">Master 执行事务</span><br><span class="line">  ↓</span><br><span class="line">写 binlog</span><br><span class="line">  ↓</span><br><span class="line">等待至少一个 Slave 收到 binlog 并写入 relay log</span><br><span class="line">  ↓</span><br><span class="line">Slave 返回 ACK</span><br><span class="line">  ↓</span><br><span class="line">Master 提交事务</span><br></pre></td></tr></table></figure>
+
+<p>注意：Slave 返回 ACK 的时机不是执行完 SQL，而是<strong>把事务日志写入 relay log 之后</strong>。</p>
+<p>这样做的好处是：</p>
+<ul>
+<li>事务数据已经在至少一个 Slave 上持久化；</li>
+<li>相比等待 Slave 完成 SQL 回放，延迟更低；</li>
+<li>数据丢失风险显著下降。</li>
+</ul>
+<p>代价是：</p>
+<ul>
+<li>Master 提交事务需要等待 Slave 确认；</li>
+<li>写性能会下降；</li>
+<li>更适合对一致性要求较高的业务。</li>
+</ul>
+<hr>
+<h2 id="8-复制风暴问题"><a href="#8-复制风暴问题" class="headerlink" title="8. 复制风暴问题"></a>8. 复制风暴问题</h2><p>如果 Master 同时向大量 Slave 复制数据，Master 的复制压力会很大，这被称为<strong>复制风暴</strong>。</p>
+<p>解决思路是构建层级复制：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">Master</span><br><span class="line">  ↓</span><br><span class="line">一级 Slave</span><br><span class="line">  ↓</span><br><span class="line">二级 Slave</span><br></pre></td></tr></table></figure>
+
+<p>也就是让部分 Slave 再向其他 Slave 复制数据，从而减轻 Master 压力。</p>
+<hr>
+<h2 id="9-MySQL-高可用架构二：MHA"><a href="#9-MySQL-高可用架构二：MHA" class="headerlink" title="9. MySQL 高可用架构二：MHA"></a>9. MySQL 高可用架构二：MHA</h2><h3 id="MHA-的定位"><a href="#MHA-的定位" class="headerlink" title="MHA 的定位"></a>MHA 的定位</h3><p>MHA，全称 <strong>Master High Availability</strong>，是 MySQL 主从高可用领域较成熟的方案。</p>
+<p>它主要解决两个问题：</p>
+<ul>
+<li>自动检测 Master 故障；</li>
+<li>自动完成主从切换。</li>
+</ul>
+<p>通常可以在 <strong>10～30 秒</strong> 内完成故障检测和切换，并尽可能保证主从数据一致。</p>
+<h3 id="MHA-的组成"><a href="#MHA-的组成" class="headerlink" title="MHA 的组成"></a>MHA 的组成</h3><table>
+<thead>
+<tr>
+<th>角色</th>
+<th>作用</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>MHA Manager</td>
+<td>管理节点，负责检测 Master 故障、检查复制状态、执行主从切换</td>
+</tr>
+<tr>
+<td>MHA Node</td>
+<td>部署在每台 MySQL 服务器上，负责修复主从数据差异</td>
+</tr>
+</tbody></table>
+<h3 id="MHA-故障转移流程"><a href="#MHA-故障转移流程" class="headerlink" title="MHA 故障转移流程"></a>MHA 故障转移流程</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">MHA Manager 周期性探测 Master 心跳</span><br><span class="line">  ↓</span><br><span class="line">连续多次探测失败，判断 Master 宕机</span><br><span class="line">  ↓</span><br><span class="line">检查各个 Slave 的 binlog / relay log 状态</span><br><span class="line">  ↓</span><br><span class="line">选择数据最接近 Master 的 Slave 作为新 Master</span><br><span class="line">  ↓</span><br><span class="line">尽量补齐 Slave 与 Master 或 Slave 之间的数据差异</span><br><span class="line">  ↓</span><br><span class="line">将其他 Slave 重新指向新 Master</span><br></pre></td></tr></table></figure>
+
+<p>MHA 的核心思想是：<strong>选出数据最新的 Slave，并尽量补齐缺失日志，最大程度降低主从切换时的数据丢失风险。</strong></p>
+<p>如果 MHA 与半同步复制结合使用，效果更好，因为半同步复制通常能保证至少一个 Slave 拥有和 Master 一致的数据。</p>
+<hr>
+<h2 id="10-MySQL-高可用架构三：MMM"><a href="#10-MySQL-高可用架构三：MMM" class="headerlink" title="10. MySQL 高可用架构三：MMM"></a>10. MySQL 高可用架构三：MMM</h2><p>MMM，全称 <strong>Multi-Master Replication Manager for MySQL</strong>，是一个用于 MySQL 双主故障切换和双主管理的脚本组件。</p>
+<h3 id="MMM-基本架构"><a href="#MMM-基本架构" class="headerlink" title="MMM 基本架构"></a>MMM 基本架构</h3><figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">Master 1：真正处理写请求</span><br><span class="line">Master 2：备用 Master，与 Master 1 相互复制</span><br><span class="line">Slave：负责读请求，从 Master 复制数据</span><br><span class="line">mmm-monitor：监控和决策节点</span><br><span class="line">mmm-agent：部署在每台 MySQL 上的代理</span><br><span class="line">write vip：对外写服务虚拟 IP</span><br><span class="line">read vip：对外读服务虚拟 IP</span><br></pre></td></tr></table></figure>
+
+<h3 id="MMM-故障切换流程"><a href="#MMM-故障切换流程" class="headerlink" title="MMM 故障切换流程"></a>MMM 故障切换流程</h3><p>当 Master 1 宕机：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">monitor 发现 Master 1 不可用</span><br><span class="line">  ↓</span><br><span class="line">请求 Master 1 移除 write vip</span><br><span class="line">  ↓</span><br><span class="line">请求 Master 2 绑定 write vip</span><br><span class="line">  ↓</span><br><span class="line">Master 2 接管写请求</span><br><span class="line">  ↓</span><br><span class="line">通知 Slave 改为向 Master 2 复制数据</span><br></pre></td></tr></table></figure>
+
+<p>MMM 的核心机制是：<strong>通过移动 write vip，让备用 Master 快速接管写请求。</strong></p>
+<h3 id="MMM-的局限"><a href="#MMM-的局限" class="headerlink" title="MMM 的局限"></a>MMM 的局限</h3><p>书中指出，MMM 比较古老：</p>
+<ul>
+<li>不支持 MySQL GTID；</li>
+<li>社区活跃度不足；</li>
+<li>当前组件处于无人维护状态。</li>
+</ul>
+<p>因此更多作为理解历史方案和思路的参考。</p>
+<hr>
+<h2 id="11-MySQL-高可用架构四：MGR"><a href="#11-MySQL-高可用架构四：MGR" class="headerlink" title="11. MySQL 高可用架构四：MGR"></a>11. MySQL 高可用架构四：MGR</h2><p>MGR，全称 <strong>MySQL Group Replication，MySQL 组复制</strong>，是 MySQL 5.7.17 推出的高可用方案。</p>
+<h3 id="MGR-的主要特性"><a href="#MGR-的主要特性" class="headerlink" title="MGR 的主要特性"></a>MGR 的主要特性</h3><table>
+<thead>
+<tr>
+<th>特性</th>
+<th>说明</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>一致性高</td>
+<td>基于 Paxos 等分布式共识思想，保证多节点数据一致</td>
+</tr>
+<tr>
+<td>容错性高</td>
+<td>只要不超过半数节点宕机，就能继续服务</td>
+</tr>
+<tr>
+<td>灵活性强</td>
+<td>支持单主模式和多主模式</td>
+</tr>
+</tbody></table>
+<h3 id="MGR-的提交机制"><a href="#MGR-的提交机制" class="headerlink" title="MGR 的提交机制"></a>MGR 的提交机制</h3><p>MGR 至少由 3 个 MySQL 节点组成一个复制组。</p>
+<p>一个事务必须经过复制组内<strong>超过半数节点决议通过</strong>后才能提交。</p>
+<p>例如 3 个节点组成复制组：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">事务提交</span><br><span class="line">  ↓</span><br><span class="line">组内节点进行 certify 决议</span><br><span class="line">  ↓</span><br><span class="line">至少 2 个节点通过</span><br><span class="line">  ↓</span><br><span class="line">事务才能提交</span><br></pre></td></tr></table></figure>
+
+<p>这种机制提升了数据一致性，但也提高了写入成本。</p>
+<hr>
+<h2 id="12-MGR-单主模式与多主模式"><a href="#12-MGR-单主模式与多主模式" class="headerlink" title="12. MGR 单主模式与多主模式"></a>12. MGR 单主模式与多主模式</h2><p>MGR 支持两种模式。</p>
+<h3 id="单主模式"><a href="#单主模式" class="headerlink" title="单主模式"></a>单主模式</h3><p>复制组自动选择一个 Master 处理写请求。</p>
+<p>如果超过半数节点与 Master 通信失败，MGR 会认为 Master 宕机，并根据节点权重和 ID 自动重新选主。</p>
+<p>官方更推荐单主模式。</p>
+<h3 id="多主模式"><a href="#多主模式" class="headerlink" title="多主模式"></a>多主模式</h3><p>每个 MySQL 节点都可以处理写请求。</p>
+<p>但在高并发写场景下，不同节点可能同时执行冲突事务，导致后提交的事务被回滚。</p>
+<p>因此，多主模式事务冲突概率较高，不适合高并发写入场景。</p>
+<hr>
+<h2 id="13-MGR-的优缺点"><a href="#13-MGR-的优缺点" class="headerlink" title="13. MGR 的优缺点"></a>13. MGR 的优缺点</h2><h3 id="优点"><a href="#优点" class="headerlink" title="优点"></a>优点</h3><ul>
+<li>数据一致性强；</li>
+<li>容错能力高；</li>
+<li>自动选主；</li>
+<li>适合对数据不丢失要求较高的场景。</li>
+</ul>
+<h3 id="缺点"><a href="#缺点" class="headerlink" title="缺点"></a>缺点</h3><ul>
+<li>每个写请求都需要和复制组内多数节点通信；</li>
+<li>写性能不如异步复制和半同步复制；</li>
+<li>更适合强一致、写请求量不大的业务场景。</li>
+</ul>
+<hr>
+<h2 id="14-几种-MySQL-高可用方案对比"><a href="#14-几种-MySQL-高可用方案对比" class="headerlink" title="14. 几种 MySQL 高可用方案对比"></a>14. 几种 MySQL 高可用方案对比</h2><table>
+<thead>
+<tr>
+<th>方案</th>
+<th>核心思路</th>
+<th>优点</th>
+<th>缺点</th>
+<th>适用场景</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>主从异步复制</td>
+<td>Master 写，Slave 异步复制</td>
+<td>性能好，架构简单</td>
+<td>Master 宕机可能丢数据</td>
+<td>普通读多写少场景</td>
+</tr>
+<tr>
+<td>半同步复制</td>
+<td>至少一个 Slave 收到日志后 Master 才提交</td>
+<td>降低数据丢失风险</td>
+<td>写性能下降</td>
+<td>一致性要求较高场景</td>
+</tr>
+<tr>
+<td>MHA</td>
+<td>自动检测故障并选择最新 Slave 切主</td>
+<td>成熟，切换快，尽量减少丢数据</td>
+<td>仍依赖主从复制基础</td>
+<td>MySQL 主从高可用</td>
+</tr>
+<tr>
+<td>MMM</td>
+<td>双主 + VIP 切换</td>
+<td>切换对业务较透明</td>
+<td>方案老旧，维护不足</td>
+<td>历史方案，不推荐新系统优先采用</td>
+</tr>
+<tr>
+<td>MGR</td>
+<td>组复制 + 多数派决议</td>
+<td>强一致，高容错，自动选主</td>
+<td>写性能较低</td>
+<td>强一致、写量不大的场景</td>
+</tr>
+</tbody></table>
+<hr>
+<h2 id="本节最重要的架构思想"><a href="#本节最重要的架构思想" class="headerlink" title="本节最重要的架构思想"></a>本节最重要的架构思想</h2><ol>
+<li><strong>MySQL 是大型互联网后台最常见的核心持久化存储。</strong></li>
+<li><strong>关系型数据库通过二维表表达实体和实体关系，逻辑清晰、容易理解。</strong></li>
+<li><strong>主键用于唯一定位一条数据记录，是表设计的基础概念。</strong></li>
+<li><strong>MySQL 高可用的基础是主从复制。</strong></li>
+<li><strong>异步复制性能好，但存在数据丢失风险。</strong></li>
+<li><strong>半同步复制通过等待至少一个 Slave 写入 relay log，降低数据丢失风险，但牺牲写性能。</strong></li>
+<li><strong>Master 向大量 Slave 复制会引发复制风暴，可以通过层级复制缓解。</strong></li>
+<li><strong>MHA 通过自动故障检测、选主和日志补齐，实现主从自动切换。</strong></li>
+<li><strong>MMM 通过移动 VIP 实现双主切换，但方案较老，不适合新系统优先选择。</strong></li>
+<li><strong>MGR 基于多数派决议提供强一致和高容错，但写性能成本更高。</strong></li>
+<li><strong>数据库高可用设计的核心权衡是：性能、一致性、可用性、复杂度。</strong></li>
+</ol>
+<hr>
+<h2 id="一句话总结"><a href="#一句话总结" class="headerlink" title="一句话总结"></a>一句话总结</h2><p><strong>MySQL 作为大型互联网后台的核心关系型数据库，依靠主从复制构建基础高可用能力；异步复制性能高但可能丢数据，半同步复制提升一致性但降低写性能，MHA、MMM、MGR 则分别从自动切主、VIP 双主切换、组复制强一致等角度解决 MySQL 高可用问题，架构选型需要在性能、一致性、可用性和维护成本之间权衡。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/MySQL/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    MySQL
+    
+</a>
+
+        
+        
+<a href="/tags/%E6%95%B0%E6%8D%AE%E5%BA%93/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    数据库
+    
+</a>
+
+        
+        
+<a href="/tags/%E4%B8%BB%E4%BB%8E%E5%A4%8D%E5%88%B6/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    主从复制
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%8F%AF%E7%94%A8/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高可用
+    
+</a>
+
+        
+        
+<a href="/tags/MHA/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    MHA
+    
+</a>
+
+        
+        
+<a href="/tags/MMM/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    MMM
+    
+</a>
+
+        
+        
+<a href="/tags/MGR/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    MGR
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/07/17/Redis%E6%80%BB%E7%BB%93/" class="post-nav-link group text-left" title="Redis 总结">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">Redis 总结</span>
+        </a>
+        
+
+        
+        <a href="/2026/07/15/RPC%E6%9C%8D%E5%8A%A1/" class="post-nav-link group text-right" title="RPC 服务总结">
+            <span class="post-nav-title">RPC 服务总结</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>
