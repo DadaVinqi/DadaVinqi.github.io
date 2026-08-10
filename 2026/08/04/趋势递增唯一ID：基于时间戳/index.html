@@ -1,0 +1,1021 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>趋势递增唯一 ID：Snowflake 为什么适合分布式发号？ | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="严格单调递增 ID 很难水平扩展，而基于时间戳的趋势递增 ID 放宽了全局顺序要求：只要整体随时间递增，局部允许少量乱序，就可以让多个机房、多个服务实例并行生成唯一 ID。Snowflake 的核心价值，就是把时间、机房、实例和毫秒内序列号编码进一个 64 位整数里。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="分布式系统, Snowflake, 时间戳" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="趋势递增唯一 ID：Snowflake 为什么适合分布式发号？ | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="严格单调递增 ID 很难水平扩展，而基于时间戳的趋势递增 ID 放宽了全局顺序要求：只要整体随时间递增，局部允许少量乱序，就可以让多个机房、多个服务实例并行生成唯一 ID。Snowflake 的核心价值，就是把时间、机房、实例和毫秒内序列号编码进一个 64 位整数里。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/08/04/%E8%B6%8B%E5%8A%BF%E9%80%92%E5%A2%9E%E5%94%AF%E4%B8%80ID%EF%BC%9A%E5%9F%BA%E4%BA%8E%E6%97%B6%E9%97%B4%E6%88%B3/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-08-04T07:44:20.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-08-10T13:17:43.324Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="分布式系统" />
+    
+    <meta property="article:tag" content="Snowflake" />
+    
+    <meta property="article:tag" content="时间戳" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="趋势递增唯一 ID：Snowflake 为什么适合分布式发号？ | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="严格单调递增 ID 很难水平扩展，而基于时间戳的趋势递增 ID 放宽了全局顺序要求：只要整体随时间递增，局部允许少量乱序，就可以让多个机房、多个服务实例并行生成唯一 ID。Snowflake 的核心价值，就是把时间、机房、实例和毫秒内序列号编码进一个 64 位整数里。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/08/04/%E8%B6%8B%E5%8A%BF%E9%80%92%E5%A2%9E%E5%94%AF%E4%B8%80ID%EF%BC%9A%E5%9F%BA%E4%BA%8E%E6%97%B6%E9%97%B4%E6%88%B3/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"趋势递增唯一 ID：Snowflake 为什么适合分布式发号？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/04/%E8%B6%8B%E5%8A%BF%E9%80%92%E5%A2%9E%E5%94%AF%E4%B8%80ID%EF%BC%9A%E5%9F%BA%E4%BA%8E%E6%97%B6%E9%97%B4%E6%88%B3/index.html"},"description":"严格单调递增 ID 很难水平扩展，而基于时间戳的趋势递增 ID 放宽了全局顺序要求：只要整体随时间递增，局部允许少量乱序，就可以让多个机房、多个服务实例并行生成唯一 ID。Snowflake 的核心价值，就是把时间、机房、实例和毫秒内序列号编码进一个 64 位整数里。","datePublished":"2026-08-04T07:44:20.000Z","dateModified":"2026-08-10T13:17:43.324Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"分布式系统, Snowflake, 时间戳"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            趋势递增唯一 ID：Snowflake 为什么适合分布式发号？
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-04">2026/08/04</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    <span class="text-slate-300">/</span>
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/">系统架构</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E7%9B%B4%E6%8E%A5%E7%94%A8%E6%97%B6%E9%97%B4%E6%88%B3%E5%81%9A%E5%94%AF%E4%B8%80-ID" data-target="二、为什么不能直接用时间戳做唯一-ID">二、为什么不能直接用时间戳做唯一 ID</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%AD%A3%E7%A1%AE%E4%BD%BF%E7%94%A8%E6%97%B6%E9%97%B4%E6%88%B3" data-target="三、正确使用时间戳">三、正确使用时间戳</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BD%BF%E7%94%A8%E7%9B%B8%E5%AF%B9%E6%97%B6%E9%97%B4%E6%88%B3" data-target="1-使用相对时间戳">1. 使用相对时间戳</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E6%97%B6%E9%97%B4%E6%88%B3%E6%94%BE%E5%9C%A8%E9%AB%98%E4%BD%8D" data-target="2-时间戳放在高位">2. 时间戳放在高位</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Snowflake-%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86" data-target="四、Snowflake-算法原理">四、Snowflake 算法原理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81Snowflake-%E7%9A%84%E7%81%B5%E6%B4%BB%E5%BA%94%E7%94%A8" data-target="五、Snowflake-的灵活应用">五、Snowflake 的灵活应用</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81Worker-ID-%E5%88%86%E9%85%8D" data-target="六、Worker-ID-分配">六、Worker ID 分配</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Worker-ID" data-target="1-为什么需要-Worker-ID">1. 为什么需要 Worker ID</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E5%BA%93%E5%88%86%E9%85%8D" data-target="2-基于数据库分配">2. 基于数据库分配</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%9F%BA%E4%BA%8E-etcd-%E5%88%86%E9%85%8D" data-target="3-基于-etcd-分配">3. 基于 etcd 分配</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%97%B6%E9%92%9F%E5%9B%9E%E6%8B%A8%E9%97%AE%E9%A2%98" data-target="七、时钟回拨问题">七、时钟回拨问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%97%AE%E9%A2%98%E6%9D%A5%E6%BA%90" data-target="1-问题来源">1. 问题来源</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF" data-target="2-解决思路">2. 解决思路</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%9C%80%E7%BB%88%E6%9E%B6%E6%9E%84" data-target="八、最终架构">八、最终架构</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="九、核心架构思想">九、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="十、一句话总结">十、一句话总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%A0%B8%E5%BF%83%E4%B8%BB%E7%BA%BF" data-target="一、核心主线">一、核心主线</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E8%83%BD%E7%9B%B4%E6%8E%A5%E7%94%A8%E6%97%B6%E9%97%B4%E6%88%B3%E5%81%9A%E5%94%AF%E4%B8%80-ID" data-target="二、为什么不能直接用时间戳做唯一-ID">二、为什么不能直接用时间戳做唯一 ID</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%AD%A3%E7%A1%AE%E4%BD%BF%E7%94%A8%E6%97%B6%E9%97%B4%E6%88%B3" data-target="三、正确使用时间戳">三、正确使用时间戳</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%BD%BF%E7%94%A8%E7%9B%B8%E5%AF%B9%E6%97%B6%E9%97%B4%E6%88%B3" data-target="1-使用相对时间戳">1. 使用相对时间戳</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E6%97%B6%E9%97%B4%E6%88%B3%E6%94%BE%E5%9C%A8%E9%AB%98%E4%BD%8D" data-target="2-时间戳放在高位">2. 时间戳放在高位</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81Snowflake-%E7%AE%97%E6%B3%95%E5%8E%9F%E7%90%86" data-target="四、Snowflake-算法原理">四、Snowflake 算法原理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81Snowflake-%E7%9A%84%E7%81%B5%E6%B4%BB%E5%BA%94%E7%94%A8" data-target="五、Snowflake-的灵活应用">五、Snowflake 的灵活应用</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81Worker-ID-%E5%88%86%E9%85%8D" data-target="六、Worker-ID-分配">六、Worker ID 分配</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E9%9C%80%E8%A6%81-Worker-ID" data-target="1-为什么需要-Worker-ID">1. 为什么需要 Worker ID</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E5%9F%BA%E4%BA%8E%E6%95%B0%E6%8D%AE%E5%BA%93%E5%88%86%E9%85%8D" data-target="2-基于数据库分配">2. 基于数据库分配</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%9F%BA%E4%BA%8E-etcd-%E5%88%86%E9%85%8D" data-target="3-基于-etcd-分配">3. 基于 etcd 分配</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E6%97%B6%E9%92%9F%E5%9B%9E%E6%8B%A8%E9%97%AE%E9%A2%98" data-target="七、时钟回拨问题">七、时钟回拨问题</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%97%AE%E9%A2%98%E6%9D%A5%E6%BA%90" data-target="1-问题来源">1. 问题来源</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E8%A7%A3%E5%86%B3%E6%80%9D%E8%B7%AF" data-target="2-解决思路">2. 解决思路</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%9C%80%E7%BB%88%E6%9E%B6%E6%9E%84" data-target="八、最终架构">八、最终架构</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B9%9D%E3%80%81%E6%A0%B8%E5%BF%83%E6%9E%B6%E6%9E%84%E6%80%9D%E6%83%B3" data-target="九、核心架构思想">九、核心架构思想</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%8D%81%E3%80%81%E4%B8%80%E5%8F%A5%E8%AF%9D%E6%80%BB%E7%BB%93" data-target="十、一句话总结">十、一句话总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>严格单调递增 ID 很难水平扩展，而基于时间戳的趋势递增 ID 放宽了全局顺序要求：只要整体随时间递增，局部允许少量乱序，就可以让多个机房、多个服务实例并行生成唯一 ID。Snowflake 的核心价值，就是把时间、机房、实例和毫秒内序列号编码进一个 64 位整数里。</p>
+<span id="more"></span>
+<h1 id="趋势递增唯一-ID：基于时间戳"><a href="#趋势递增唯一-ID：基于时间戳" class="headerlink" title="趋势递增唯一 ID：基于时间戳"></a>趋势递增唯一 ID：基于时间戳</h1><h2 id="一、核心主线"><a href="#一、核心主线" class="headerlink" title="一、核心主线"></a>一、核心主线</h2><p><strong>如何利用时间戳生成趋势递增的分布式唯一 ID，并解决多实例、同毫秒并发、Worker ID 分配和时钟回拨问题。</strong></p>
+<p>整体思路：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">时间天然递增</span><br><span class="line">        ↓</span><br><span class="line">不能直接用完整时间戳做 ID</span><br><span class="line">        ↓</span><br><span class="line">使用相对时间戳节省位数</span><br><span class="line">        ↓</span><br><span class="line">把机房、实例、并发序列编码进 ID</span><br><span class="line">        ↓</span><br><span class="line">形成 Snowflake 类算法</span><br><span class="line">        ↓</span><br><span class="line">再处理 Worker ID 分配和时钟回拨</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="二、为什么不能直接用时间戳做唯一-ID"><a href="#二、为什么不能直接用时间戳做唯一-ID" class="headerlink" title="二、为什么不能直接用时间戳做唯一 ID"></a>二、为什么不能直接用时间戳做唯一 ID</h2><p>时间戳虽然递增，但不能直接作为唯一 ID。</p>
+<p>原因是高并发场景下，多个请求可能在同一时间到达：</p>
+<ul>
+<li>不同服务实例在同一毫秒生成 ID；</li>
+<li>同一服务实例在同一毫秒处理多个请求；</li>
+<li>如果 ID 只包含时间戳，就会重复。</li>
+</ul>
+<p>所以，基于时间戳的 ID 必须额外区分：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">时间</span><br><span class="line">  + 机房</span><br><span class="line">  + 服务实例</span><br><span class="line">  + 同一毫秒内的请求序列号</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="三、正确使用时间戳"><a href="#三、正确使用时间戳" class="headerlink" title="三、正确使用时间戳"></a>三、正确使用时间戳</h2><h3 id="1-使用相对时间戳"><a href="#1-使用相对时间戳" class="headerlink" title="1. 使用相对时间戳"></a>1. 使用相对时间戳</h3><p>64 位 ID 空间有限，不能简单把完整系统时间戳直接塞进去。</p>
+<p>更合理的做法是设置一个业务起始时间，例如系统上线时间：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">相对时间戳 = 当前时间 - 系统起始时间</span><br></pre></td></tr></table></figure>
+
+<p>这样可以节省大量高位空间。</p>
+<p>例如：</p>
+<ul>
+<li>如果按秒记录，几十年只需要约 31 位；</li>
+<li>如果按毫秒记录，约 41 位即可支持长期运行。</li>
+</ul>
+<h3 id="2-时间戳放在高位"><a href="#2-时间戳放在高位" class="headerlink" title="2. 时间戳放在高位"></a>2. 时间戳放在高位</h3><p>整数大小主要由高位决定。</p>
+<p>因此，时间戳应放在 ID 的高位：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">高位：时间戳</span><br><span class="line">中间：机房 / 实例</span><br><span class="line">低位：毫秒内序列号</span><br></pre></td></tr></table></figure>
+
+<p>这样随着时间推进，生成的 ID 整体也会越来越大，满足趋势递增。</p>
+<hr>
+<h2 id="四、Snowflake-算法原理"><a href="#四、Snowflake-算法原理" class="headerlink" title="四、Snowflake 算法原理"></a>四、Snowflake 算法原理</h2><p>Snowflake 算法将多个分布式变量按位拼接成一个 64 位 long 类型整数。</p>
+<p>经典结构如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">0 | 41位时间戳 | 5位机房ID | 5位机器ID | 12位序列号</span><br></pre></td></tr></table></figure>
+
+<p>各部分含义：</p>
+<table>
+<thead>
+<tr>
+<th>位段</th>
+<th>作用</th>
+<th>能力</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>1 位符号位</td>
+<td>固定为 0，保证正数</td>
+<td>生成正整数 ID</td>
+</tr>
+<tr>
+<td>41 位时间戳</td>
+<td>当前时间与起始时间的毫秒差</td>
+<td>可运行约 69 年</td>
+</tr>
+<tr>
+<td>5 位机房 ID</td>
+<td>区分不同机房</td>
+<td>最多 32 个机房</td>
+</tr>
+<tr>
+<td>5 位机器 ID</td>
+<td>区分服务实例</td>
+<td>每机房最多 32 个实例</td>
+</tr>
+<tr>
+<td>12 位序列号</td>
+<td>区分同一毫秒内请求</td>
+<td>每实例每毫秒最多 4096 个 ID</td>
+</tr>
+</tbody></table>
+<p>生成过程可以理解为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br></pre></td><td class="code"><pre><span class="line">获取当前毫秒时间戳</span><br><span class="line">        ↓</span><br><span class="line">读取机房 ID</span><br><span class="line">        ↓</span><br><span class="line">读取 Worker ID</span><br><span class="line">        ↓</span><br><span class="line">生成同毫秒内自增序列号</span><br><span class="line">        ↓</span><br><span class="line">按位左移并拼接</span><br><span class="line">        ↓</span><br><span class="line">得到 64 位唯一 ID</span><br></pre></td></tr></table></figure>
+
+<hr>
+<h2 id="五、Snowflake-的灵活应用"><a href="#五、Snowflake-的灵活应用" class="headerlink" title="五、Snowflake 的灵活应用"></a>五、Snowflake 的灵活应用</h2><p>Snowflake 不是固定模板，而是一种设计思想：</p>
+<blockquote>
+<p>把业务需要区分的变量，按照容量需求分配到 64 位整数的不同比特位中。</p>
+</blockquote>
+<p>例如书中给出的业务条件：</p>
+<ul>
+<li>3 个机房；</li>
+<li>未来每秒近 10 亿次发号需求；</li>
+<li>单个服务实例每秒处理 100 万请求；</li>
+<li>期望系统运行 30 年。</li>
+</ul>
+<p>可以调整为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1位符号位</span><br><span class="line">40位毫秒时间戳</span><br><span class="line">2位机房ID</span><br><span class="line">11位服务实例ID</span><br><span class="line">10位毫秒内并发序列号</span><br></pre></td></tr></table></figure>
+
+<p>这种设计说明：</p>
+<ul>
+<li>位数分配要根据业务规模估算；</li>
+<li>机房数、实例数、并发数之间可以权衡；</li>
+<li>不要机械照搬经典 Snowflake 的 41-5-5-12。</li>
+</ul>
+<hr>
+<h2 id="六、Worker-ID-分配"><a href="#六、Worker-ID-分配" class="headerlink" title="六、Worker ID 分配"></a>六、Worker ID 分配</h2><h3 id="1-为什么需要-Worker-ID"><a href="#1-为什么需要-Worker-ID" class="headerlink" title="1. 为什么需要 Worker ID"></a>1. 为什么需要 Worker ID</h3><p>多个 ID 生成器实例同时运行时，必须保证每个实例拥有不同的 Worker ID。</p>
+<p>否则两个实例在同一毫秒内可能生成完全相同的 ID。</p>
+<h3 id="2-基于数据库分配"><a href="#2-基于数据库分配" class="headerlink" title="2. 基于数据库分配"></a>2. 基于数据库分配</h3><p>可以创建 <code>worker_id</code> 表，用自增主键分配 Worker ID：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line">实例启动</span><br><span class="line">        ↓</span><br><span class="line">携带本机 IP 查询 worker_id 表</span><br><span class="line">        ↓</span><br><span class="line">如果已存在，使用已有主键</span><br><span class="line">        ↓</span><br><span class="line">如果不存在，插入 IP 并使用新主键</span><br></pre></td></tr></table></figure>
+
+<p>优点是实现简单，适合规模不大的场景。</p>
+<h3 id="3-基于-etcd-分配"><a href="#3-基于-etcd-分配" class="headerlink" title="3. 基于 etcd 分配"></a>3. 基于 etcd 分配</h3><p>etcd 提供全局递增的 Revision 机制。</p>
+<p>分配流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">实例启动</span><br><span class="line">        ↓</span><br><span class="line">创建 worker_id_&#123;IP&#125; 键</span><br><span class="line">        ↓</span><br><span class="line">读取所有 worker_id_ 前缀键</span><br><span class="line">        ↓</span><br><span class="line">按 create_revision 排序</span><br><span class="line">        ↓</span><br><span class="line">当前实例所在下标 = Worker ID</span><br></pre></td></tr></table></figure>
+
+<p>这种方案更适合分布式协调场景，也可用 ZooKeeper、etcd 等组件实现。</p>
+<hr>
+<h2 id="七、时钟回拨问题"><a href="#七、时钟回拨问题" class="headerlink" title="七、时钟回拨问题"></a>七、时钟回拨问题</h2><h3 id="1-问题来源"><a href="#1-问题来源" class="headerlink" title="1. 问题来源"></a>1. 问题来源</h3><p>Snowflake 依赖机器时间。</p>
+<p>机器时间可能因为 NTP 校准发生回拨：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">当前机器时间：11:05:05</span><br><span class="line">        ↓ NTP 校准</span><br><span class="line">校准后时间：11:05:00</span><br></pre></td></tr></table></figure>
+
+<p>如果服务继续发号，就可能生成与 5 秒前相同时间段内的 ID，导致重复。</p>
+<h3 id="2-解决思路"><a href="#2-解决思路" class="headerlink" title="2. 解决思路"></a>2. 解决思路</h3><p>每次生成 ID 时，都要比较：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">当前毫秒时间戳 vs 上一次发号毫秒时间戳</span><br></pre></td></tr></table></figure>
+
+<p>如果当前时间小于上一次时间，说明发生了时钟回拨。</p>
+<p>处理方式：</p>
+<table>
+<thead>
+<tr>
+<th>回拨情况</th>
+<th>处理策略</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>回拨时间较短</td>
+<td>阻塞等待一小段时间后重试</td>
+</tr>
+<tr>
+<td>回拨时间较长</td>
+<td>直接拒绝请求，避免重复 ID</td>
+</tr>
+<tr>
+<td>机器长期漂移严重</td>
+<td>从服务集群中摘除该实例</td>
+</tr>
+</tbody></table>
+<p>也可以对 ID 生成器集群关闭 NTP 自动同步，避免运行中突然回拨，但需要额外监控时钟漂移。</p>
+<hr>
+<h2 id="八、最终架构"><a href="#八、最终架构" class="headerlink" title="八、最终架构"></a>八、最终架构</h2><p>基于 Snowflake 的唯一 ID 生成器最终架构如下：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br></pre></td><td class="code"><pre><span class="line">多个机房</span><br><span class="line">  ├── 每个机房有独立机房编号</span><br><span class="line">  ├── 每个机房部署 Worker ID 分配器</span><br><span class="line">  └── 每个机房部署多个 ID 生成器实例</span><br><span class="line">          ↓</span><br><span class="line">      实例启动时获取 Worker ID</span><br><span class="line">          ↓</span><br><span class="line">      本地维护毫秒时间戳和毫秒内序列号</span><br><span class="line">          ↓</span><br><span class="line">      结合机房 ID 生成唯一 ID</span><br></pre></td></tr></table></figure>
+
+<p>这种架构的特点：</p>
+<ul>
+<li>多机房可并行发号；</li>
+<li>多实例可水平扩展；</li>
+<li>发号过程主要在本地完成；</li>
+<li>性能高，不依赖中心服务逐次分配；</li>
+<li>生成结果趋势递增，适合作为数据库主键。</li>
+</ul>
+<hr>
+<h2 id="九、核心架构思想"><a href="#九、核心架构思想" class="headerlink" title="九、核心架构思想"></a>九、核心架构思想</h2><ol>
+<li><strong>趋势递增比严格单调递增更适合分布式高并发系统。</strong></li>
+<li><strong>时间戳适合放在 ID 高位，用来保证整体递增趋势。</strong></li>
+<li><strong>不能直接用时间戳做唯一 ID，必须加入实例和并发序列信息。</strong></li>
+<li><strong>Snowflake 的本质是按位编码，把多个变量压缩进 64 位整数。</strong></li>
+<li><strong>位数分配应根据业务容量灵活调整，而不是死套经典模板。</strong></li>
+<li><strong>Worker ID 必须全局唯一，否则多实例会生成重复 ID。</strong></li>
+<li><strong>Worker ID 可以通过数据库自增主键、etcd 或 ZooKeeper 分配。</strong></li>
+<li><strong>同一毫秒内的序列号决定单实例瞬时发号能力。</strong></li>
+<li><strong>时钟回拨是基于时间戳发号的核心风险，必须检测并处理。</strong></li>
+<li><strong>Snowflake 用局部有序换取高并发、高可用和水平扩展能力。</strong></li>
+</ol>
+<hr>
+<h2 id="十、一句话总结"><a href="#十、一句话总结" class="headerlink" title="十、一句话总结"></a>十、一句话总结</h2><p><strong>基于时间戳的趋势递增唯一 ID 通过 Snowflake 类算法，把相对时间戳、机房 ID、Worker ID 和毫秒内序列号编码进 64 位整数，从而实现多机房、多实例的高并发本地发号；它牺牲严格全局单调递增，换来了更好的分布式扩展能力，但必须解决 Worker ID 分配和时钟回拨问题。</strong></p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E5%88%86%E5%B8%83%E5%BC%8F%E7%B3%BB%E7%BB%9F/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    分布式系统
+    
+</a>
+
+        
+        
+<a href="/tags/Snowflake/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Snowflake
+    
+</a>
+
+        
+        
+<a href="/tags/%E6%97%B6%E9%97%B4%E6%88%B3/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    时间戳
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <div></div>
+        
+
+        
+        <a href="/2026/08/03/%E6%95%B0%E6%8D%AE%E5%88%86%E7%89%87%E4%B8%8E%E6%95%B0%E6%8D%AE%E5%BA%93%E5%88%86%E5%BA%93%E5%88%86%E8%A1%A8/" class="post-nav-link group text-right" title="数据分片与数据库分库分表">
+            <span class="post-nav-title">数据分片与数据库分库分表</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>
