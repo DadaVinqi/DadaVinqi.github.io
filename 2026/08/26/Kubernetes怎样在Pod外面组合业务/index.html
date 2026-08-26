@@ -118,25 +118,25 @@
         
     
     
-    <title>Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog</title>
+    <title>Kubernetes 怎样在 Pod 外面组合业务？ | DadaVinCi's Blog</title>
 
     <!-- SEO Meta -->
     
-    <meta name="description" content="容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？" />
+    <meta name="description" content="上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。 一个 echo 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。 所以先要把任务分成在..." />
     
     
     <meta name="author" content="John Doe" />
     
     
-    <meta name="keywords" content="Kubernetes, Pod, YAML, kubectl" />
+    <meta name="keywords" content="Kubernetes, Job, CronJob, ConfigMap, Secret, Pod" />
     
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog" />
+    <meta property="og:title" content="Kubernetes 怎样在 Pod 外面组合业务？ | DadaVinCi's Blog" />
     
-    <meta property="og:description" content="容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？" />
+    <meta property="og:description" content="上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。 一个 echo 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。 所以先要把任务分成在..." />
     
-    <meta property="og:url" content="https://dadavinqi.github.io/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/index.html" />
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/index.html" />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="DadaVinCi's Blog" />
     
@@ -144,20 +144,20 @@
     <meta property="og:locale" content="zh_CN" />
     
     
-    <meta property="og:image" content="https://dadavinqi.github.io/images/k8s12-resource-classic.png" />
-    <meta property="og:image:alt" content="Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog" />
+    <meta property="og:image" content="https://dadavinqi.github.io/images/k8s13-job-wrap-pod.jpg" />
+    <meta property="og:image:alt" content="Kubernetes 怎样在 Pod 外面组合业务？ | DadaVinCi's Blog" />
     
     
-    <meta property="og:image:width" content="1478" />
-    <meta property="og:image:height" content="812" />
+    <meta property="og:image:width" content="769" />
+    <meta property="og:image:height" content="1920" />
     
     
     
     
-    <meta property="article:published_time" content="2026-08-25T03:29:00.000Z" />
+    <meta property="article:published_time" content="2026-08-26T06:02:00.000Z" />
     
     
-    <meta property="article:modified_time" content="2026-08-25T05:30:07.840Z" />
+    <meta property="article:modified_time" content="2026-08-26T07:36:34.794Z" />
     
     
     <meta property="article:author" content="John Doe" />
@@ -166,27 +166,31 @@
     
     <meta property="article:tag" content="Kubernetes" />
     
+    <meta property="article:tag" content="Job" />
+    
+    <meta property="article:tag" content="CronJob" />
+    
+    <meta property="article:tag" content="ConfigMap" />
+    
+    <meta property="article:tag" content="Secret" />
+    
     <meta property="article:tag" content="Pod" />
-    
-    <meta property="article:tag" content="YAML" />
-    
-    <meta property="article:tag" content="kubectl" />
     
     
     
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog" />
+    <meta name="twitter:title" content="Kubernetes 怎样在 Pod 外面组合业务？ | DadaVinCi's Blog" />
     
-    <meta name="twitter:description" content="容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？" />
+    <meta name="twitter:description" content="上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。 一个 echo 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。 所以先要把任务分成在..." />
     
     
-    <meta name="twitter:image" content="https://dadavinqi.github.io/images/k8s12-resource-classic.png" />
+    <meta name="twitter:image" content="https://dadavinqi.github.io/images/k8s13-job-wrap-pod.jpg" />
     
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://dadavinqi.github.io/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/index.html" />
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/index.html" />
 
     <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
     
@@ -194,7 +198,7 @@
     <!-- Structured data (JSON-LD) -->
     
     
-    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 为什么要把容器再包一层 Pod？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/index.html"},"description":"容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？","image":["https://dadavinqi.github.io/images/k8s12-resource-classic.png"],"datePublished":"2026-08-25T03:29:00.000Z","dateModified":"2026-08-25T05:30:07.840Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Pod, YAML, kubectl"}]</script>
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 怎样在 Pod 外面组合业务？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/index.html"},"description":"上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。 一个 echo 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。 所以先要把任务分成在...","image":["https://dadavinqi.github.io/images/k8s13-job-wrap-pod.jpg"],"datePublished":"2026-08-26T06:02:00.000Z","dateModified":"2026-08-26T07:36:34.794Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Job, CronJob, ConfigMap, Secret, Pod"}]</script>
     
 
     <!-- Favicon -->
@@ -447,7 +451,7 @@
     <header class="text-center mb-8">
         
         <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
-            Kubernetes 为什么要把容器再包一层 Pod？
+            Kubernetes 怎样在 Pod 外面组合业务？
         </h1>
         
         
@@ -461,7 +465,7 @@
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
 </svg>
 
-        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-25">2026/08/25</time></a>
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-26">2026/08/26</time></a>
     </div>
     
         
@@ -503,145 +507,137 @@
 </svg>
 
     </button>
-    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E6%8D%A2%E4%B8%80%E4%B8%AA%E8%A7%86%E8%A7%92%EF%BC%9A%E5%AE%B9%E5%99%A8%E5%A4%AA%E2%80%9C%E5%B9%B2%E5%87%80%E2%80%9D%EF%BC%8C%E7%8E%B0%E5%AE%9E%E5%BA%94%E7%94%A8%E5%BE%80%E5%BE%80%E4%B8%8D%E5%B9%B2%E5%87%80" data-target="1-先换一个视角：容器太“干净”，现实应用往往不干净">1. 先换一个视角：容器太“干净”，现实应用往往不干净</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-Pod-%E4%BC%9A%E5%8F%98%E6%88%90-Kubernetes-%E7%9A%84%E6%A0%B8%E5%BF%83" data-target="2-为什么-Pod-会变成-Kubernetes-的核心">2. 为什么 Pod 会变成 Kubernetes 的核心</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-YAML-%E9%87%8C-Pod-%E6%80%8E%E4%B9%88%E5%86%99" data-target="3-YAML-里-Pod-怎么写">3. YAML 里 Pod 怎么写</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-kubectl-%E6%80%8E%E4%B9%88%E6%93%8D%E4%BD%9C%EF%BC%8C%E4%BB%A5%E5%8F%8A%E6%88%91%E8%B8%A9%E5%88%B0%E7%9A%84-CrashLoopBackOff" data-target="4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff">4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E4%B8%80%E5%BC%A0%E8%A1%A8%E6%8A%8A%E5%85%B3%E7%B3%BB%E8%AE%B0%E4%BD%8F" data-target="5-一张表把关系记住">5. 一张表把关系记住</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%87%A0%E7%82%B9%E6%80%9D%E8%80%83%E4%B8%8E%E7%90%86%E8%A7%A3" data-target="几点思考与理解">几点思考与理解</a></li></ul></div>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%9C%A8%E7%BA%BF%E4%BB%BB%E5%8A%A1%E3%80%81%E7%A6%BB%E7%BA%BF%E4%BB%BB%E5%8A%A1" data-target="1-在线任务、离线任务">1. 在线任务、离线任务</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E6%94%B9-Pod" data-target="2-为什么不直接改-Pod">2. 为什么不直接改 Pod</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-Job%EF%BC%9A%E8%B7%91%E5%AE%8C%E5%B0%B1%E7%BB%93%E6%9D%9F" data-target="3-Job：跑完就结束">3. Job：跑完就结束</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-CronJob%EF%BC%9A%E6%8C%89%E7%82%B9%E5%86%8D%E8%B7%91%E4%B8%80%E9%81%8D" data-target="4-CronJob：按点再跑一遍">4. CronJob：按点再跑一遍</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E5%85%89%E4%BC%9A%E8%B7%91%E8%BF%98%E4%B8%8D%E5%A4%9F%EF%BC%8C%E8%BF%98%E5%BE%97%E6%8A%8A%E9%85%8D%E7%BD%AE%E6%8B%86%E5%87%BA%E6%9D%A5" data-target="5-光会跑还不够，还得把配置拆出来">5. 光会跑还不够，还得把配置拆出来</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E4%B8%A4%E7%A7%8D%E6%B3%A8%E5%85%A5%EF%BC%9A%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%EF%BC%8C%E6%88%96%E8%80%85%E6%8C%82%E6%88%90%E6%96%87%E4%BB%B6" data-target="6-两种注入：环境变量，或者挂成文件">6. 两种注入：环境变量，或者挂成文件</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-%E5%AF%B9%E7%85%A7" data-target="7-对照">7. 对照</a></li></ul></div>
 </nav>
 
 <!-- Sidebar TOC (xl+ screens) -->
 <nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
     <div class="toc-sidebar-inner">
         <p class="toc-sidebar-title">目录</p>
-        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E6%8D%A2%E4%B8%80%E4%B8%AA%E8%A7%86%E8%A7%92%EF%BC%9A%E5%AE%B9%E5%99%A8%E5%A4%AA%E2%80%9C%E5%B9%B2%E5%87%80%E2%80%9D%EF%BC%8C%E7%8E%B0%E5%AE%9E%E5%BA%94%E7%94%A8%E5%BE%80%E5%BE%80%E4%B8%8D%E5%B9%B2%E5%87%80" data-target="1-先换一个视角：容器太“干净”，现实应用往往不干净">1. 先换一个视角：容器太“干净”，现实应用往往不干净</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-Pod-%E4%BC%9A%E5%8F%98%E6%88%90-Kubernetes-%E7%9A%84%E6%A0%B8%E5%BF%83" data-target="2-为什么-Pod-会变成-Kubernetes-的核心">2. 为什么 Pod 会变成 Kubernetes 的核心</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-YAML-%E9%87%8C-Pod-%E6%80%8E%E4%B9%88%E5%86%99" data-target="3-YAML-里-Pod-怎么写">3. YAML 里 Pod 怎么写</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-kubectl-%E6%80%8E%E4%B9%88%E6%93%8D%E4%BD%9C%EF%BC%8C%E4%BB%A5%E5%8F%8A%E6%88%91%E8%B8%A9%E5%88%B0%E7%9A%84-CrashLoopBackOff" data-target="4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff">4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E4%B8%80%E5%BC%A0%E8%A1%A8%E6%8A%8A%E5%85%B3%E7%B3%BB%E8%AE%B0%E4%BD%8F" data-target="5-一张表把关系记住">5. 一张表把关系记住</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%87%A0%E7%82%B9%E6%80%9D%E8%80%83%E4%B8%8E%E7%90%86%E8%A7%A3" data-target="几点思考与理解">几点思考与理解</a></li></ul></div>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%9C%A8%E7%BA%BF%E4%BB%BB%E5%8A%A1%E3%80%81%E7%A6%BB%E7%BA%BF%E4%BB%BB%E5%8A%A1" data-target="1-在线任务、离线任务">1. 在线任务、离线任务</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88%E4%B8%8D%E7%9B%B4%E6%8E%A5%E6%94%B9-Pod" data-target="2-为什么不直接改-Pod">2. 为什么不直接改 Pod</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-Job%EF%BC%9A%E8%B7%91%E5%AE%8C%E5%B0%B1%E7%BB%93%E6%9D%9F" data-target="3-Job：跑完就结束">3. Job：跑完就结束</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-CronJob%EF%BC%9A%E6%8C%89%E7%82%B9%E5%86%8D%E8%B7%91%E4%B8%80%E9%81%8D" data-target="4-CronJob：按点再跑一遍">4. CronJob：按点再跑一遍</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E5%85%89%E4%BC%9A%E8%B7%91%E8%BF%98%E4%B8%8D%E5%A4%9F%EF%BC%8C%E8%BF%98%E5%BE%97%E6%8A%8A%E9%85%8D%E7%BD%AE%E6%8B%86%E5%87%BA%E6%9D%A5" data-target="5-光会跑还不够，还得把配置拆出来">5. 光会跑还不够，还得把配置拆出来</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E4%B8%A4%E7%A7%8D%E6%B3%A8%E5%85%A5%EF%BC%9A%E7%8E%AF%E5%A2%83%E5%8F%98%E9%87%8F%EF%BC%8C%E6%88%96%E8%80%85%E6%8C%82%E6%88%90%E6%96%87%E4%BB%B6" data-target="6-两种注入：环境变量，或者挂成文件">6. 两种注入：环境变量，或者挂成文件</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#7-%E5%AF%B9%E7%85%A7" data-target="7-对照">7. 对照</a></li></ul></div>
     </div>
 </nav>
 
     
 
     <div class="prose-shiro" data-pagefind-body>
-        <p>容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？</p>
+        <p>上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。</p>
+<p>一个 <code>echo</code> 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。</p>
+<p>所以先要把任务分成在线和离线。分清了，才知道什么该直接用 Pod 的默认行为，什么该用 Job &#x2F; CronJob 包一层。配置再用 ConfigMap &#x2F; Secret 从外面注入。</p>
 <span id="more"></span>
 
-<h2 id="1-先换一个视角：容器太“干净”，现实应用往往不干净"><a href="#1-先换一个视角：容器太“干净”，现实应用往往不干净" class="headerlink" title="1. 先换一个视角：容器太“干净”，现实应用往往不干净"></a>1. 先换一个视角：容器太“干净”，现实应用往往不干净</h2><p>以前我习惯把容器理解成“一个进程、一个沙盒”。隔离性很好，封装也干净。但一进真实场景，麻烦就来了：很少有应用是完全独立跑的。</p>
-<p>有的关系还比较松散，比如 Nginx、WordPress、MariaDB，可以分别调度，靠 IP 通信。还有一类关系很紧：启动前要有人帮它初始化配置，或者日志代理必须读同一个本地文件再转发出去。这两个进程如果被拆到不同机器上，联系一断，就没法干活。</p>
-<p>那能不能把它们塞进同一个容器？</p>
-<p>可以，但我觉得这不是好办法。容器的初衷就是一个进程、一个应用。一个容器里塞多个应用，既难管，也违背隔离。</p>
-<p>所以需要在容器外面再加一层“收纳舱”：里面的容器相对独立，同时又共享一小块网络和存储，而且永远绑在一起调度。这一层就是 Pod。</p>
-<p>Pod 原意是豌豆荚，后来也有舱室、太空舱的意思。容器就是豆荚里那些豌豆，<code>spec.containers</code> 本来就是数组，允许定义多个容器。</p>
-<p>对我来说，这句话最好记：<strong>容器解决“怎么跑一个进程”，Pod 解决“哪些进程必须待在一起跑”。</strong></p>
-<h2 id="2-为什么-Pod-会变成-Kubernetes-的核心"><a href="#2-为什么-Pod-会变成-Kubernetes-的核心" class="headerlink" title="2. 为什么 Pod 会变成 Kubernetes 的核心"></a>2. 为什么 Pod 会变成 Kubernetes 的核心</h2><p>有了这层打包，里面的容器总是一起调度、一起运行，不会被拆开。更重要的是，Pod 属于 Kubernetes，可以在不直接碰下层容器运行时的前提下做定制。集群级别管理应用，就会顺手很多。</p>
-<p>Kubernetes 把 Pod 当成应用调度部署的最小单位。它像原子：对外是最小单位，对内其实还有结构。后面的 ConfigMap、Job、Deployment，都是从 Pod 往外长出来的。</p>
-<p>经典那张资源关系图就是这个意思，从 Pod 扩到配置、离线作业、多实例部署：</p>
-<p><img src="/images/k8s12-resource-classic.png" alt="以 Pod 为中心的经典资源图" decoding="async" loading="eager" fetchpriority="high" width="1478" height="812"></p>
-<p>但随着发展，这张图已经不能完全概括了，于是有了一张更完整的图，后面很多对象都可以按“围着 Pod 转”来看：</p>
-<p><img src="/images/k8s12-resource-map.jpg" alt="以 Pod 为中心的资源对象关系" decoding="async" loading="lazy" fetchpriority="auto" width="769" height="1920"></p>
-<p>两张图看下来，结论很简单：<strong>Kubernetes 里几乎所有功能，最后都要通过 Pod 落地。</strong> 所以它不是众多对象里普通的一个，而是中心。</p>
-<h2 id="3-YAML-里-Pod-怎么写"><a href="#3-YAML-里-Pod-怎么写" class="headerlink" title="3. YAML 里 Pod 怎么写"></a>3. YAML 里 Pod 怎么写</h2><p>Pod 也是 API 对象，四个基本部分少不了：<code>apiVersion</code>、<code>kind</code>、<code>metadata</code>、<code>spec</code>。</p>
-<p>对 Pod 来说，<code>apiVersion</code> 是 <code>v1</code>，<code>kind</code> 是 <code>Pod</code>。Docker 创建容器可以不起名字，Kubernetes 里不行，Pod 必须有 <code>metadata.name</code>。光有名字还不够，<code>labels</code> 用来贴分类标签，后面做筛选、关联会很方便，比如 <code>env=dev/test/prod</code>、<code>tier=front/back</code>。</p>
-<p><code>spec</code> 里最重要的是 <code>containers</code>。每个容器至少要有 <code>name</code> 和 <code>image</code>，否则校验过不去。其他字段大多能对上 Docker 的经验：</p>
-<table>
+<h2 id="1-在线任务、离线任务"><a href="#1-在线任务、离线任务" class="headerlink" title="1. 在线任务、离线任务"></a>1. 在线任务、离线任务</h2><p>课程里把集群里的应用先分成两类。名字容易误会：这里的「离线」不是没网，是算完就走，英文常叫 batch &#x2F; offline job。</p>
+<p><strong>在线任务</strong>是长期运行的服务，Nginx、Node.js、MySQL、Redis 都属于这一类。启动之后不应停止，随时接收请求。进程退出会被视为故障，需要拉起。上一讲的 Nginx Pod 对应的就是这种模型，默认 <code>restartPolicy</code> 是 <code>Always</code>。</p>
+<p><strong>离线任务</strong>是一批计算，完成后退出。日志分析、数据建模、视频转码、数据库备份都很常见。它们往往不直接服务外部用户，主要对内有用。核心特点是一定会退出，不会无限期运行。因此还要处理超时、失败重试、获取结果。上一讲 busy-pod 执行完 <code>echo</code> 就退出，却被当成服务反复重启，就是用在线策略去管离线任务。</p>
+<p>区分标准只有一条：<strong>正常情况下，这个进程应该持续运行，还是应该运行完毕后退出？</strong></p>
+<ul>
+<li>应该持续运行 → 在线。退出视为失败。</li>
+<li>应该运行完毕后退出 → 离线。退出才算成功；一直不退出，反而可能是卡住了。</li>
+</ul>
+<p>这和重要程度无关。MySQL 重要，夜间备份同样重要。差别在生命周期：一个常驻，一个有始有终。</p>
+<p>离线任务还可以再分：</p>
+<ul>
+<li><strong>临时任务</strong>：按需执行一次。对应 Job。</li>
+<li><strong>定时任务</strong>：按周期执行。对应 CronJob。</li>
+</ul>
+<h2 id="2-为什么不直接改-Pod"><a href="#2-为什么不直接改-Pod" class="headerlink" title="2. 为什么不直接改 Pod"></a>2. 为什么不直接改 Pod</h2><p>上一讲那个 busy-pod，容器本身没有异常，只是执行完 <code>echo</code> 正常退出。但 Pod 默认把其中的进程当作服务：退出就会重启。离线任务本身就需要退出，这个默认行为对不上。</p>
+<p>那能不能给 Pod 增加字段，专门处理“完成后不要重启、超时杀掉、失败再试”？可以，但 Pod 会同时承担容器管理、作业策略和配置，职责过重。</p>
+<p>课程里的思路是：Pod 继续只管理容器。作业如何运行，另建对象，把 Pod 嵌进去当模板。配置也不写进镜像，单独存放，Pod 使用时再引用。各对象只做自己的事。</p>
+<h2 id="3-Job：跑完就结束"><a href="#3-Job：跑完就结束" class="headerlink" title="3. Job：跑完就结束"></a>3. Job：跑完就结束</h2><p>临时跑一次的，用 Job。它的 apiVersion 是 <code>batch/v1</code>，不是普通 Pod 的 <code>v1</code>。</p>
+<p>YAML 是嵌套结构：外层是 Job，<code>spec.template</code> 里放一份 Pod 规格。这份 Pod 没有自己的 <code>apiVersion</code> 和 <code>kind</code>，只描述容器如何运行。Job 依据这份模板创建真正的 Pod。</p>
+<p><img src="/images/k8s13-job-wrap-pod.jpg" alt="Job 里面嵌了一份 Pod 模板" decoding="async" loading="eager" fetchpriority="high" width="769" height="1920"></p>
+<p>离线任务还要改重启策略。<code>restartPolicy</code> 写在模板里的 Pod 上：失败了原地重启容器，用 <code>OnFailure</code>；不重启、让 Job 再开一个新 Pod，用 <code>Never</code>。不要用 <code>Always</code>，否则又会变成那个死循环。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">batch/v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Job</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">echo-job</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">template:</span></span><br><span class="line">    <span class="attr">spec:</span></span><br><span class="line">      <span class="attr">restartPolicy:</span> <span class="string">OnFailure</span></span><br><span class="line">      <span class="attr">containers:</span></span><br><span class="line">      <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">echo-job</span></span><br><span class="line">        <span class="attr">image:</span> <span class="string">busybox</span></span><br><span class="line">        <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">        <span class="attr">command:</span> [<span class="string">&quot;/bin/echo&quot;</span>]</span><br><span class="line">        <span class="attr">args:</span> [<span class="string">&quot;hello&quot;</span>, <span class="string">&quot;world&quot;</span>]</span><br></pre></td></tr></table></figure>
+
+<p><code>kubectl apply</code> 之后，要看两处：<code>kubectl get job</code> 看作业完没完，<code>kubectl get pod</code> 看具体那个 Pod。正常结束的状态是 Completed，不是 Running，Job 上会显示 <code>1/1</code>。Pod 名字一般是 Job 名后面跟一串随机字符，输出用 <code>kubectl logs</code> 看。</p>
+<p>超时、重试、要跑几个、能不能并行，这些不写在 Pod 模板里，写在 Job 自己的 <code>spec</code> 下：</p>
+<ul>
+<li><code>activeDeadlineSeconds</code>：跑太久就超时</li>
+<li><code>backoffLimit</code>：失败最多试几次</li>
+<li><code>completions</code>：一共要成功几个 Pod，默认 1 个</li>
+<li><code>parallelism</code>：同时最多跑几个，避免把集群占满</li>
+</ul>
+<p>课程里有个 <code>sleep-job</code>：超时 15 秒，失败最多重试 2 次，总共要完成 4 个 Pod，同一时刻最多 2 个。<code>kubectl get pod -w</code> 可以观察排队、启动和完成。这些字段声明清楚后，并行度和完成数由控制器维护。</p>
+<p>Job 完成后不会立刻删除，便于事后查看日志。保留过多会占用资源，可以用 <code>ttlSecondsAfterFinished</code> 到期自动清理。</p>
+<h2 id="4-CronJob：按点再跑一遍"><a href="#4-CronJob：按点再跑一遍" class="headerlink" title="4. CronJob：按点再跑一遍"></a>4. CronJob：按点再跑一遍</h2><p>Job 是按需执行一次。每天备份、每分钟扫描这类周期任务，用 CronJob，简称 <code>cj</code>。</p>
+<p>它不直接管理 Pod，而是先嵌套一个 Job，再由 Job 嵌套 Pod。YAML 里可以看到三层 <code>spec</code>：最外层是定时规则 <code>schedule</code>，中间 <code>jobTemplate</code> 是 Job，最内层 <code>template</code> 才是 Pod。</p>
+<p><img src="/images/k8s13-cronjob-nest.jpg" alt="CronJob 套 Job，Job 再套 Pod" decoding="async" loading="lazy" fetchpriority="auto" width="769" height="1920"></p>
+<p><code>schedule</code> 与 Linux crontab 相同，<code>*/1 * * * *</code> 表示每分钟一次。表达式不好记时，可以用 <a target="_blank" rel="noopener" href="https://crontab.guru/">crontab.guru</a> 核对。</p>
+<p>创建、查看和 Job 差不多：<code>kubectl apply</code>，然后 <code>kubectl get cj</code>、<code>kubectl get pod</code>。默认只留最近 3 次成功记录，改 <code>successfulJobsHistoryLimit</code> 可以调整。</p>
+<p>连起来看就是：CronJob 决定什么时候开工，Job 决定跑几个、失败怎么办，Pod 决定容器长什么样。每一层只多管一件事。</p>
+<h2 id="5-光会跑还不够，还得把配置拆出来"><a href="#5-光会跑还不够，还得把配置拆出来" class="headerlink" title="5. 光会跑还不够，还得把配置拆出来"></a>5. 光会跑还不够，还得把配置拆出来</h2><p>Job 套完，任务能跑完了。可进程启动时还要读端口、路径、密码。如果这些写在 Dockerfile 的 <code>COPY</code> 里，改个参数就得重新打镜像；如果靠 <code>docker cp</code> 或 <code>-v</code> 往里塞，集群里也不好自动管。</p>
+<p>Kubernetes 的办法还是单独做对象，再让 Pod 去用。</p>
+<p>配置都是字符串，差别在于是否适合明文存放：</p>
+<ul>
+<li>端口、路径、普通参数：ConfigMap，简写 <code>cm</code></li>
+<li>密码、密钥、证书：Secret</li>
+</ul>
+<p>它们不是容器，没有 <code>spec</code>，数据放在 <code>data</code> 里，一组 Key-Value。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create cm info --from-literal=count=10 --dry-run=client -o yaml</span><br></pre></td></tr></table></figure>
+
+<p>apply 进去之后存在 etcd 里。<code>kubectl describe</code> 能直接看到 ConfigMap 的明文。</p>
+<p>Secret 用法差不多，入门用这种就行：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl create secret generic user --from-literal=name=root --dry-run=client -o yaml</span><br></pre></td></tr></table></figure>
+
+<p>看起来和 ConfigMap 几乎一样，只是 <code>data</code> 里是 Base64。这不是加密，只是避免明文直接出现在输出里。<code>kubectl describe</code> Secret 时通常只显示数据大小。自行转码时要加 <code>echo -n</code>，否则换行符也会被编码，值会出错：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">echo</span> -n <span class="string">&#x27;root&#x27;</span> | <span class="built_in">base64</span></span><br></pre></td></tr></table></figure>
+
+<p>跟 Job 不一样：Job 是把 Pod 嵌在 YAML 里；ConfigMap &#x2F; Secret 只是一堆字符串，<strong>不注入进 Pod，容器根本读不到</strong>。引用靠名字，一份配置可以给好几个 Pod、好几个 Job 用。</p>
+<h2 id="6-两种注入：环境变量，或者挂成文件"><a href="#6-两种注入：环境变量，或者挂成文件" class="headerlink" title="6. 两种注入：环境变量，或者挂成文件"></a>6. 两种注入：环境变量，或者挂成文件</h2><p>短的值，做成环境变量最省事。Pod 的 <code>env</code> 不要写死 <code>value</code>，改成 <code>valueFrom</code>：明文走 <code>configMapKeyRef</code>，机密走 <code>secretKeyRef</code>。</p>
+<p>这里有个容易混的地方：<code>name</code> 填的是 ConfigMap &#x2F; Secret <strong>对象的名字</strong>，真正取哪一条数据用 <code>key</code>。</p>
+<p><img src="/images/k8s14-env-ref.jpg" alt="用 valueFrom 把配置变成环境变量" decoding="async" loading="lazy" fetchpriority="auto" width="769" height="1920"></p>
+<p>大段配置，比如一份 nginx.conf，更适合挂成文件。先在 Pod 的 <code>spec.volumes</code> 里声明卷（和 <code>containers</code> 平级，卷属于整个 Pod），再在容器的 <code>volumeMounts</code> 里挂到某个目录。</p>
+<p>多绕一步，是为了以后磁盘、网络盘也能用同一套 Volume 概念。</p>
+<p><img src="/images/k8s14-volume-ref.jpg" alt="先声明 Volume，再挂进容器目录" decoding="async" loading="lazy" fetchpriority="auto" width="769" height="1920"></p>
+<p>挂进去之后，目录里每个文件名就是原来的 Key，文件内容就是 Value。应用按读普通文件的方式读就行。</p>
+<p>修改 ConfigMap &#x2F; Secret 再 apply 之后，已经在运行的 Pod 会不会立刻生效，需要自己验证。环境变量尤其可能仍是旧值，往往要重建 Pod。</p>
+<h2 id="7-对照"><a href="#7-对照" class="headerlink" title="7. 对照"></a>7. 对照</h2><table>
 <thead>
 <tr>
-<th>字段</th>
-<th>我的对应理解</th>
+<th>你想做的事</th>
+<th>用谁</th>
+<th>它和 Pod 的关系</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>ports</td>
-<td>有点像 <code>docker -p</code>，声明容器端口</td>
+<td>长期在线的服务</td>
+<td>在线任务</td>
+<td>裸 Pod 默认按这个管，后面用 Deployment</td>
 </tr>
 <tr>
-<td>imagePullPolicy</td>
-<td>Always &#x2F; Never &#x2F; IfNotPresent，本地没有才拉</td>
+<td>跑完就结束</td>
+<td>离线任务 &#x2F; Job</td>
+<td>里面嵌一份 Pod 模板</td>
 </tr>
 <tr>
-<td>env</td>
-<td>运行时环境变量，比写死在镜像里灵活</td>
+<td>到点再跑</td>
+<td>离线任务 &#x2F; CronJob</td>
+<td>里面嵌 Job，Job 再嵌 Pod</td>
 </tr>
 <tr>
-<td>command</td>
-<td>相当于 Dockerfile 的 ENTRYPOINT</td>
+<td>普通配置</td>
+<td>ConfigMap</td>
+<td>被 Pod 按名字引用</td>
 </tr>
 <tr>
-<td>args</td>
-<td>相当于 Dockerfile 的 CMD，注意和 Docker 命令行含义不完全一样</td>
+<td>密码这类</td>
+<td>Secret</td>
+<td>一样引用，数据是 Base64</td>
+</tr>
+<tr>
+<td>短配置</td>
+<td>env.valueFrom</td>
+<td>变成环境变量</td>
+</tr>
+<tr>
+<td>长配置文件</td>
+<td>volumes + volumeMounts</td>
+<td>变成目录里的文件</td>
 </tr>
 </tbody></table>
-<p>一份最小例子可以长这样：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">busy-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">chrono</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">region:</span> <span class="string">north</span></span><br><span class="line">    <span class="attr">tier:</span> <span class="string">back</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">busy</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">busybox:latest</span></span><br><span class="line">    <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">    <span class="attr">env:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">os</span></span><br><span class="line">      <span class="attr">value:</span> <span class="string">&quot;ubuntu&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">debug</span></span><br><span class="line">      <span class="attr">value:</span> <span class="string">&quot;on&quot;</span></span><br><span class="line">    <span class="attr">command:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">/bin/echo</span></span><br><span class="line">    <span class="attr">args:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;$(os), $(debug)&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>YAML 把期望状态写清楚，比一条很长的 <code>docker run</code> 好读，也对机器友好。这就是声明式。</p>
-<h2 id="4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff"><a href="#4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff" class="headerlink" title="4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff"></a>4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff</h2><p>创建和删除还是上次那套：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f busy-pod.yml</span><br><span class="line">kubectl delete -f busy-pod.yml</span><br><span class="line"><span class="comment"># 也可以按名字删</span></span><br><span class="line">kubectl delete pod busy-pod</span><br></pre></td></tr></table></figure>
-
-<p>和 Docker 不一样，Pod 不会在前台跑，默认就像加了 <code>-d</code>。想看输出，用 <code>kubectl logs</code>：</p>
-<p><img src="/images/k8s12-busy-logs.png" alt="kubectl logs busy-pod" decoding="async" loading="lazy" fetchpriority="auto" width="948" height="124"></p>
-<p><code>kubectl get pod</code> 看状态时，这个 busy-pod 并不健康：</p>
-<p><img src="/images/k8s12-crashloop.png" alt="busy-pod 处于 CrashLoopBackOff" decoding="async" loading="lazy" fetchpriority="auto" width="1464" height="184"></p>
-<p>排错要看 <code>kubectl describe</code>，重点在末尾 Events。它被调度到 minikube，镜像也在本地，容器能创建、能启动，但马上退出。Kubernetes 默认会重启 Pod，于是就进入反复停止-启动，最后变成 CrashLoopBackOff。</p>
-<p><img src="/images/k8s12-events.png" alt="Events 里的 Back-off restarting" decoding="async" loading="lazy" fetchpriority="auto" width="1920" height="294"></p>
-<p>原因很直接：这个容器只跑了一条 <code>echo</code> 就结束了。集群里大多数应用是常驻服务，不会主动退出，所以把 busy-pod 删掉，换成 Nginx 这种才更像日常用法。</p>
-<p><code>ngx-pod</code> 起来后就是 Running：</p>
-<p><img src="/images/k8s12-ngx-running.png" alt="ngx-pod Running" decoding="async" loading="lazy" fetchpriority="auto" width="1124" height="184"></p>
-<p>日志也能看到 Nginx 启动过程：</p>
-<p><img src="/images/k8s12-ngx-logs.png" alt="kubectl logs ngx-pod" decoding="async" loading="lazy" fetchpriority="auto" width="1920" height="415"></p>
-<p>拷文件、进容器也有对应命令。<code>kubectl cp</code> 把本地文件拷进 Pod，<code>kubectl exec</code> 进去执行命令。和 Docker 有个小差别：Pod 名后面要加 <code>--</code>，把 kubectl 参数和容器里的命令隔开。</p>
-<p><img src="/images/k8s12-exec.png" alt="kubectl exec 进入 ngx-pod" decoding="async" loading="lazy" fetchpriority="auto" width="1920" height="402"></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl <span class="built_in">cp</span> a.txt ngx-pod:/tmp</span><br><span class="line">kubectl <span class="built_in">exec</span> -it ngx-pod -- sh</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-一张表把关系记住"><a href="#5-一张表把关系记住" class="headerlink" title="5. 一张表把关系记住"></a>5. 一张表把关系记住</h2><table>
-<thead>
-<tr>
-<th>概念</th>
-<th>我理解的角色</th>
-<th>一句话</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>容器</td>
-<td>进程的沙盒</td>
-<td>一个进程、一份隔离</td>
-</tr>
-<tr>
-<td>Pod</td>
-<td>调度原子</td>
-<td>把必须在一起的容器绑死</td>
-</tr>
-<tr>
-<td>metadata.name</td>
-<td>身份证</td>
-<td>集群里对象必须有名字</td>
-</tr>
-<tr>
-<td>metadata.labels</td>
-<td>分类贴</td>
-<td>方便识别、筛选、关联</td>
-</tr>
-<tr>
-<td>spec.containers</td>
-<td>豆荚里的豌豆</td>
-<td>名字 + 镜像是底线</td>
-</tr>
-<tr>
-<td>kubectl apply&#x2F;delete</td>
-<td>声明落地 &#x2F; 删掉</td>
-<td>用 YAML 管对象</td>
-</tr>
-<tr>
-<td>kubectl get&#x2F;describe&#x2F;logs</td>
-<td>看状态、看事件、看输出</td>
-<td>排错先看这三件</td>
-</tr>
-<tr>
-<td>kubectl cp&#x2F;exec</td>
-<td>拷文件、进容器</td>
-<td>多容器时用 <code>-c</code> 指定</td>
-</tr>
-</tbody></table>
-<p>没有 Pod，紧耦合进程就只能硬塞进一个容器，或者拆开后靠跨节点通信，调度和对齐都会变难。有了 Pod，共享网络和存储、一起调度，这条线才清楚。</p>
-<h2 id="几点思考与理解"><a href="#几点思考与理解" class="headerlink" title="几点思考与理解"></a>几点思考与理解</h2><p>第一，Pod 和容器不是替换关系。容器还是真正干活的运行时，Pod 是 Kubernetes 的调度单位。有点像进程组和进程：进程还在，但调度和管理按组来。</p>
-<p>第二，生产上通常不要直接创建“裸 Pod”。它只是对容器做了简单包装，比较脆弱。真正扛业务的是 Job、CronJob、Deployment 这些对象，它们会给 Pod 补上重启策略、副本、自愈。即使只跑一个实例，后面也会更倾向用 Deployment，<code>replicas: 1</code>，让控制器盯着它。</p>
-<p>第三，<code>image: xxx:latest</code> 要小心。<code>imagePullPolicy</code> 不是永远默认 IfNotPresent。标签是 <code>latest</code> 时，默认往往是 Always，没外网就会拉取失败。离线环境最好写死具体版本。</p>
-<p>第四，排错顺序可以固定下来：<code>get</code> 看 Ready 和 STATUS，<code>describe</code> 看 Events，<code>logs</code> 看容器输出。READY 列是 <code>x/y</code>，y 是容器总数，x 是已经 Ready 的数量。CrashLoopBackOff 不一定是镜像坏了，也可能只是进程跑完就退出了。</p>
-<p>图片来源：极客时间 <a target="_blank" rel="noopener" href="https://time.geekbang.org/">《Kubernetes入门实战课》</a> 第 12 讲《Pod：如何理解这个Kubernetes里最核心的概念？》，作者 Chrono。</p>
+<p>写 YAML 前先想清楚：这个进程是常驻，还是跑完就结束？配置会不会改、能不能写进镜像？</p>
+<p>持续运行的用在线模型，不要用 Job。会结束的用 Job &#x2F; CronJob，不要直接创建裸 Pod。需要变更的配置放 ConfigMap 或 Secret，短配置用环境变量，长配置挂成文件。</p>
+<p>图片来源：极客时间 <a target="_blank" rel="noopener" href="https://time.geekbang.org/">《Kubernetes入门实战课》</a> 第 13 讲《Job&#x2F;CronJob：为什么不直接用Pod来处理业务？》、第 14 讲《ConfigMap&#x2F;Secret：怎样配置、定制我的应用》，作者 Chrono。</p>
 
     </div>
 
@@ -661,34 +657,56 @@
 
         
         
+<a href="/tags/Job/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Job
+    
+</a>
+
+        
+        
+<a href="/tags/CronJob/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    CronJob
+    
+</a>
+
+        
+        
+<a href="/tags/ConfigMap/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    ConfigMap
+    
+</a>
+
+        
+        
+<a href="/tags/Secret/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Secret
+    
+</a>
+
+        
+        
 <a href="/tags/Pod/" class="tag-pill">
     <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
         <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
     </svg>
     Pod
-    
-</a>
-
-        
-        
-<a href="/tags/YAML/" class="tag-pill">
-    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
-    </svg>
-    YAML
-    
-</a>
-
-        
-        
-<a href="/tags/kubectl/" class="tag-pill">
-    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
-    </svg>
-    kubectl
     
 </a>
 
@@ -700,15 +718,15 @@
     <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
     <div class="section-divider flex justify-between items-center text-sm md:text-base">
         
-        <a href="/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/" class="post-nav-link group text-left" title="Kubernetes 怎样在 Pod 外面组合业务？">
+        <a href="/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/" class="post-nav-link group text-left" title="Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？">
              <span aria-hidden="true">&larr;</span>
-             <span class="post-nav-title">Kubernetes 怎样在 Pod 外面组合业务？</span>
+             <span class="post-nav-title">Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？</span>
         </a>
         
 
         
-        <a href="/2026/08/24/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%83%BD%E8%87%AA%E5%8A%A8%E5%8C%96%E8%BF%90%E7%BB%B4/" class="post-nav-link group text-right" title="Kubernetes 为什么能自动化运维？">
-            <span class="post-nav-title">Kubernetes 为什么能自动化运维？</span>
+        <a href="/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/" class="post-nav-link group text-right" title="Kubernetes 为什么要把容器再包一层 Pod？">
+            <span class="post-nav-title">Kubernetes 为什么要把容器再包一层 Pod？</span>
             <span aria-hidden="true">&rarr;</span>
         </a>
         

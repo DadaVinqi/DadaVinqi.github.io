@@ -93,6 +93,13 @@
     
     
     
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
     
     
     
@@ -157,6 +164,8 @@
     <!-- CSS -->
     <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
     <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
     
     
     <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
@@ -417,6 +426,162 @@
     
 
     
+    
+        
+<article class="py-2">
+    <header class="text-center mb-4">
+        <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
+            <a href="/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/">Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？</a>
+        </h2>
+        
+
+
+
+<div class="mt-2 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-27">2026/08/27</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+            
+        </div>
+    
+</div>
+
+    </header>
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="prose-shiro">
+        <p>离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod，<code>restartPolicy</code> 默认是 <code>Always</code>，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。</p>
+<p>处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同：</p>
+<ul>
+<li><strong>Deployment</strong>：在集群中维持 N 个相同副本，不指定必须落在哪台机器。Nginx、WordPress 这类业务用它。</li>
+<li><strong>DaemonSet</strong>：每个节点恰好运行一个 Pod，与节点绑定。kube-proxy、日志采集、监控代理用它。</li>
+</ul>
+<p>多节点集群里，这两种差别才明显。</p>
+    </div>
+    
+    <div class="mt-6 text-center">
+        <a href="/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/"
+            class="focus-elegant btn-ink"
+            aria-label="阅读更多: Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？">
+            阅读更多
+        </a>
+    </div>
+    
+</article>
+
+
+        
+            
+<div class="my-8 flex items-center justify-center gap-3" aria-hidden="true">
+    <div class="h-px flex-1 bg-linear-to-r from-transparent to-slate-300 max-w-divider"></div>
+    <svg class="h-4 w-10 shrink-0 text-slate-300" viewBox="0 0 40 10">
+        <circle cx="20" cy="5" r="3" fill="currentColor" opacity="0.9" />
+        <circle cx="4" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
+        <circle cx="36" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
+    </svg>
+    <div class="h-px flex-1 bg-linear-to-l from-transparent to-slate-300 max-w-divider"></div>
+</div>
+
+        
+    
+        
+<article class="py-2">
+    <header class="text-center mb-4">
+        <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
+            <a href="/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/">Kubernetes 怎样在 Pod 外面组合业务？</a>
+        </h2>
+        
+
+
+
+<div class="mt-2 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-26">2026/08/26</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+            
+        </div>
+    
+</div>
+
+    </header>
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="prose-shiro">
+        <p>上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。</p>
+<p>一个 <code>echo</code> 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。</p>
+<p>所以先要把任务分成在线和离线。分清了，才知道什么该直接用 Pod 的默认行为，什么该用 Job &#x2F; CronJob 包一层。配置再用 ConfigMap &#x2F; Secret 从外面注入。</p>
+    </div>
+    
+    <div class="mt-6 text-center">
+        <a href="/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/"
+            class="focus-elegant btn-ink"
+            aria-label="阅读更多: Kubernetes 怎样在 Pod 外面组合业务？">
+            阅读更多
+        </a>
+    </div>
+    
+</article>
+
+
+        
+            
+<div class="my-8 flex items-center justify-center gap-3" aria-hidden="true">
+    <div class="h-px flex-1 bg-linear-to-r from-transparent to-slate-300 max-w-divider"></div>
+    <svg class="h-4 w-10 shrink-0 text-slate-300" viewBox="0 0 40 10">
+        <circle cx="20" cy="5" r="3" fill="currentColor" opacity="0.9" />
+        <circle cx="4" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
+        <circle cx="36" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
+    </svg>
+    <div class="h-px flex-1 bg-linear-to-l from-transparent to-slate-300 max-w-divider"></div>
+</div>
+
+        
     
         
 <article class="py-2">
@@ -998,154 +1163,6 @@
 
 
         
-            
-<div class="my-8 flex items-center justify-center gap-3" aria-hidden="true">
-    <div class="h-px flex-1 bg-linear-to-r from-transparent to-slate-300 max-w-divider"></div>
-    <svg class="h-4 w-10 shrink-0 text-slate-300" viewBox="0 0 40 10">
-        <circle cx="20" cy="5" r="3" fill="currentColor" opacity="0.9" />
-        <circle cx="4" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
-        <circle cx="36" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
-    </svg>
-    <div class="h-px flex-1 bg-linear-to-l from-transparent to-slate-300 max-w-divider"></div>
-</div>
-
-        
-    
-        
-<article class="py-2">
-    <header class="text-center mb-4">
-        <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
-            <a href="/2026/07/22/%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E8%A6%81%E7%82%B9/">高并发架构设计要点</a>
-        </h2>
-        
-
-
-
-<div class="mt-2 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
-    <div class="flex items-center gap-1.5">
-        
-<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-</svg>
-
-        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-22">2026/07/22</time></a>
-    </div>
-    
-        
-        <span class="text-slate-300" aria-hidden="true">•</span>
-        <div class="flex items-center gap-1.5">
-            
-<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-</svg>
-
-            
-                
-                <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
-            
-        </div>
-    
-</div>
-
-    </header>
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="prose-shiro">
-        <p>高并发并不只是“能扛很多请求”，而是系统在海量请求下仍然具备高性能、高可用性和可扩展性。</p>
-    </div>
-    
-    <div class="mt-6 text-center">
-        <a href="/2026/07/22/%E9%AB%98%E5%B9%B6%E5%8F%91%E6%9E%B6%E6%9E%84%E8%AE%BE%E8%AE%A1%E8%A6%81%E7%82%B9/"
-            class="focus-elegant btn-ink"
-            aria-label="阅读更多: 高并发架构设计要点">
-            阅读更多
-        </a>
-    </div>
-    
-</article>
-
-
-        
-            
-<div class="my-8 flex items-center justify-center gap-3" aria-hidden="true">
-    <div class="h-px flex-1 bg-linear-to-r from-transparent to-slate-300 max-w-divider"></div>
-    <svg class="h-4 w-10 shrink-0 text-slate-300" viewBox="0 0 40 10">
-        <circle cx="20" cy="5" r="3" fill="currentColor" opacity="0.9" />
-        <circle cx="4" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
-        <circle cx="36" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
-    </svg>
-    <div class="h-px flex-1 bg-linear-to-l from-transparent to-slate-300 max-w-divider"></div>
-</div>
-
-        
-    
-        
-<article class="py-2">
-    <header class="text-center mb-4">
-        <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
-            <a href="/2026/07/18/LSM%20Tree%E6%80%BB%E7%BB%93/">LSM Tree</a>
-        </h2>
-        
-
-
-
-<div class="mt-2 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
-    <div class="flex items-center gap-1.5">
-        
-<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-</svg>
-
-        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-18">2026/07/18</time></a>
-    </div>
-    
-        
-        <span class="text-slate-300" aria-hidden="true">•</span>
-        <div class="flex items-center gap-1.5">
-            
-<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-</svg>
-
-            
-                
-                <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
-            
-        </div>
-    
-</div>
-
-    </header>
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="prose-shiro">
-        <p>LSM Tree（Log-Structured Merge Tree，日志结构合并树）是一种<strong>面向高并发写入优化，同时兼顾查询效率的键值存储模型</strong>。</p>
-    </div>
-    
-    <div class="mt-6 text-center">
-        <a href="/2026/07/18/LSM%20Tree%E6%80%BB%E7%BB%93/"
-            class="focus-elegant btn-ink"
-            aria-label="阅读更多: LSM Tree">
-            阅读更多
-        </a>
-    </div>
-    
-</article>
-
-
-        
     
     
 
@@ -1201,6 +1218,9 @@
         
         
         
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
         
         window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
         
@@ -1210,6 +1230,8 @@
     <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
     
     
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
     
     
     

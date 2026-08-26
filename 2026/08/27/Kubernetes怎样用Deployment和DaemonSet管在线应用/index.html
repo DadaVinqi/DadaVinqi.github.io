@@ -118,25 +118,25 @@
         
     
     
-    <title>Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog</title>
+    <title>Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？ | DadaVinCi's Blog</title>
 
     <!-- SEO Meta -->
     
-    <meta name="description" content="容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？" />
+    <meta name="description" content="离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod， restartPolicy 默认是 Always ，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。 处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同： Deployment ：在集群中维持..." />
     
     
     <meta name="author" content="John Doe" />
     
     
-    <meta name="keywords" content="Kubernetes, Pod, YAML, kubectl" />
+    <meta name="keywords" content="Kubernetes, Pod, Deployment, DaemonSet, taint" />
     
 
     <!-- Open Graph -->
-    <meta property="og:title" content="Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog" />
+    <meta property="og:title" content="Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？ | DadaVinCi's Blog" />
     
-    <meta property="og:description" content="容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？" />
+    <meta property="og:description" content="离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod， restartPolicy 默认是 Always ，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。 处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同： Deployment ：在集群中维持..." />
     
-    <meta property="og:url" content="https://dadavinqi.github.io/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/index.html" />
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/index.html" />
     <meta property="og:type" content="article" />
     <meta property="og:site_name" content="DadaVinCi's Blog" />
     
@@ -144,20 +144,20 @@
     <meta property="og:locale" content="zh_CN" />
     
     
-    <meta property="og:image" content="https://dadavinqi.github.io/images/k8s12-resource-classic.png" />
-    <meta property="og:image:alt" content="Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog" />
+    <meta property="og:image" content="https://dadavinqi.github.io/images/k8s18-deploy-yaml.jpg" />
+    <meta property="og:image:alt" content="Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？ | DadaVinCi's Blog" />
     
     
-    <meta property="og:image:width" content="1478" />
-    <meta property="og:image:height" content="812" />
+    <meta property="og:image:width" content="769" />
+    <meta property="og:image:height" content="1920" />
     
     
     
     
-    <meta property="article:published_time" content="2026-08-25T03:29:00.000Z" />
+    <meta property="article:published_time" content="2026-08-27T08:20:00.000Z" />
     
     
-    <meta property="article:modified_time" content="2026-08-25T05:30:07.840Z" />
+    <meta property="article:modified_time" content="2026-08-26T07:39:06.003Z" />
     
     
     <meta property="article:author" content="John Doe" />
@@ -168,25 +168,27 @@
     
     <meta property="article:tag" content="Pod" />
     
-    <meta property="article:tag" content="YAML" />
+    <meta property="article:tag" content="Deployment" />
     
-    <meta property="article:tag" content="kubectl" />
+    <meta property="article:tag" content="DaemonSet" />
+    
+    <meta property="article:tag" content="taint" />
     
     
     
 
     <!-- Twitter Card -->
     <meta name="twitter:card" content="summary_large_image" />
-    <meta name="twitter:title" content="Kubernetes 为什么要把容器再包一层 Pod？ | DadaVinCi's Blog" />
+    <meta name="twitter:title" content="Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？ | DadaVinCi's Blog" />
     
-    <meta name="twitter:description" content="容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？" />
+    <meta name="twitter:description" content="离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod， restartPolicy 默认是 Always ，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。 处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同： Deployment ：在集群中维持..." />
     
     
-    <meta name="twitter:image" content="https://dadavinqi.github.io/images/k8s12-resource-classic.png" />
+    <meta name="twitter:image" content="https://dadavinqi.github.io/images/k8s18-deploy-yaml.jpg" />
     
 
     <!-- Canonical URL -->
-    <link rel="canonical" href="https://dadavinqi.github.io/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/index.html" />
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/index.html" />
 
     <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
     
@@ -194,7 +196,7 @@
     <!-- Structured data (JSON-LD) -->
     
     
-    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 为什么要把容器再包一层 Pod？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/25/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A6%81%E6%8A%8A%E5%AE%B9%E5%99%A8%E5%86%8D%E5%8C%85%E4%B8%80%E5%B1%82Pod/index.html"},"description":"容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？","image":["https://dadavinqi.github.io/images/k8s12-resource-classic.png"],"datePublished":"2026-08-25T03:29:00.000Z","dateModified":"2026-08-25T05:30:07.840Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Pod, YAML, kubectl"}]</script>
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/index.html"},"description":"离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod， restartPolicy 默认是 Always ，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。 处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同： Deployment ：在集群中维持...","image":["https://dadavinqi.github.io/images/k8s18-deploy-yaml.jpg"],"datePublished":"2026-08-27T08:20:00.000Z","dateModified":"2026-08-26T07:39:06.003Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Pod, Deployment, DaemonSet, taint"}]</script>
     
 
     <!-- Favicon -->
@@ -447,7 +449,7 @@
     <header class="text-center mb-8">
         
         <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
-            Kubernetes 为什么要把容器再包一层 Pod？
+            Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？
         </h1>
         
         
@@ -461,7 +463,7 @@
     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
 </svg>
 
-        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-25">2026/08/25</time></a>
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-08-27">2026/08/27</time></a>
     </div>
     
         
@@ -503,145 +505,134 @@
 </svg>
 
     </button>
-    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E6%8D%A2%E4%B8%80%E4%B8%AA%E8%A7%86%E8%A7%92%EF%BC%9A%E5%AE%B9%E5%99%A8%E5%A4%AA%E2%80%9C%E5%B9%B2%E5%87%80%E2%80%9D%EF%BC%8C%E7%8E%B0%E5%AE%9E%E5%BA%94%E7%94%A8%E5%BE%80%E5%BE%80%E4%B8%8D%E5%B9%B2%E5%87%80" data-target="1-先换一个视角：容器太“干净”，现实应用往往不干净">1. 先换一个视角：容器太“干净”，现实应用往往不干净</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-Pod-%E4%BC%9A%E5%8F%98%E6%88%90-Kubernetes-%E7%9A%84%E6%A0%B8%E5%BF%83" data-target="2-为什么-Pod-会变成-Kubernetes-的核心">2. 为什么 Pod 会变成 Kubernetes 的核心</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-YAML-%E9%87%8C-Pod-%E6%80%8E%E4%B9%88%E5%86%99" data-target="3-YAML-里-Pod-怎么写">3. YAML 里 Pod 怎么写</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-kubectl-%E6%80%8E%E4%B9%88%E6%93%8D%E4%BD%9C%EF%BC%8C%E4%BB%A5%E5%8F%8A%E6%88%91%E8%B8%A9%E5%88%B0%E7%9A%84-CrashLoopBackOff" data-target="4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff">4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E4%B8%80%E5%BC%A0%E8%A1%A8%E6%8A%8A%E5%85%B3%E7%B3%BB%E8%AE%B0%E4%BD%8F" data-target="5-一张表把关系记住">5. 一张表把关系记住</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%87%A0%E7%82%B9%E6%80%9D%E8%80%83%E4%B8%8E%E7%90%86%E8%A7%A3" data-target="几点思考与理解">几点思考与理解</a></li></ul></div>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A3%B8-Pod-%E4%B8%8D%E5%A4%9F%E7%AE%A1%E5%9C%A8%E7%BA%BF%E4%B8%9A%E5%8A%A1" data-target="1-为什么裸-Pod-不够管在线业务">1. 为什么裸 Pod 不够管在线业务</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-Deployment%EF%BC%9A%E5%A3%B0%E6%98%8E%E5%89%AF%E6%9C%AC%E6%95%B0%EF%BC%8C%E7%94%B1%E9%9B%86%E7%BE%A4%E7%BB%B4%E6%8C%81" data-target="2-Deployment：声明副本数，由集群维持">2. Deployment：声明副本数，由集群维持</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-DaemonSet%EF%BC%9A%E6%AF%8F%E4%B8%AA%E8%8A%82%E7%82%B9%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%AA-Pod" data-target="3-DaemonSet：每个节点运行一个-Pod">3. DaemonSet：每个节点运行一个 Pod</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-%E6%B1%A1%E7%82%B9%E5%92%8C%E5%AE%B9%E5%BF%8D%E5%BA%A6" data-target="4-污点和容忍度">4. 污点和容忍度</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E9%9D%99%E6%80%81-Pod%EF%BC%9A%E7%94%B1-kubelet-%E7%9B%B4%E6%8E%A5%E7%AE%A1%E7%90%86" data-target="5-静态-Pod：由-kubelet-直接管理">5. 静态 Pod：由 kubelet 直接管理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%AF%B9%E7%85%A7" data-target="6-对照">6. 对照</a></li></ul></div>
 </nav>
 
 <!-- Sidebar TOC (xl+ screens) -->
 <nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
     <div class="toc-sidebar-inner">
         <p class="toc-sidebar-title">目录</p>
-        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E6%8D%A2%E4%B8%80%E4%B8%AA%E8%A7%86%E8%A7%92%EF%BC%9A%E5%AE%B9%E5%99%A8%E5%A4%AA%E2%80%9C%E5%B9%B2%E5%87%80%E2%80%9D%EF%BC%8C%E7%8E%B0%E5%AE%9E%E5%BA%94%E7%94%A8%E5%BE%80%E5%BE%80%E4%B8%8D%E5%B9%B2%E5%87%80" data-target="1-先换一个视角：容器太“干净”，现实应用往往不干净">1. 先换一个视角：容器太“干净”，现实应用往往不干净</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E4%B8%BA%E4%BB%80%E4%B9%88-Pod-%E4%BC%9A%E5%8F%98%E6%88%90-Kubernetes-%E7%9A%84%E6%A0%B8%E5%BF%83" data-target="2-为什么-Pod-会变成-Kubernetes-的核心">2. 为什么 Pod 会变成 Kubernetes 的核心</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-YAML-%E9%87%8C-Pod-%E6%80%8E%E4%B9%88%E5%86%99" data-target="3-YAML-里-Pod-怎么写">3. YAML 里 Pod 怎么写</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-kubectl-%E6%80%8E%E4%B9%88%E6%93%8D%E4%BD%9C%EF%BC%8C%E4%BB%A5%E5%8F%8A%E6%88%91%E8%B8%A9%E5%88%B0%E7%9A%84-CrashLoopBackOff" data-target="4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff">4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E4%B8%80%E5%BC%A0%E8%A1%A8%E6%8A%8A%E5%85%B3%E7%B3%BB%E8%AE%B0%E4%BD%8F" data-target="5-一张表把关系记住">5. 一张表把关系记住</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%87%A0%E7%82%B9%E6%80%9D%E8%80%83%E4%B8%8E%E7%90%86%E8%A7%A3" data-target="几点思考与理解">几点思考与理解</a></li></ul></div>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E4%B8%BA%E4%BB%80%E4%B9%88%E8%A3%B8-Pod-%E4%B8%8D%E5%A4%9F%E7%AE%A1%E5%9C%A8%E7%BA%BF%E4%B8%9A%E5%8A%A1" data-target="1-为什么裸-Pod-不够管在线业务">1. 为什么裸 Pod 不够管在线业务</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-Deployment%EF%BC%9A%E5%A3%B0%E6%98%8E%E5%89%AF%E6%9C%AC%E6%95%B0%EF%BC%8C%E7%94%B1%E9%9B%86%E7%BE%A4%E7%BB%B4%E6%8C%81" data-target="2-Deployment：声明副本数，由集群维持">2. Deployment：声明副本数，由集群维持</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-DaemonSet%EF%BC%9A%E6%AF%8F%E4%B8%AA%E8%8A%82%E7%82%B9%E8%BF%90%E8%A1%8C%E4%B8%80%E4%B8%AA-Pod" data-target="3-DaemonSet：每个节点运行一个-Pod">3. DaemonSet：每个节点运行一个 Pod</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-%E6%B1%A1%E7%82%B9%E5%92%8C%E5%AE%B9%E5%BF%8D%E5%BA%A6" data-target="4-污点和容忍度">4. 污点和容忍度</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E9%9D%99%E6%80%81-Pod%EF%BC%9A%E7%94%B1-kubelet-%E7%9B%B4%E6%8E%A5%E7%AE%A1%E7%90%86" data-target="5-静态-Pod：由-kubelet-直接管理">5. 静态 Pod：由 kubelet 直接管理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#6-%E5%AF%B9%E7%85%A7" data-target="6-对照">6. 对照</a></li></ul></div>
     </div>
 </nav>
 
     
 
     <div class="prose-shiro" data-pagefind-body>
-        <p>容器已经很成熟了，为什么 Kubernetes 还要再抽象出一个 Pod，而且几乎所有人都说它是最核心的概念？</p>
+        <p>离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod，<code>restartPolicy</code> 默认是 <code>Always</code>，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。</p>
+<p>处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同：</p>
+<ul>
+<li><strong>Deployment</strong>：在集群中维持 N 个相同副本，不指定必须落在哪台机器。Nginx、WordPress 这类业务用它。</li>
+<li><strong>DaemonSet</strong>：每个节点恰好运行一个 Pod，与节点绑定。kube-proxy、日志采集、监控代理用它。</li>
+</ul>
+<p>多节点集群里，这两种差别才明显。</p>
 <span id="more"></span>
 
-<h2 id="1-先换一个视角：容器太“干净”，现实应用往往不干净"><a href="#1-先换一个视角：容器太“干净”，现实应用往往不干净" class="headerlink" title="1. 先换一个视角：容器太“干净”，现实应用往往不干净"></a>1. 先换一个视角：容器太“干净”，现实应用往往不干净</h2><p>以前我习惯把容器理解成“一个进程、一个沙盒”。隔离性很好，封装也干净。但一进真实场景，麻烦就来了：很少有应用是完全独立跑的。</p>
-<p>有的关系还比较松散，比如 Nginx、WordPress、MariaDB，可以分别调度，靠 IP 通信。还有一类关系很紧：启动前要有人帮它初始化配置，或者日志代理必须读同一个本地文件再转发出去。这两个进程如果被拆到不同机器上，联系一断，就没法干活。</p>
-<p>那能不能把它们塞进同一个容器？</p>
-<p>可以，但我觉得这不是好办法。容器的初衷就是一个进程、一个应用。一个容器里塞多个应用，既难管，也违背隔离。</p>
-<p>所以需要在容器外面再加一层“收纳舱”：里面的容器相对独立，同时又共享一小块网络和存储，而且永远绑在一起调度。这一层就是 Pod。</p>
-<p>Pod 原意是豌豆荚，后来也有舱室、太空舱的意思。容器就是豆荚里那些豌豆，<code>spec.containers</code> 本来就是数组，允许定义多个容器。</p>
-<p>对我来说，这句话最好记：<strong>容器解决“怎么跑一个进程”，Pod 解决“哪些进程必须待在一起跑”。</strong></p>
-<h2 id="2-为什么-Pod-会变成-Kubernetes-的核心"><a href="#2-为什么-Pod-会变成-Kubernetes-的核心" class="headerlink" title="2. 为什么 Pod 会变成 Kubernetes 的核心"></a>2. 为什么 Pod 会变成 Kubernetes 的核心</h2><p>有了这层打包，里面的容器总是一起调度、一起运行，不会被拆开。更重要的是，Pod 属于 Kubernetes，可以在不直接碰下层容器运行时的前提下做定制。集群级别管理应用，就会顺手很多。</p>
-<p>Kubernetes 把 Pod 当成应用调度部署的最小单位。它像原子：对外是最小单位，对内其实还有结构。后面的 ConfigMap、Job、Deployment，都是从 Pod 往外长出来的。</p>
-<p>经典那张资源关系图就是这个意思，从 Pod 扩到配置、离线作业、多实例部署：</p>
-<p><img src="/images/k8s12-resource-classic.png" alt="以 Pod 为中心的经典资源图" decoding="async" loading="eager" fetchpriority="high" width="1478" height="812"></p>
-<p>但随着发展，这张图已经不能完全概括了，于是有了一张更完整的图，后面很多对象都可以按“围着 Pod 转”来看：</p>
-<p><img src="/images/k8s12-resource-map.jpg" alt="以 Pod 为中心的资源对象关系" decoding="async" loading="lazy" fetchpriority="auto" width="769" height="1920"></p>
-<p>两张图看下来，结论很简单：<strong>Kubernetes 里几乎所有功能，最后都要通过 Pod 落地。</strong> 所以它不是众多对象里普通的一个，而是中心。</p>
-<h2 id="3-YAML-里-Pod-怎么写"><a href="#3-YAML-里-Pod-怎么写" class="headerlink" title="3. YAML 里 Pod 怎么写"></a>3. YAML 里 Pod 怎么写</h2><p>Pod 也是 API 对象，四个基本部分少不了：<code>apiVersion</code>、<code>kind</code>、<code>metadata</code>、<code>spec</code>。</p>
-<p>对 Pod 来说，<code>apiVersion</code> 是 <code>v1</code>，<code>kind</code> 是 <code>Pod</code>。Docker 创建容器可以不起名字，Kubernetes 里不行，Pod 必须有 <code>metadata.name</code>。光有名字还不够，<code>labels</code> 用来贴分类标签，后面做筛选、关联会很方便，比如 <code>env=dev/test/prod</code>、<code>tier=front/back</code>。</p>
-<p><code>spec</code> 里最重要的是 <code>containers</code>。每个容器至少要有 <code>name</code> 和 <code>image</code>，否则校验过不去。其他字段大多能对上 Docker 的经验：</p>
-<table>
+<h2 id="1-为什么裸-Pod-不够管在线业务"><a href="#1-为什么裸-Pod-不够管在线业务" class="headerlink" title="1. 为什么裸 Pod 不够管在线业务"></a>1. 为什么裸 Pod 不够管在线业务</h2><p>容器退出，Pod 可以重启容器；Pod 本身没了，不会有对象再创建一份。误删或节点故障，服务就会中断。</p>
+<p>多实例同样不适合手工 <code>kubectl run</code>。副本数量、健康检查、版本更新如果都靠人盯，等于回到手工运维。</p>
+<p>Job 已经说明过：作业策略不要堆进 Pod，另建对象，把 Pod 当作模板嵌进去。在线业务同样再套一层，这一层就是 Deployment，简称 <code>deploy</code>，<code>apiVersion</code> 是 <code>apps/v1</code>。</p>
+<h2 id="2-Deployment：声明副本数，由集群维持"><a href="#2-Deployment：声明副本数，由集群维持" class="headerlink" title="2. Deployment：声明副本数，由集群维持"></a>2. Deployment：声明副本数，由集群维持</h2><p>可以用命令生成样板：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line"><span class="built_in">export</span> out=<span class="string">&quot;--dry-run=client -o yaml&quot;</span></span><br><span class="line">kubectl create deploy ngx-dep --image=nginx:alpine <span class="variable">$out</span></span><br></pre></td></tr></table></figure>
+
+<p>和 Job 一样有 <code>template</code>，里面是一份不带 <code>apiVersion</code> &#x2F; <code>kind</code> 的 Pod 规格。另外多两个字段：</p>
+<ul>
+<li><code>replicas</code>：期望的副本数，也就是声明式的目标状态。当前为 0 时按模板创建；运行中少了一个就再补，直到数量一致。</li>
+<li><code>selector.matchLabels</code>：按标签筛选要管理的 Pod，必须与 <code>template.metadata.labels</code> 相同，否则 API 校验失败。</li>
+</ul>
+<p><img src="/images/k8s18-deploy-yaml.jpg" alt="Deployment 用标签选中模板里的 Pod" decoding="async" loading="eager" fetchpriority="high" width="769" height="1920"></p>
+<p>标签写两遍看起来重复。Job 不需要这样做，是因为离线任务的 Pod 通常一次性，和该 Job 强绑定即可。在线 Pod 会长期运行，之后 Service 做负载均衡也要按标签找到它们。Deployment 并不持有 Pod，只保证带这组标签的副本数量足够。标签把组合从写死改成了弱引用。</p>
+<p><code>kubectl apply</code> 之后看两处：<code>kubectl get deploy</code> 看控制器，<code>kubectl get pod</code> 看实例。</p>
+<p>Deployment 列表里几个数字含义不同：</p>
+<ul>
+<li><strong>READY</strong> <code>2/2</code>：当前数量 &#x2F; 期望数量</li>
+<li><strong>UP-TO-DATE</strong>：已更新到模板最新状态的数量</li>
+<li><strong>AVAILABLE</strong>：已就绪、可对外提供服务的数量，这是更关键的指标</li>
+<li><strong>AGE</strong>：对象已运行的时间</li>
+</ul>
+<p>Pod 名称一般是 Deployment 名 + 模板 hash + 随机后缀。删除其中一个：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl delete pod ngx-dep-xxxx</span><br><span class="line">kubectl get pod</span><br></pre></td></tr></table></figure>
+
+<p>被删的 Pod 消失后，很快会再建一个，总数仍等于 YAML 中的 <code>replicas</code>。入门阶段所谓「永不宕机」，指的不是进程永不退出，而是副本数量会被控制器维持住。</p>
+<p>扩容缩容可以用 <code>kubectl scale --replicas=5 deploy ngx-dep</code>。这是命令式操作，只改集群里正在运行的对象，YAML 文件不会同步。若要长期保持某个数量，应修改 YAML 再 <code>apply</code>，避免描述文件和实际状态分叉。</p>
+<p><code>replicas</code> 设为 <code>0</code> 也有用途：Pod 全部停止，Deployment 对象和配置仍保留，改回数字即可重新上线。下线服务时可以先缩到 0，观察一段时间再删除对象。</p>
+<p>标签不限于 Deployment。<code>kubectl get pod -l app=ngx-dep</code>，或 <code>-l &#39;app in (ngx, nginx, ngx-dep)&#39;</code>，筛选规则与 <code>selector</code> 相同。</p>
+<p>即使只运行一个实例，也应使用 Deployment，把 <code>replicas</code> 设为 1，不要再直接创建裸 Pod。滚动更新、回滚、自动伸缩放到高级篇。Deployment 默认把 Pod 视为可替换的相同副本；需要稳定身份和启动顺序的有状态应用，后面用 StatefulSet。</p>
+<h2 id="3-DaemonSet：每个节点运行一个-Pod"><a href="#3-DaemonSet：每个节点运行一个-Pod" class="headerlink" title="3. DaemonSet：每个节点运行一个 Pod"></a>3. DaemonSet：每个节点运行一个 Pod</h2><p>Nginx、MySQL 这类应用在哪台机器上跑通常没有差别，Deployment 就够用。它不关心 Pod 落在哪个节点，副本数是固定的，节点增减时数量不会跟着变，Pod 还可能在节点之间迁移。</p>
+<p>另一类应用必须依附节点才有意义：</p>
+<ul>
+<li>网络：kube-proxy，每个节点都要运行，否则无法加入集群网络</li>
+<li>监控：Prometheus 一类，每个节点上报本机状态</li>
+<li>日志：Fluentd，每个节点收集本机容器日志</li>
+<li>安全：审计、扫描，同样需要每台一份</li>
+</ul>
+<p>此时副本数应与节点数同步，而不是写死一个 N。对应对象是 <strong>DaemonSet</strong>，简称 <code>ds</code>，同样是 <code>apps/v1</code>。目标是在每个节点运行且仅运行一个 Pod，类似 Linux 的守护进程。</p>
+<p><code>kubectl create</code> 不能直接生成 DaemonSet 样板。可以先生成 Deployment，把 <code>kind</code> 改成 <code>DaemonSet</code>，再删除 <code>replicas</code>：</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl create deploy redis-ds --image=redis:5-alpine <span class="variable">$out</span></span><br><span class="line"><span class="comment"># 然后改 kind，去掉 replicas</span></span><br></pre></td></tr></table></figure>
+
+<p>YAML 结构几乎相同，关键差异是没有 <code>replicas</code>。selector 与 template 的标签仍需一致。</p>
+<p><img src="/images/k8s19-ds-vs-deploy.jpg" alt="DaemonSet 和 Deployment 结构接近，只是没有 replicas" decoding="async" loading="lazy" fetchpriority="auto" width="769" height="1920"></p>
+<p>apply 之后，DaemonSet 会查询节点并在节点上创建 Pod。两节点实验里，经常只在 Worker 上看到一个实例，Master 被排除在外。按定义每个节点都应当有一份，这里对不上，原因不在 YAML 写错，而在节点上的<strong>污点</strong>。</p>
+<h2 id="4-污点和容忍度"><a href="#4-污点和容忍度" class="headerlink" title="4. 污点和容忍度"></a>4. 污点和容忍度</h2><p>污点（taint）是 Node 的属性，用来给节点做标记，有意不和 <code>labels</code> 混用。容忍度（toleration）写在 Pod 上，表示可以接受哪些污点。</p>
+<p>默认 Pod 不容忍任何污点。节点带有 <code>NoSchedule</code> 污点时，这类 Pod 不会被调度上去。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">kubectl describe node master</span><br><span class="line"><span class="comment"># Taints: node-role.kubernetes.io/master:NoSchedule</span></span><br><span class="line"></span><br><span class="line">kubectl describe node worker</span><br><span class="line"><span class="comment"># Taints: &lt;none&gt;</span></span><br></pre></td></tr></table></figure>
+
+<p>这就是 Master 默认不跑业务负载的原因。kubeadm 初始化的控制面节点会带上该污点。较新版本常见 <code>node-role.kubernetes.io/control-plane:NoSchedule</code>，有的环境两个都在。以 <code>kubectl describe</code> 的实际输出为准。</p>
+<p>若希望 DaemonSet 也在 Master 上运行，有两种做法。</p>
+<p><strong>修改节点：去掉污点。</strong> 影响面较大，其他原本不该上 Master 的 Pod 也可能被调度过来。</p>
+<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">kubectl taint node master node-role.kubernetes.io/master:NoSchedule-</span><br></pre></td></tr></table></figure>
+
+<p>DaemonSet 会持续观察节点。污点去掉后，Master 上很快会多一个 Pod。</p>
+<p><strong>修改 Pod：增加容忍度。</strong> 节点污点保留，只允许指定 Pod 调度上去，范围更可控。</p>
+<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">tolerations:</span></span><br><span class="line"><span class="bullet">-</span> <span class="attr">key:</span> <span class="string">node-role.kubernetes.io/master</span></span><br><span class="line">  <span class="attr">effect:</span> <span class="string">NoSchedule</span></span><br><span class="line">  <span class="attr">operator:</span> <span class="string">Exists</span></span><br></pre></td></tr></table></figure>
+
+<p><code>tolerations</code> 属于 Pod，写在模板的 <code>spec</code> 里，不是 DaemonSet 独有。Job、Deployment 管理的 Pod 也可以添加，用来做更精细的调度。</p>
+<p><code>NoSchedule</code> 只阻止新的调度。节点事后才加上污点，已经在运行的 Pod 不会被驱逐；删除之后才不会再调度回来。若要驱逐已有 Pod，需要另一种效果 <code>NoExecute</code>。</p>
+<h2 id="5-静态-Pod：由-kubelet-直接管理"><a href="#5-静态-Pod：由-kubelet-直接管理" class="headerlink" title="5. 静态 Pod：由 kubelet 直接管理"></a>5. 静态 Pod：由 kubelet 直接管理</h2><p>DaemonSet 是集群里实现「每节点一份」最常用的方式，但不是唯一方式。<strong>静态 Pod</strong> 不经过 apiserver 和 scheduler，只由本机 kubelet 管理。YAML 默认放在节点的 <code>/etc/kubernetes/manifests/</code>。</p>
+<p><img src="/images/k8s19-static-pod.png" alt="控制面组件其实是 Master 上的静态 Pod" decoding="async" loading="lazy" fetchpriority="auto" width="1842" height="486"></p>
+<p>kubeadm 部署的 apiserver、etcd、scheduler、controller-manager，就是这个目录里的几份 YAML。因此它们能先于集群启动：当时还没有调度器，kubelet 扫描目录后直接调用容器运行时。</p>
+<p>kubelet 会定期检查该目录，文件增删改就会创建或删除对应容器。有特殊需求时可以使用静态 Pod，但部署完全手工、各节点各自维护，集群里没有统一的控制器。能用 DaemonSet 时不必用静态 Pod。</p>
+<p>Flannel 本身也是 DaemonSet。有的清单不在 <code>kube-system</code>，而在 <code>kube-flannel</code> 这类命名空间，需要 <code>kubectl get ds -A</code> 才能看到。</p>
+<h2 id="6-对照"><a href="#6-对照" class="headerlink" title="6. 对照"></a>6. 对照</h2><table>
 <thead>
 <tr>
-<th>字段</th>
-<th>我的对应理解</th>
+<th>需求</th>
+<th>对象</th>
+<th>副本如何确定</th>
 </tr>
 </thead>
 <tbody><tr>
-<td>ports</td>
-<td>有点像 <code>docker -p</code>，声明容器端口</td>
+<td>无状态在线服务，需要 N 份</td>
+<td>Deployment</td>
+<td><code>replicas</code>，删除后会补齐</td>
 </tr>
 <tr>
-<td>imagePullPolicy</td>
-<td>Always &#x2F; Never &#x2F; IfNotPresent，本地没有才拉</td>
+<td>每个节点必须有一份</td>
+<td>DaemonSet</td>
+<td>随节点数变化，没有 <code>replicas</code></td>
 </tr>
 <tr>
-<td>env</td>
-<td>运行时环境变量，比写死在镜像里灵活</td>
+<td>单实例也要能自愈</td>
+<td>Deployment，<code>replicas: 1</code></td>
+<td>不要用裸 Pod</td>
 </tr>
 <tr>
-<td>command</td>
-<td>相当于 Dockerfile 的 ENTRYPOINT</td>
+<td>临时停服务、保留配置</td>
+<td>Deployment，<code>replicas: 0</code></td>
+<td>对象仍在</td>
 </tr>
 <tr>
-<td>args</td>
-<td>相当于 Dockerfile 的 CMD，注意和 Docker 命令行含义不完全一样</td>
+<td>允许调度到 Master</td>
+<td>Pod 添加 tolerations</td>
+<td>尽量少改节点污点</td>
+</tr>
+<tr>
+<td>控制面组件如何启动</td>
+<td>静态 Pod</td>
+<td>kubelet 读取 manifests 目录</td>
 </tr>
 </tbody></table>
-<p>一份最小例子可以长这样：</p>
-<figure class="highlight yaml"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br><span class="line">10</span><br><span class="line">11</span><br><span class="line">12</span><br><span class="line">13</span><br><span class="line">14</span><br><span class="line">15</span><br><span class="line">16</span><br><span class="line">17</span><br><span class="line">18</span><br><span class="line">19</span><br><span class="line">20</span><br><span class="line">21</span><br><span class="line">22</span><br><span class="line">23</span><br></pre></td><td class="code"><pre><span class="line"><span class="attr">apiVersion:</span> <span class="string">v1</span></span><br><span class="line"><span class="attr">kind:</span> <span class="string">Pod</span></span><br><span class="line"><span class="attr">metadata:</span></span><br><span class="line">  <span class="attr">name:</span> <span class="string">busy-pod</span></span><br><span class="line">  <span class="attr">labels:</span></span><br><span class="line">    <span class="attr">owner:</span> <span class="string">chrono</span></span><br><span class="line">    <span class="attr">env:</span> <span class="string">demo</span></span><br><span class="line">    <span class="attr">region:</span> <span class="string">north</span></span><br><span class="line">    <span class="attr">tier:</span> <span class="string">back</span></span><br><span class="line"><span class="attr">spec:</span></span><br><span class="line">  <span class="attr">containers:</span></span><br><span class="line">  <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">busy</span></span><br><span class="line">    <span class="attr">image:</span> <span class="string">busybox:latest</span></span><br><span class="line">    <span class="attr">imagePullPolicy:</span> <span class="string">IfNotPresent</span></span><br><span class="line">    <span class="attr">env:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">os</span></span><br><span class="line">      <span class="attr">value:</span> <span class="string">&quot;ubuntu&quot;</span></span><br><span class="line">    <span class="bullet">-</span> <span class="attr">name:</span> <span class="string">debug</span></span><br><span class="line">      <span class="attr">value:</span> <span class="string">&quot;on&quot;</span></span><br><span class="line">    <span class="attr">command:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">/bin/echo</span></span><br><span class="line">    <span class="attr">args:</span></span><br><span class="line">    <span class="bullet">-</span> <span class="string">&quot;$(os), $(debug)&quot;</span></span><br></pre></td></tr></table></figure>
-
-<p>YAML 把期望状态写清楚，比一条很长的 <code>docker run</code> 好读，也对机器友好。这就是声明式。</p>
-<h2 id="4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff"><a href="#4-kubectl-怎么操作，以及我踩到的-CrashLoopBackOff" class="headerlink" title="4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff"></a>4. kubectl 怎么操作，以及我踩到的 CrashLoopBackOff</h2><p>创建和删除还是上次那套：</p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">kubectl apply -f busy-pod.yml</span><br><span class="line">kubectl delete -f busy-pod.yml</span><br><span class="line"><span class="comment"># 也可以按名字删</span></span><br><span class="line">kubectl delete pod busy-pod</span><br></pre></td></tr></table></figure>
-
-<p>和 Docker 不一样，Pod 不会在前台跑，默认就像加了 <code>-d</code>。想看输出，用 <code>kubectl logs</code>：</p>
-<p><img src="/images/k8s12-busy-logs.png" alt="kubectl logs busy-pod" decoding="async" loading="lazy" fetchpriority="auto" width="948" height="124"></p>
-<p><code>kubectl get pod</code> 看状态时，这个 busy-pod 并不健康：</p>
-<p><img src="/images/k8s12-crashloop.png" alt="busy-pod 处于 CrashLoopBackOff" decoding="async" loading="lazy" fetchpriority="auto" width="1464" height="184"></p>
-<p>排错要看 <code>kubectl describe</code>，重点在末尾 Events。它被调度到 minikube，镜像也在本地，容器能创建、能启动，但马上退出。Kubernetes 默认会重启 Pod，于是就进入反复停止-启动，最后变成 CrashLoopBackOff。</p>
-<p><img src="/images/k8s12-events.png" alt="Events 里的 Back-off restarting" decoding="async" loading="lazy" fetchpriority="auto" width="1920" height="294"></p>
-<p>原因很直接：这个容器只跑了一条 <code>echo</code> 就结束了。集群里大多数应用是常驻服务，不会主动退出，所以把 busy-pod 删掉，换成 Nginx 这种才更像日常用法。</p>
-<p><code>ngx-pod</code> 起来后就是 Running：</p>
-<p><img src="/images/k8s12-ngx-running.png" alt="ngx-pod Running" decoding="async" loading="lazy" fetchpriority="auto" width="1124" height="184"></p>
-<p>日志也能看到 Nginx 启动过程：</p>
-<p><img src="/images/k8s12-ngx-logs.png" alt="kubectl logs ngx-pod" decoding="async" loading="lazy" fetchpriority="auto" width="1920" height="415"></p>
-<p>拷文件、进容器也有对应命令。<code>kubectl cp</code> 把本地文件拷进 Pod，<code>kubectl exec</code> 进去执行命令。和 Docker 有个小差别：Pod 名后面要加 <code>--</code>，把 kubectl 参数和容器里的命令隔开。</p>
-<p><img src="/images/k8s12-exec.png" alt="kubectl exec 进入 ngx-pod" decoding="async" loading="lazy" fetchpriority="auto" width="1920" height="402"></p>
-<figure class="highlight bash"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">kubectl <span class="built_in">cp</span> a.txt ngx-pod:/tmp</span><br><span class="line">kubectl <span class="built_in">exec</span> -it ngx-pod -- sh</span><br></pre></td></tr></table></figure>
-
-<h2 id="5-一张表把关系记住"><a href="#5-一张表把关系记住" class="headerlink" title="5. 一张表把关系记住"></a>5. 一张表把关系记住</h2><table>
-<thead>
-<tr>
-<th>概念</th>
-<th>我理解的角色</th>
-<th>一句话</th>
-</tr>
-</thead>
-<tbody><tr>
-<td>容器</td>
-<td>进程的沙盒</td>
-<td>一个进程、一份隔离</td>
-</tr>
-<tr>
-<td>Pod</td>
-<td>调度原子</td>
-<td>把必须在一起的容器绑死</td>
-</tr>
-<tr>
-<td>metadata.name</td>
-<td>身份证</td>
-<td>集群里对象必须有名字</td>
-</tr>
-<tr>
-<td>metadata.labels</td>
-<td>分类贴</td>
-<td>方便识别、筛选、关联</td>
-</tr>
-<tr>
-<td>spec.containers</td>
-<td>豆荚里的豌豆</td>
-<td>名字 + 镜像是底线</td>
-</tr>
-<tr>
-<td>kubectl apply&#x2F;delete</td>
-<td>声明落地 &#x2F; 删掉</td>
-<td>用 YAML 管对象</td>
-</tr>
-<tr>
-<td>kubectl get&#x2F;describe&#x2F;logs</td>
-<td>看状态、看事件、看输出</td>
-<td>排错先看这三件</td>
-</tr>
-<tr>
-<td>kubectl cp&#x2F;exec</td>
-<td>拷文件、进容器</td>
-<td>多容器时用 <code>-c</code> 指定</td>
-</tr>
-</tbody></table>
-<p>没有 Pod，紧耦合进程就只能硬塞进一个容器，或者拆开后靠跨节点通信，调度和对齐都会变难。有了 Pod，共享网络和存储、一起调度，这条线才清楚。</p>
-<h2 id="几点思考与理解"><a href="#几点思考与理解" class="headerlink" title="几点思考与理解"></a>几点思考与理解</h2><p>第一，Pod 和容器不是替换关系。容器还是真正干活的运行时，Pod 是 Kubernetes 的调度单位。有点像进程组和进程：进程还在，但调度和管理按组来。</p>
-<p>第二，生产上通常不要直接创建“裸 Pod”。它只是对容器做了简单包装，比较脆弱。真正扛业务的是 Job、CronJob、Deployment 这些对象，它们会给 Pod 补上重启策略、副本、自愈。即使只跑一个实例，后面也会更倾向用 Deployment，<code>replicas: 1</code>，让控制器盯着它。</p>
-<p>第三，<code>image: xxx:latest</code> 要小心。<code>imagePullPolicy</code> 不是永远默认 IfNotPresent。标签是 <code>latest</code> 时，默认往往是 Always，没外网就会拉取失败。离线环境最好写死具体版本。</p>
-<p>第四，排错顺序可以固定下来：<code>get</code> 看 Ready 和 STATUS，<code>describe</code> 看 Events，<code>logs</code> 看容器输出。READY 列是 <code>x/y</code>，y 是容器总数，x 是已经 Ready 的数量。CrashLoopBackOff 不一定是镜像坏了，也可能只是进程跑完就退出了。</p>
-<p>图片来源：极客时间 <a target="_blank" rel="noopener" href="https://time.geekbang.org/">《Kubernetes入门实战课》</a> 第 12 讲《Pod：如何理解这个Kubernetes里最核心的概念？》，作者 Chrono。</p>
+<p>写 YAML 前先分清：这份应用是「集群里要几个」，还是「每台机器都要有」。前者用 Deployment，后者用 DaemonSet。两者都嵌一套 Pod 模板，用标签选中实例。Deployment 维持的是副本数量，DaemonSet 维持的是节点覆盖。</p>
+<p>图片来源：极客时间 <a target="_blank" rel="noopener" href="https://time.geekbang.org/">《Kubernetes入门实战课》</a> 第 18 讲《Deployment：让应用永不宕机》、第 19 讲《Daemonset：忠实可靠的看门狗》，作者 Chrono。</p>
 
     </div>
 
@@ -672,23 +663,34 @@
 
         
         
-<a href="/tags/YAML/" class="tag-pill">
+<a href="/tags/Deployment/" class="tag-pill">
     <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
         <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
     </svg>
-    YAML
+    Deployment
     
 </a>
 
         
         
-<a href="/tags/kubectl/" class="tag-pill">
+<a href="/tags/DaemonSet/" class="tag-pill">
     <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
         <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
     </svg>
-    kubectl
+    DaemonSet
+    
+</a>
+
+        
+        
+<a href="/tags/taint/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    taint
     
 </a>
 
@@ -700,15 +702,12 @@
     <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
     <div class="section-divider flex justify-between items-center text-sm md:text-base">
         
-        <a href="/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/" class="post-nav-link group text-left" title="Kubernetes 怎样在 Pod 外面组合业务？">
-             <span aria-hidden="true">&larr;</span>
-             <span class="post-nav-title">Kubernetes 怎样在 Pod 外面组合业务？</span>
-        </a>
+        <div></div>
         
 
         
-        <a href="/2026/08/24/Kubernetes%E4%B8%BA%E4%BB%80%E4%B9%88%E8%83%BD%E8%87%AA%E5%8A%A8%E5%8C%96%E8%BF%90%E7%BB%B4/" class="post-nav-link group text-right" title="Kubernetes 为什么能自动化运维？">
-            <span class="post-nav-title">Kubernetes 为什么能自动化运维？</span>
+        <a href="/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/" class="post-nav-link group text-right" title="Kubernetes 怎样在 Pod 外面组合业务？">
+            <span class="post-nav-title">Kubernetes 怎样在 Pod 外面组合业务？</span>
             <span aria-hidden="true">&rarr;</span>
         </a>
         
