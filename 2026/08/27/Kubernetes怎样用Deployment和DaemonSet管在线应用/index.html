@@ -128,7 +128,7 @@
     <meta name="author" content="John Doe" />
     
     
-    <meta name="keywords" content="Kubernetes, Pod, Deployment, DaemonSet, taint" />
+    <meta name="keywords" content="Kubernetes, Deployment, DaemonSet, Pod, taint" />
     
 
     <!-- Open Graph -->
@@ -166,11 +166,11 @@
     
     <meta property="article:tag" content="Kubernetes" />
     
-    <meta property="article:tag" content="Pod" />
-    
     <meta property="article:tag" content="Deployment" />
     
     <meta property="article:tag" content="DaemonSet" />
+    
+    <meta property="article:tag" content="Pod" />
     
     <meta property="article:tag" content="taint" />
     
@@ -196,7 +196,7 @@
     <!-- Structured data (JSON-LD) -->
     
     
-    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/index.html"},"description":"离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod， restartPolicy 默认是 Always ，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。 处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同： Deployment ：在集群中维持...","image":["https://dadavinqi.github.io/images/k8s18-deploy-yaml.jpg"],"datePublished":"2026-08-27T08:20:00.000Z","dateModified":"2026-08-26T07:39:06.003Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Pod, Deployment, DaemonSet, taint"}]</script>
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/index.html"},"description":"离线任务用 Job 包装一层，跑完即结束。在线任务如果只用裸 Pod， restartPolicy 默认是 Always ，容器异常退出后会被拉起；但 Pod 被删除、节点宕机时，容器级策略无法补救，实例会直接消失。需要多副本时，数量、健康和更新也只能靠人工维护。 处理方式仍然是对象组合：Pod 只负责容器，在线业务再套一层控制器。这一层有两种，调度策略不同： Deployment ：在集群中维持...","image":["https://dadavinqi.github.io/images/k8s18-deploy-yaml.jpg"],"datePublished":"2026-08-27T08:20:00.000Z","dateModified":"2026-08-26T07:39:06.003Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Deployment, DaemonSet, Pod, taint"}]</script>
     
 
     <!-- Favicon -->
@@ -652,17 +652,6 @@
 
         
         
-<a href="/tags/Pod/" class="tag-pill">
-    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
-    </svg>
-    Pod
-    
-</a>
-
-        
-        
 <a href="/tags/Deployment/" class="tag-pill">
     <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
@@ -680,6 +669,17 @@
         <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
     </svg>
     DaemonSet
+    
+</a>
+
+        
+        
+<a href="/tags/Pod/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Pod
     
 </a>
 

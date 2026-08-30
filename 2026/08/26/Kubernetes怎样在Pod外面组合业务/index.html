@@ -128,7 +128,7 @@
     <meta name="author" content="John Doe" />
     
     
-    <meta name="keywords" content="Kubernetes, Job, CronJob, ConfigMap, Secret, Pod" />
+    <meta name="keywords" content="Kubernetes, Pod, Job, CronJob, ConfigMap, Secret" />
     
 
     <!-- Open Graph -->
@@ -166,6 +166,8 @@
     
     <meta property="article:tag" content="Kubernetes" />
     
+    <meta property="article:tag" content="Pod" />
+    
     <meta property="article:tag" content="Job" />
     
     <meta property="article:tag" content="CronJob" />
@@ -173,8 +175,6 @@
     <meta property="article:tag" content="ConfigMap" />
     
     <meta property="article:tag" content="Secret" />
-    
-    <meta property="article:tag" content="Pod" />
     
     
     
@@ -198,7 +198,7 @@
     <!-- Structured data (JSON-LD) -->
     
     
-    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 怎样在 Pod 外面组合业务？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/index.html"},"description":"上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。 一个 echo 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。 所以先要把任务分成在...","image":["https://dadavinqi.github.io/images/k8s13-job-wrap-pod.jpg"],"datePublished":"2026-08-26T06:02:00.000Z","dateModified":"2026-08-26T07:36:34.794Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Job, CronJob, ConfigMap, Secret, Pod"}]</script>
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"Kubernetes 怎样在 Pod 外面组合业务？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/08/26/Kubernetes%E6%80%8E%E6%A0%B7%E5%9C%A8Pod%E5%A4%96%E9%9D%A2%E7%BB%84%E5%90%88%E4%B8%9A%E5%8A%A1/index.html"},"description":"上一讲说了，Kubernetes 调度的最小单位是 Pod，不是容器。那是不是写个 Pod 就能上业务了？还不行。 一个 echo 跑完就退出的 Pod，会被反复拉起，最后变成 CrashLoopBackOff。Nginx 这类长期在线的服务没有这个问题；日志分析、转码这类“算完就退出”的任务则会踩中默认重启策略。另外，端口、密码如果写死在镜像里，改一次配置还得重新构建镜像。 所以先要把任务分成在...","image":["https://dadavinqi.github.io/images/k8s13-job-wrap-pod.jpg"],"datePublished":"2026-08-26T06:02:00.000Z","dateModified":"2026-08-26T07:36:34.794Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"Kubernetes, Pod, Job, CronJob, ConfigMap, Secret"}]</script>
     
 
     <!-- Favicon -->
@@ -657,6 +657,17 @@
 
         
         
+<a href="/tags/Pod/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Pod
+    
+</a>
+
+        
+        
 <a href="/tags/Job/" class="tag-pill">
     <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
@@ -696,17 +707,6 @@
         <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
     </svg>
     Secret
-    
-</a>
-
-        
-        
-<a href="/tags/Pod/" class="tag-pill">
-    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
-    </svg>
-    Pod
     
 </a>
 
