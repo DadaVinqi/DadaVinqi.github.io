@@ -119,7 +119,7 @@
     <meta name="author" content="John Doe" />
     
     
-    <meta name="keywords" content="系统架构, Redis, 高并发, 分布式缓存, 缓存穿透, 缓存雪崩, 缓存更新" />
+    <meta name="keywords" content="系统架构, 高并发, 分布式缓存, Redis, 缓存穿透, 缓存雪崩, 缓存更新" />
     
 
     <!-- Open Graph -->
@@ -149,11 +149,11 @@
     
     <meta property="article:tag" content="系统架构" />
     
-    <meta property="article:tag" content="Redis" />
-    
     <meta property="article:tag" content="高并发" />
     
     <meta property="article:tag" content="分布式缓存" />
+    
+    <meta property="article:tag" content="Redis" />
     
     <meta property="article:tag" content="缓存穿透" />
     
@@ -181,7 +181,7 @@
     <!-- Structured data (JSON-LD) -->
     
     
-    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"分布式缓存","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/index.html"},"description":"分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。","datePublished":"2026-07-25T14:27:35.000Z","dateModified":"2026-08-10T13:35:23.922Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, Redis, 高并发, 分布式缓存, 缓存穿透, 缓存雪崩, 缓存更新"}]</script>
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"分布式缓存","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/index.html"},"description":"分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。","datePublished":"2026-07-25T14:27:35.000Z","dateModified":"2026-08-10T13:35:23.922Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, 高并发, 分布式缓存, Redis, 缓存穿透, 缓存雪崩, 缓存更新"}]</script>
     
 
     <!-- Favicon -->
@@ -835,17 +835,6 @@
 
         
         
-<a href="/tags/Redis/" class="tag-pill">
-    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
-        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
-        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
-    </svg>
-    Redis
-    
-</a>
-
-        
-        
 <a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" class="tag-pill">
     <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
         <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
@@ -863,6 +852,17 @@
         <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
     </svg>
     分布式缓存
+    
+</a>
+
+        
+        
+<a href="/tags/Redis/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Redis
     
 </a>
 
