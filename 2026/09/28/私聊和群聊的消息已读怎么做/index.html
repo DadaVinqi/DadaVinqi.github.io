@@ -1,0 +1,949 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>私聊和群聊的消息已读怎么做？ | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="私聊和群聊用同一套数据做已读。每个会话的消息按序号只存一份，每个用户在这个会话里只存一个水位线。私聊拿对方那一个数，把消息显示成已读或未读。群聊拿其余成员的水位线，数出「几人已读」。两边都不要把已读写回消息正文。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, Redis, 高并发, IM" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="私聊和群聊的消息已读怎么做？ | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="私聊和群聊用同一套数据做已读。每个会话的消息按序号只存一份，每个用户在这个会话里只存一个水位线。私聊拿对方那一个数，把消息显示成已读或未读。群聊拿其余成员的水位线，数出「几人已读」。两边都不要把已读写回消息正文。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/09/28/%E7%A7%81%E8%81%8A%E5%92%8C%E7%BE%A4%E8%81%8A%E7%9A%84%E6%B6%88%E6%81%AF%E5%B7%B2%E8%AF%BB%E6%80%8E%E4%B9%88%E5%81%9A/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-09-28T11:20:00.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-09-28T11:53:25.951Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="Redis" />
+    
+    <meta property="article:tag" content="高并发" />
+    
+    <meta property="article:tag" content="IM" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="私聊和群聊的消息已读怎么做？ | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="私聊和群聊用同一套数据做已读。每个会话的消息按序号只存一份，每个用户在这个会话里只存一个水位线。私聊拿对方那一个数，把消息显示成已读或未读。群聊拿其余成员的水位线，数出「几人已读」。两边都不要把已读写回消息正文。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/09/28/%E7%A7%81%E8%81%8A%E5%92%8C%E7%BE%A4%E8%81%8A%E7%9A%84%E6%B6%88%E6%81%AF%E5%B7%B2%E8%AF%BB%E6%80%8E%E4%B9%88%E5%81%9A/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"私聊和群聊的消息已读怎么做？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/09/28/%E7%A7%81%E8%81%8A%E5%92%8C%E7%BE%A4%E8%81%8A%E7%9A%84%E6%B6%88%E6%81%AF%E5%B7%B2%E8%AF%BB%E6%80%8E%E4%B9%88%E5%81%9A/index.html"},"description":"私聊和群聊用同一套数据做已读。每个会话的消息按序号只存一份，每个用户在这个会话里只存一个水位线。私聊拿对方那一个数，把消息显示成已读或未读。群聊拿其余成员的水位线，数出「几人已读」。两边都不要把已读写回消息正文。","datePublished":"2026-09-28T11:20:00.000Z","dateModified":"2026-09-28T11:53:25.951Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, Redis, 高并发, IM"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            私聊和群聊的消息已读怎么做？
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-09-28">2026/09/28</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E6%94%BE%E5%A5%BD%E4%B8%A4%E4%BB%BD%E6%95%B0%E6%8D%AE" data-target="1-先放好两份数据">1. 先放好两份数据</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E7%A7%81%E8%81%8A%E6%80%8E%E4%B9%88%E5%81%9A" data-target="2-私聊怎么做">2. 私聊怎么做</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8F%91%E4%B8%80%E6%9D%A1%E6%B6%88%E6%81%AF" data-target="发一条消息">发一条消息</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%AF%B9%E6%96%B9%E8%AF%BB%E5%88%B0" data-target="对方读到">对方读到</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%AF%B9%E6%96%B9%E5%86%8D%E5%9B%9E%E4%B8%80%E6%9D%A1" data-target="对方再回一条">对方再回一条</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-%E7%BE%A4%E8%81%8A%E6%80%8E%E4%B9%88%E5%81%9A" data-target="3-群聊怎么做">3. 群聊怎么做</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8F%91%E4%B8%80%E6%9D%A1%E6%B6%88%E6%81%AF-1" data-target="发一条消息-1">发一条消息</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E6%9C%89%E4%BA%BA%E9%98%85%E8%AF%BB" data-target="有人阅读">有人阅读</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8F%88%E6%9D%A5%E4%B8%80%E6%9D%A1%E6%96%B0%E6%B6%88%E6%81%AF" data-target="又来一条新消息">又来一条新消息</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-%E4%B8%8D%E8%A6%81%E6%8A%8A%E5%B7%B2%E8%AF%BB%E5%86%99%E8%BF%9B%E6%B6%88%E6%81%AF" data-target="4-不要把已读写进消息">4. 不要把已读写进消息</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E4%B8%A4%E4%B8%AA%E4%B8%8D%E8%83%BD%E7%94%A8%E4%B8%80%E4%B8%AA%E6%95%B4%E6%95%B0%E7%A1%AC%E5%A5%97%E7%9A%84%E6%83%85%E5%86%B5" data-target="5-两个不能用一个整数硬套的情况">5. 两个不能用一个整数硬套的情况</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%87%A0%E7%82%B9%E7%90%86%E8%A7%A3" data-target="几点理解">几点理解</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#1-%E5%85%88%E6%94%BE%E5%A5%BD%E4%B8%A4%E4%BB%BD%E6%95%B0%E6%8D%AE" data-target="1-先放好两份数据">1. 先放好两份数据</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#2-%E7%A7%81%E8%81%8A%E6%80%8E%E4%B9%88%E5%81%9A" data-target="2-私聊怎么做">2. 私聊怎么做</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8F%91%E4%B8%80%E6%9D%A1%E6%B6%88%E6%81%AF" data-target="发一条消息">发一条消息</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%AF%B9%E6%96%B9%E8%AF%BB%E5%88%B0" data-target="对方读到">对方读到</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%AF%B9%E6%96%B9%E5%86%8D%E5%9B%9E%E4%B8%80%E6%9D%A1" data-target="对方再回一条">对方再回一条</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#3-%E7%BE%A4%E8%81%8A%E6%80%8E%E4%B9%88%E5%81%9A" data-target="3-群聊怎么做">3. 群聊怎么做</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8F%91%E4%B8%80%E6%9D%A1%E6%B6%88%E6%81%AF-1" data-target="发一条消息-1">发一条消息</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E6%9C%89%E4%BA%BA%E9%98%85%E8%AF%BB" data-target="有人阅读">有人阅读</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E5%8F%88%E6%9D%A5%E4%B8%80%E6%9D%A1%E6%96%B0%E6%B6%88%E6%81%AF" data-target="又来一条新消息">又来一条新消息</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#4-%E4%B8%8D%E8%A6%81%E6%8A%8A%E5%B7%B2%E8%AF%BB%E5%86%99%E8%BF%9B%E6%B6%88%E6%81%AF" data-target="4-不要把已读写进消息">4. 不要把已读写进消息</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#5-%E4%B8%A4%E4%B8%AA%E4%B8%8D%E8%83%BD%E7%94%A8%E4%B8%80%E4%B8%AA%E6%95%B4%E6%95%B0%E7%A1%AC%E5%A5%97%E7%9A%84%E6%83%85%E5%86%B5" data-target="5-两个不能用一个整数硬套的情况">5. 两个不能用一个整数硬套的情况</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%87%A0%E7%82%B9%E7%90%86%E8%A7%A3" data-target="几点理解">几点理解</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>私聊和群聊用同一套数据做已读。每个会话的消息按序号只存一份，每个用户在这个会话里只存一个水位线。私聊拿对方那一个数，把消息显示成已读或未读。群聊拿其余成员的水位线，数出「几人已读」。两边都不要把已读写回消息正文。</p>
+<span id="more"></span>
+
+<h2 id="1-先放好两份数据"><a href="#1-先放好两份数据" class="headerlink" title="1. 先放好两份数据"></a>1. 先放好两份数据</h2><p>已读不改消息。一个会话只维护两类数据：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">消息    (conversation_id, seq, sender_id, body)</span><br><span class="line">水位线  (conversation_id, user_id) → cursor</span><br></pre></td></tr></table></figure>
+
+<p><code>seq</code> 在一个会话内从 1 开始，每发一条加 1，只增不复用。<code>cursor</code> 表示这个用户已经读过 <code>seq &lt;= cursor</code> 的消息。没读过时，<code>cursor</code> 是 0。</p>
+<p><strong>未读条数用自己的水位线：</strong></p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">未读数 = 最新 seq - 自己的 cursor</span><br></pre></td></tr></table></figure>
+
+<p>这条减法成立，是因为序号连续，中间没有空洞。</p>
+<p>**已读回执用别人的水位线。**一条序号为 <code>S</code>、发送者是 <code>U</code> 的消息：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">已读人数 = 成员里满足 user_id ≠ U 且 cursor &gt;= S 的人数</span><br></pre></td></tr></table></figure>
+
+<p>私聊的成员只有两个，这个人数只能是 0 或 1，界面对应未读和已读。群聊的成员有 N 个，这个人数就是「N 人已读」。写路径没有第二套。</p>
+<p>进度和消息分开存。消息进消息库。水位线放 Redis：一个会话一个计数器（负责记号），一个会话一个 Hash（负责记每个人的水位线）。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">INCR  conv:&#123;cid&#125;:seq                 分配序号</span><br><span class="line">HSET  conv:&#123;cid&#125;:cursor  &#123;uid&#125; &#123;seq&#125; 更新这个人的水位线</span><br></pre></td></tr></table></figure>
+
+<p><code>HSET</code> 前要先比大小，避免旧请求把水位线盖小。</p>
+<figure class="highlight lua"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br></pre></td><td class="code"><pre><span class="line"><span class="keyword">local</span> cur = <span class="built_in">tonumber</span>(redis.call(<span class="string">&#x27;HGET&#x27;</span>, KEYS[<span class="number">1</span>], ARGV[<span class="number">1</span>]) <span class="keyword">or</span> <span class="string">&#x27;0&#x27;</span>)</span><br><span class="line"><span class="keyword">local</span> nxt = <span class="built_in">tonumber</span>(ARGV[<span class="number">2</span>])</span><br><span class="line"><span class="keyword">if</span> nxt &gt; cur <span class="keyword">then</span></span><br><span class="line">  redis.call(<span class="string">&#x27;HSET&#x27;</span>, KEYS[<span class="number">1</span>], ARGV[<span class="number">1</span>], nxt)</span><br><span class="line">  <span class="keyword">return</span> nxt</span><br><span class="line"><span class="keyword">end</span></span><br><span class="line"><span class="keyword">return</span> cur</span><br></pre></td></tr></table></figure>
+
+<p><code>KEYS[1]</code> 是 <code>conv:{cid}:cursor</code>，<code>ARGV[1]</code> 是用户 ID，<code>ARGV[2]</code> 是客户端上报的序号。</p>
+<p>客户端不要按消息 ID 逐条上报。它只报一个数：这个会话里自己已经看到的最大 <code>seq</code>。打开会话、停在底部又收到新消息、向上翻完又继续向下看，都是在更新这一个数。</p>
+<h2 id="2-私聊怎么做"><a href="#2-私聊怎么做" class="headerlink" title="2. 私聊怎么做"></a>2. 私聊怎么做</h2><p>私聊就是上面这套数据里只有 A、B 两个人。界面上不显示人数，只显示对方有没有越过这条消息。</p>
+<h3 id="发一条消息"><a href="#发一条消息" class="headerlink" title="发一条消息"></a>发一条消息</h3><p>A 给 B 发「你好」：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">seq = INCR conv:&#123;P&#125;:seq          → 1</span><br><span class="line">写入消息 (P, 1, A, 你好)</span><br><span class="line">A 正在这个会话里，A 的水位线推进到 1</span><br><span class="line">把消息推给 B</span><br></pre></td></tr></table></figure>
+
+<p>此刻：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">消息 1  A  你好</span><br><span class="line">A → 1</span><br><span class="line">B → 0</span><br></pre></td></tr></table></figure>
+
+<p>A 看自己这条：B 的水位线是 0，<code>0 &gt;= 1</code> 不成立，显示未读。B 的未读数是 <code>1 - 0 = 1</code>。</p>
+<h3 id="对方读到"><a href="#对方读到" class="headerlink" title="对方读到"></a>对方读到</h3><p>B 打开会话，客户端上报看到的最大序号 1：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br></pre></td><td class="code"><pre><span class="line">B 的水位线从 0 推进到 1</span><br><span class="line">把 (P, B, 1) 推给正在看这个会话的 A</span><br></pre></td></tr></table></figure>
+
+<p>A 只改本地的 B。消息 1 满足 <code>B &gt;= 1</code>，从未读变成已读。B 的未读数变成 0。</p>
+<h3 id="对方再回一条"><a href="#对方再回一条" class="headerlink" title="对方再回一条"></a>对方再回一条</h3><p>B 回复「晚上开会」：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">seq = 2</span><br><span class="line">消息 (P, 2, B, 晚上开会)</span><br><span class="line">B 的水位线推进到 2</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br></pre></td><td class="code"><pre><span class="line">消息 1  A  你好</span><br><span class="line">消息 2  B  晚上开会</span><br><span class="line">A → 1</span><br><span class="line">B → 2</span><br></pre></td></tr></table></figure>
+
+<p>B 看自己的消息 2：A 还停在 1，显示未读。A 的未读数是 <code>2 - 1 = 1</code>。A 打开会话后，水位线推进到 2，消息 2 变成已读。</p>
+<p>整个过程消息行只在发送时写。已读变化只写水位线：A 一条，B 一条。</p>
+<h2 id="3-群聊怎么做"><a href="#3-群聊怎么做" class="headerlink" title="3. 群聊怎么做"></a>3. 群聊怎么做</h2><p>群聊还是这两份数据。成员从 2 个变成 N 个，回执从「过了没有」变成「过了几个人」。发消息和推进水位线的步骤与私聊相同。</p>
+<p>群 G 里有 A、B、C，水位线初始都是 0。</p>
+<h3 id="发一条消息-1"><a href="#发一条消息-1" class="headerlink" title="发一条消息"></a>发一条消息</h3><p>A 发送「开会」：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">seq = 1</span><br><span class="line">消息 (G, 1, A, 开会)</span><br><span class="line">A 的水位线 = 1</span><br></pre></td></tr></table></figure>
+
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A → 1    B → 0    C → 0</span><br></pre></td></tr></table></figure>
+
+<p>消息 1 的已读人数：B、C 都还没到 1，是 0。B 的未读数是 1，C 的未读数是 1。A 自己的未读数是 0。</p>
+<h3 id="有人阅读"><a href="#有人阅读" class="headerlink" title="有人阅读"></a>有人阅读</h3><p>B 打开群，上报 1。服务端把 B 的水位线写成 1，并把 <code>(G, B, 1)</code> 推给当前开着这个群的客户端。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A → 1    B → 1    C → 0</span><br></pre></td></tr></table></figure>
+
+<p>消息 1 再数一次：B 到了，C 没到，1 人已读。C 的未读数仍是 1。</p>
+<h3 id="又来一条新消息"><a href="#又来一条新消息" class="headerlink" title="又来一条新消息"></a>又来一条新消息</h3><p>A 再发「改到三点」，序号是 2，A 的水位线跟着到 2：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">消息 1  A  开会</span><br><span class="line">消息 2  A  改到三点</span><br><span class="line">A → 2    B → 1    C → 0</span><br></pre></td></tr></table></figure>
+
+<p>两条消息分开数：</p>
+<ul>
+<li>消息 1：B 的 1 已经盖过，C 没有，仍是 1 人已读；</li>
+<li>消息 2：B 停在 1，C 停在 0，0 人已读。</li>
+</ul>
+<p>B 的未读数是 <code>2 - 1 = 1</code>，只有后一条。C 的未读数是 2。</p>
+<p>C 随后打开群并看到底部，水位线推进到 2：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">A → 2    B → 1    C → 2</span><br></pre></td></tr></table></figure>
+
+<ul>
+<li>消息 1：B 和 C 都过了，2 人已读；</li>
+<li>消息 2：只有 C 过了，1 人已读。</li>
+</ul>
+<p>B 如果还停在消息 1，他本地也可以先收到 C 的水位线事件，把消息 1 从 1 人改成 2 人。他自己的未读数不变，因为未读数只看 B 自己的水位线。</p>
+<p>五百人的群也是这三步。一个人阅读，只 <code>HSET</code> 自己那一个 field。一条消息被五百个人读完，是五百次不同 field 的更新，不是对消息行的五百次追加。展示人数时把这个 Hash 取出来，按 <code>cursor &gt;= seq</code> 数一遍。五百个整数的比较，留在读路径上。</p>
+<h2 id="4-不要把已读写进消息"><a href="#4-不要把已读写进消息" class="headerlink" title="4. 不要把已读写进消息"></a>4. 不要把已读写进消息</h2><p>另一套做法是在消息上挂状态。私聊给消息加一个已读标记，群聊给消息加一个已读数组，谁读了就追加一个用户 ID。</p>
+<p>私聊这样往往也能跑。来把某条消息改成已读的，通常只有对方一个人，同一行上几乎没有并发更新。</p>
+<p>群聊把这个标记按人数循环，就变成：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br></pre></td><td class="code"><pre><span class="line">message.read_by.push(userId)</span><br></pre></td></tr></table></figure>
+
+<p>一条消息被五百个人读完，是对同一行的五百次并发追加，数组还越来越长。拉历史消息要读这行，和追加抢同一把行锁。正文从发出后就没变过，这行却变成进度写入的热点。人少的时候和私聊一样看不出来，人一多，等锁的事务会把连接池占满。</p>
+<p>私聊和群聊如果已经用了水位线，就不要再把算出来的「已读」或「3 人已读」写回消息。那一笔写会把热点搬回消息行，人数一变还要再写一次。</p>
+<h2 id="5-两个不能用一个整数硬套的情况"><a href="#5-两个不能用一个整数硬套的情况" class="headerlink" title="5. 两个不能用一个整数硬套的情况"></a>5. 两个不能用一个整数硬套的情况</h2><p>新成员入群时，如果把他的水位线直接设成当前最大序号，他的未读数是 0，这是对的。但他会满足 <code>cursor &gt;= 旧消息序号</code>，旧消息的已读人数会把他算进去，这是错的。他没有看过入群前的消息。</p>
+<p>计数时要多一个条件：这条消息发出时他已经是成员。实现上给成员记一个 <code>join_seq</code>，只有 <code>join_seq &lt;= 消息 seq &lt;= cursor</code> 的人才算读过。私聊从会话建立时两人都在，没有这个分支。</p>
+<p>另一个限制是阅读必须是前缀。水位线的意思是：这个序号之前的消息全部看过。产品如果允许跳过前面的消息、只把某一条标成已读，一个整数会把中间没看的也标掉。那种读法得按消息记状态，写放大也会回来。进会话就往后推进的已读，不需要这种记法。</p>
+<h2 id="几点理解"><a href="#几点理解" class="headerlink" title="几点理解"></a>几点理解</h2><p>第一，私聊和群聊的写入是一样的。发消息就追加正文并分配序号，阅读就推进自己的水位线。</p>
+<p>第二，私聊和群聊的差别在读法。私聊看对方一个数过没过。群聊数除发送者以外有多少个数已经过了。</p>
+<p>第三，未读角标在两种会话里都只看自己的水位线，和群里有多少人无关。</p>
+<p>第四，已读结果不要回写消息。消息行的写入停在发送那一次。</p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/Redis/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Redis
+    
+</a>
+
+        
+        
+<a href="/tags/%E9%AB%98%E5%B9%B6%E5%8F%91/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    高并发
+    
+</a>
+
+        
+        
+<a href="/tags/IM/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    IM
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <div></div>
+        
+
+        
+        <a href="/2026/08/27/Kubernetes%E6%80%8E%E6%A0%B7%E7%94%A8Deployment%E5%92%8CDaemonSet%E7%AE%A1%E5%9C%A8%E7%BA%BF%E5%BA%94%E7%94%A8/" class="post-nav-link group text-right" title="Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？">
+            <span class="post-nav-title">Kubernetes 怎样用 Deployment 和 DaemonSet 管在线应用？</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>
