@@ -1,0 +1,93 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="800" height="1220" viewBox="0 0 800 1220" role="img" aria-labelledby="title desc">
+  <title id="title">Codex Goal：线程状态与续跑流程</title>
+  <desc id="desc">Goal 保存在当前线程。Agent 执行一轮并核对目标证据后，调度器检查是否满足续跑条件；满足则带回 Goal 和线程上下文开始下一轮，否则暂停等待处理。</desc>
+  <defs>
+    <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#5e6870"/>
+    </marker>
+    <marker id="arrow-accent" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
+      <path d="M0 0 L8 4 L0 8 Z" fill="#9b5948"/>
+    </marker>
+    <style>
+      .title { font: 600 29px Georgia, "Songti SC", "Noto Serif CJK SC", serif; fill: #252b30; }
+      .subtitle { font: 15px "Avenir Next", "PingFang SC", "Noto Sans CJK SC", sans-serif; fill: #68727a; }
+      .heading { font: 600 19px "Avenir Next", "PingFang SC", "Noto Sans CJK SC", sans-serif; fill: #293138; }
+      .body { font: 16px "Avenir Next", "PingFang SC", "Noto Sans CJK SC", sans-serif; fill: #56616a; }
+      .small { font: 14px "Avenir Next", "PingFang SC", "Noto Sans CJK SC", sans-serif; fill: #6c767d; }
+      .step { font: 600 13px "Avenir Next", "PingFang SC", "Noto Sans CJK SC", sans-serif; letter-spacing: 1px; fill: #9b5948; }
+      .label { font: 600 14px "Avenir Next", "PingFang SC", "Noto Sans CJK SC", sans-serif; fill: #9b5948; }
+      .rule { stroke: #d9dddf; stroke-width: 1.2; }
+      .node { fill: #fff; stroke: #89939a; stroke-width: 1.35; }
+      .state { fill: #f7f8f8; stroke: #89939a; stroke-width: 1.35; }
+      .audit { fill: #faf8f5; stroke: #9b8b7e; stroke-width: 1.35; }
+      .complete { fill: #f4f7f4; stroke: #738a78; stroke-width: 1.35; }
+      .waiting { fill: #f6f5f2; stroke: #99948b; stroke-width: 1.35; }
+      .decision { fill: #fff; stroke: #5e6870; stroke-width: 1.45; }
+      .connector { fill: none; stroke: #5e6870; stroke-width: 1.55; marker-end: url(#arrow); }
+      .continuation { fill: none; stroke: #9b5948; stroke-width: 1.65; marker-end: url(#arrow-accent); }
+    </style>
+  </defs>
+
+  <rect width="800" height="1220" fill="#fff"/>
+  <text class="title" x="70" y="62">Codex Goal：线程状态与续跑流程</text>
+  <text class="subtitle" x="70" y="92">持久目标状态 · 轮次结束调度 · 基于证据判断完成</text>
+  <line class="rule" x1="70" y1="114" x2="730" y2="114"/>
+
+  <text class="step" x="90" y="137">01</text>
+  <rect class="state" x="90" y="148" width="430" height="92"/>
+  <text class="heading" x="115" y="181">创建 Goal，附加到当前线程</text>
+  <text class="body" x="115" y="211">保存目标、生命周期、预算与进度</text>
+  <path class="connector" d="M305 240 V310"/>
+
+  <text class="step" x="90" y="299">02</text>
+  <rect class="node" x="90" y="310" width="430" height="125"/>
+  <text class="heading" x="115" y="345">执行一个 Agent turn</text>
+  <text class="body" x="115" y="375">读取 Goal 和线程上下文，选择下一步</text>
+  <text class="body" x="115" y="403">按需使用工具、修改文件、运行命令</text>
+  <path class="connector" d="M305 435 V505"/>
+
+  <text class="step" x="90" y="494">03</text>
+  <rect class="audit" x="90" y="505" width="430" height="106"/>
+  <text class="heading" x="115" y="539">核对目标与完成证据</text>
+  <text class="body" x="115" y="568">文件、测试、日志、基准结果或产物</text>
+  <text class="small" x="115" y="592">检查项由目标要求和当前任务决定</text>
+  <path class="connector" d="M305 611 V646"/>
+
+  <path class="decision" d="M305 646 L405 696 L305 746 L205 696 Z"/>
+  <text class="heading" x="305" y="692" text-anchor="middle">目标满足？</text>
+  <text class="small" x="305" y="714" text-anchor="middle">证据支持完成</text>
+
+  <path class="connector" d="M405 696 H575"/>
+  <text class="label" x="480" y="681" text-anchor="middle">是</text>
+  <rect class="complete" x="575" y="658" width="175" height="78"/>
+  <text class="heading" x="595" y="690">标记完成</text>
+  <text class="small" x="595" y="715">停止自动续跑</text>
+
+  <path class="connector" d="M305 746 V790"/>
+  <text class="label" x="324" y="769">否</text>
+  <rect class="state" x="90" y="790" width="430" height="128"/>
+  <text class="heading" x="115" y="825">调度器检查续跑条件</text>
+  <text class="body" x="115" y="855">Goal 活跃 · 预算可用 · 线程空闲</text>
+  <text class="body" x="115" y="883">无排队输入或其他待处理工作</text>
+  <text class="small" x="115" y="906">Plan-only 不续跑；中断会暂停续跑</text>
+
+  <path class="connector" d="M305 918 V950"/>
+  <path class="decision" d="M305 950 L405 1000 L305 1050 L205 1000 Z"/>
+  <text class="heading" x="305" y="996" text-anchor="middle">可以续跑？</text>
+
+  <path class="continuation" d="M405 1000 H575"/>
+  <text class="label" x="480" y="985" text-anchor="middle">是</text>
+  <rect class="node" x="575" y="960" width="175" height="82"/>
+  <text class="heading" x="595" y="991">启动下一轮</text>
+  <text class="small" x="595" y="1018">Goal + 最新上下文</text>
+  <path class="continuation" d="M750 1001 H770 V372 H520"/>
+  <text class="label" x="650" y="357">续跑提示</text>
+
+  <path class="connector" d="M305 1050 V1092"/>
+  <text class="label" x="324" y="1072">否</text>
+  <rect class="waiting" x="90" y="1092" width="430" height="78"/>
+  <text class="heading" x="115" y="1123">暂停或汇报，等待处理</text>
+  <text class="small" x="115" y="1148">预算到顶、受阻或用户介入，不代表完成</text>
+
+  <text class="small" x="90" y="1200">续跑只在安全边界触发；目标不预设轮数，也不保证每轮执行同一组检查。</text>
+</svg>
