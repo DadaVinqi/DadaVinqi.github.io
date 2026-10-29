@@ -1,6 +1,6 @@
 <svg xmlns="http://www.w3.org/2000/svg" width="800" height="1220" viewBox="0 0 800 1220" role="img" aria-labelledby="title desc">
-  <title id="title">Codex Goal：线程状态与续跑流程</title>
-  <desc id="desc">Goal 保存在当前线程。Agent 执行一轮并核对目标证据后，调度器检查是否满足续跑条件；满足则带回 Goal 和线程上下文开始下一轮，否则暂停等待处理。</desc>
+  <title id="title">Goal 模式：状态与续跑流程</title>
+  <desc id="desc">Harness 保存目标和进度。Agent 执行一轮并收集证据后，评估器判断目标是否完成；未完成时，调度器检查是否允许续跑。</desc>
   <defs>
     <marker id="arrow" markerWidth="8" markerHeight="8" refX="7" refY="4" orient="auto" markerUnits="strokeWidth">
       <path d="M0 0 L8 4 L0 8 Z" fill="#5e6870"/>
@@ -29,33 +29,33 @@
   </defs>
 
   <rect width="800" height="1220" fill="#fff"/>
-  <text class="title" x="70" y="62">Codex Goal：线程状态与续跑流程</text>
-  <text class="subtitle" x="70" y="92">持久目标状态 · 轮次结束调度 · 基于证据判断完成</text>
+  <text class="title" x="70" y="62">Goal 模式：状态与续跑流程</text>
+  <text class="subtitle" x="70" y="92">目标状态 · 完成评估 · 续跑调度 · 预算熔断</text>
   <line class="rule" x1="70" y1="114" x2="730" y2="114"/>
 
   <text class="step" x="90" y="137">01</text>
   <rect class="state" x="90" y="148" width="430" height="92"/>
-  <text class="heading" x="115" y="181">创建 Goal，附加到当前线程</text>
-  <text class="body" x="115" y="211">保存目标、生命周期、预算与进度</text>
+  <text class="heading" x="115" y="181">创建目标并持久化状态</text>
+  <text class="body" x="115" y="211">目标、生命周期、预算与进度</text>
   <path class="connector" d="M305 240 V310"/>
 
   <text class="step" x="90" y="299">02</text>
   <rect class="node" x="90" y="310" width="430" height="125"/>
   <text class="heading" x="115" y="345">执行一个 Agent turn</text>
-  <text class="body" x="115" y="375">读取 Goal 和线程上下文，选择下一步</text>
+  <text class="body" x="115" y="375">读取目标和当前上下文，选择下一步</text>
   <text class="body" x="115" y="403">按需使用工具、修改文件、运行命令</text>
   <path class="connector" d="M305 435 V505"/>
 
   <text class="step" x="90" y="494">03</text>
   <rect class="audit" x="90" y="505" width="430" height="106"/>
-  <text class="heading" x="115" y="539">核对目标与完成证据</text>
-  <text class="body" x="115" y="568">文件、测试、日志、基准结果或产物</text>
-  <text class="small" x="115" y="592">检查项由目标要求和当前任务决定</text>
+  <text class="heading" x="115" y="539">收集证据并评估完成条件</text>
+  <text class="body" x="115" y="568">测试、日志、文件、基准或生成产物</text>
+  <text class="small" x="115" y="592">可由执行模型、规则或独立评估器判断</text>
   <path class="connector" d="M305 611 V646"/>
 
   <path class="decision" d="M305 646 L405 696 L305 746 L205 696 Z"/>
   <text class="heading" x="305" y="692" text-anchor="middle">目标满足？</text>
-  <text class="small" x="305" y="714" text-anchor="middle">证据支持完成</text>
+  <text class="small" x="305" y="714" text-anchor="middle">完成证据通过</text>
 
   <path class="connector" d="M405 696 H575"/>
   <text class="label" x="480" y="681" text-anchor="middle">是</text>
@@ -66,10 +66,10 @@
   <path class="connector" d="M305 746 V790"/>
   <text class="label" x="324" y="769">否</text>
   <rect class="state" x="90" y="790" width="430" height="128"/>
-  <text class="heading" x="115" y="825">调度器检查续跑条件</text>
-  <text class="body" x="115" y="855">Goal 活跃 · 预算可用 · 线程空闲</text>
+  <text class="heading" x="115" y="825">续跑引擎检查条件</text>
+  <text class="body" x="115" y="855">目标有效 · 未暂停 · 预算可用</text>
   <text class="body" x="115" y="883">无排队输入或其他待处理工作</text>
-  <text class="small" x="115" y="906">Plan-only 不续跑；中断会暂停续跑</text>
+  <text class="small" x="115" y="906">仅在 turn 结束等安全边界检查</text>
 
   <path class="connector" d="M305 918 V950"/>
   <path class="decision" d="M305 950 L405 1000 L305 1050 L205 1000 Z"/>
@@ -79,7 +79,7 @@
   <text class="label" x="480" y="985" text-anchor="middle">是</text>
   <rect class="node" x="575" y="960" width="175" height="82"/>
   <text class="heading" x="595" y="991">启动下一轮</text>
-  <text class="small" x="595" y="1018">Goal + 最新上下文</text>
+  <text class="small" x="595" y="1018">目标 + 进度 + 预算</text>
   <path class="continuation" d="M750 1001 H770 V372 H520"/>
   <text class="label" x="650" y="357">续跑提示</text>
 
@@ -87,7 +87,7 @@
   <text class="label" x="324" y="1072">否</text>
   <rect class="waiting" x="90" y="1092" width="430" height="78"/>
   <text class="heading" x="115" y="1123">暂停或汇报，等待处理</text>
-  <text class="small" x="115" y="1148">预算到顶、受阻或用户介入，不代表完成</text>
+  <text class="small" x="115" y="1148">阻塞、预算到顶或用户中断</text>
 
-  <text class="small" x="90" y="1200">续跑只在安全边界触发；目标不预设轮数，也不保证每轮执行同一组检查。</text>
+  <text class="small" x="90" y="1200">调度器决定能否续跑；评估机制决定目标是否达成。两者不是同一个判断。</text>
 </svg>
