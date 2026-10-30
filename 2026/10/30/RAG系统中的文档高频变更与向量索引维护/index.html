@@ -1,0 +1,936 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>RAG 系统中的文档高频变更，如何维护向量索引？ | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="RAG 系统中的文档频繁新增、修改和删除，会带来向量化成本、索引维护和数据一致性等问题。合理的设计需要先过滤无效变更，再按变更类型分别处理，并通过版本切换、异步清理和全链路对账保证稳定性。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="系统架构, RAG, 向量数据库, 数据一致性" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="RAG 系统中的文档高频变更，如何维护向量索引？ | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="RAG 系统中的文档频繁新增、修改和删除，会带来向量化成本、索引维护和数据一致性等问题。合理的设计需要先过滤无效变更，再按变更类型分别处理，并通过版本切换、异步清理和全链路对账保证稳定性。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/10/30/RAG%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E6%96%87%E6%A1%A3%E9%AB%98%E9%A2%91%E5%8F%98%E6%9B%B4%E4%B8%8E%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%E7%BB%B4%E6%8A%A4/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-10-29T16:00:00.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-10-30T08:59:48.195Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="系统架构" />
+    
+    <meta property="article:tag" content="RAG" />
+    
+    <meta property="article:tag" content="向量数据库" />
+    
+    <meta property="article:tag" content="数据一致性" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="RAG 系统中的文档高频变更，如何维护向量索引？ | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="RAG 系统中的文档频繁新增、修改和删除，会带来向量化成本、索引维护和数据一致性等问题。合理的设计需要先过滤无效变更，再按变更类型分别处理，并通过版本切换、异步清理和全链路对账保证稳定性。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/10/30/RAG%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E6%96%87%E6%A1%A3%E9%AB%98%E9%A2%91%E5%8F%98%E6%9B%B4%E4%B8%8E%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%E7%BB%B4%E6%8A%A4/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"RAG 系统中的文档高频变更，如何维护向量索引？","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/10/30/RAG%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E6%96%87%E6%A1%A3%E9%AB%98%E9%A2%91%E5%8F%98%E6%9B%B4%E4%B8%8E%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%E7%BB%B4%E6%8A%A4/index.html"},"description":"RAG 系统中的文档频繁新增、修改和删除，会带来向量化成本、索引维护和数据一致性等问题。合理的设计需要先过滤无效变更，再按变更类型分别处理，并通过版本切换、异步清理和全链路对账保证稳定性。","datePublished":"2026-10-29T16:00:00.000Z","dateModified":"2026-10-30T08:59:48.195Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"系统架构, RAG, 向量数据库, 数据一致性"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            RAG 系统中的文档高频变更，如何维护向量索引？
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-10-30">2026/10/30</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    <span class="text-slate-300">/</span>
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/AI/">AI</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%96%87%E6%A1%A3%E5%8F%98%E6%9B%B4%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%8C%91%E6%88%98" data-target="一、文档变更带来的挑战">一、文档变更带来的挑战</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E8%BF%87%E6%BB%A4%E6%97%A0%E6%95%88%E5%8F%98%E6%9B%B4" data-target="二、先过滤无效变更">二、先过滤无效变更</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E6%A3%80%E6%9F%A5%E5%85%83%E6%95%B0%E6%8D%AE" data-target="1-检查元数据">1. 检查元数据</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E6%A3%80%E6%9F%A5%E5%86%85%E5%AE%B9%E6%8C%87%E7%BA%B9" data-target="2-检查内容指纹">2. 检查内容指纹</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E7%BC%93%E5%86%B2%E5%8F%98%E6%9B%B4" data-target="3-使用消息队列缓冲变更">3. 使用消息队列缓冲变更</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%96%B0%E5%A2%9E%EF%BC%9A%E6%8C%89%E6%96%87%E6%A1%A3%E5%92%8C%E7%89%88%E6%9C%AC%E5%86%99%E5%85%A5" data-target="三、新增：按文档和版本写入">三、新增：按文档和版本写入</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E4%BF%AE%E6%94%B9%EF%BC%9A%E5%B0%BD%E9%87%8F%E5%8F%AA%E9%87%8D%E7%AE%97%E5%8F%97%E5%BD%B1%E5%93%8D%E7%9A%84%E5%88%86%E7%89%87" data-target="四、修改：尽量只重算受影响的分片">四、修改：尽量只重算受影响的分片</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%88%A0%E9%99%A4%EF%BC%9A%E5%85%88%E8%AE%A9%E5%86%85%E5%AE%B9%E4%B8%8D%E5%8F%AF%E8%A7%81%EF%BC%8C%E5%86%8D%E6%89%B9%E9%87%8F%E6%B8%85%E7%90%86" data-target="五、删除：先让内容不可见，再批量清理">五、删除：先让内容不可见，再批量清理</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%80%BB%E8%BE%91%E5%88%A0%E9%99%A4" data-target="1-逻辑删除">1. 逻辑删除</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E7%89%A9%E7%90%86%E6%B8%85%E7%90%86" data-target="2-物理清理">2. 物理清理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%89%88%E6%9C%AC%E5%88%87%E6%8D%A2%EF%BC%9A%E4%BF%9D%E8%AF%81%E6%9F%A5%E8%AF%A2%E5%8F%AA%E7%9C%8B%E5%88%B0%E5%AE%8C%E6%95%B4%E7%89%88%E6%9C%AC" data-target="六、版本切换：保证查询只看到完整版本">六、版本切换：保证查询只看到完整版本</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E8%BF%90%E7%BB%B4%E4%BF%9D%E9%9A%9C%EF%BC%9A%E5%AF%B9%E8%B4%A6%E4%B8%8E%E7%B4%A2%E5%BC%95%E7%9B%91%E6%8E%A7" data-target="七、运维保障：对账与索引监控">七、运维保障：对账与索引监控</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%80%BB%E7%BB%93" data-target="八、总结">八、总结</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E6%96%87%E6%A1%A3%E5%8F%98%E6%9B%B4%E5%B8%A6%E6%9D%A5%E7%9A%84%E6%8C%91%E6%88%98" data-target="一、文档变更带来的挑战">一、文档变更带来的挑战</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81%E5%85%88%E8%BF%87%E6%BB%A4%E6%97%A0%E6%95%88%E5%8F%98%E6%9B%B4" data-target="二、先过滤无效变更">二、先过滤无效变更</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E6%A3%80%E6%9F%A5%E5%85%83%E6%95%B0%E6%8D%AE" data-target="1-检查元数据">1. 检查元数据</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E6%A3%80%E6%9F%A5%E5%86%85%E5%AE%B9%E6%8C%87%E7%BA%B9" data-target="2-检查内容指纹">2. 检查内容指纹</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E4%BD%BF%E7%94%A8%E6%B6%88%E6%81%AF%E9%98%9F%E5%88%97%E7%BC%93%E5%86%B2%E5%8F%98%E6%9B%B4" data-target="3-使用消息队列缓冲变更">3. 使用消息队列缓冲变更</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81%E6%96%B0%E5%A2%9E%EF%BC%9A%E6%8C%89%E6%96%87%E6%A1%A3%E5%92%8C%E7%89%88%E6%9C%AC%E5%86%99%E5%85%A5" data-target="三、新增：按文档和版本写入">三、新增：按文档和版本写入</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E4%BF%AE%E6%94%B9%EF%BC%9A%E5%B0%BD%E9%87%8F%E5%8F%AA%E9%87%8D%E7%AE%97%E5%8F%97%E5%BD%B1%E5%93%8D%E7%9A%84%E5%88%86%E7%89%87" data-target="四、修改：尽量只重算受影响的分片">四、修改：尽量只重算受影响的分片</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E5%88%A0%E9%99%A4%EF%BC%9A%E5%85%88%E8%AE%A9%E5%86%85%E5%AE%B9%E4%B8%8D%E5%8F%AF%E8%A7%81%EF%BC%8C%E5%86%8D%E6%89%B9%E9%87%8F%E6%B8%85%E7%90%86" data-target="五、删除：先让内容不可见，再批量清理">五、删除：先让内容不可见，再批量清理</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E9%80%BB%E8%BE%91%E5%88%A0%E9%99%A4" data-target="1-逻辑删除">1. 逻辑删除</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E7%89%A9%E7%90%86%E6%B8%85%E7%90%86" data-target="2-物理清理">2. 物理清理</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E7%89%88%E6%9C%AC%E5%88%87%E6%8D%A2%EF%BC%9A%E4%BF%9D%E8%AF%81%E6%9F%A5%E8%AF%A2%E5%8F%AA%E7%9C%8B%E5%88%B0%E5%AE%8C%E6%95%B4%E7%89%88%E6%9C%AC" data-target="六、版本切换：保证查询只看到完整版本">六、版本切换：保证查询只看到完整版本</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%83%E3%80%81%E8%BF%90%E7%BB%B4%E4%BF%9D%E9%9A%9C%EF%BC%9A%E5%AF%B9%E8%B4%A6%E4%B8%8E%E7%B4%A2%E5%BC%95%E7%9B%91%E6%8E%A7" data-target="七、运维保障：对账与索引监控">七、运维保障：对账与索引监控</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AB%E3%80%81%E6%80%BB%E7%BB%93" data-target="八、总结">八、总结</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p><strong>RAG 系统中的文档频繁新增、修改和删除，会带来向量化成本、索引维护和数据一致性等问题。合理的设计需要先过滤无效变更，再按变更类型分别处理，并通过版本切换、异步清理和全链路对账保证稳定性。</strong></p>
+<span id="more"></span>
+
+<h2 id="一、文档变更带来的挑战"><a href="#一、文档变更带来的挑战" class="headerlink" title="一、文档变更带来的挑战"></a>一、文档变更带来的挑战</h2><p>文档发生变化后，RAG 系统通常需要重新解析文本、切分分片、生成向量，再更新索引。如果每次变更都对整篇文档执行这套流程，文档越大、变更越频繁，计算和写入成本就越高。</p>
+<p>更新过程还可能出现其他问题：</p>
+<ul>
+<li>新旧版本同时出现在检索结果中；</li>
+<li>更新中途失败，导致文档只写入了一部分；</li>
+<li>删除后，旧内容仍然出现在搜索结果里；</li>
+<li>大量写入和删除增加索引维护成本，影响查询表现。</li>
+</ul>
+<p>因此，文档变更设计需要兼顾更新成本、检索时效和数据一致性。</p>
+<h2 id="二、先过滤无效变更"><a href="#二、先过滤无效变更" class="headerlink" title="二、先过滤无效变更"></a>二、先过滤无效变更</h2><p>文档变更事件不一定意味着内容真的发生了变化。例如，文件可能只是改了名称、修改时间，或者调整了格式。对这类变化重新生成向量，通常没有必要。</p>
+<h3 id="1-检查元数据"><a href="#1-检查元数据" class="headerlink" title="1. 检查元数据"></a>1. 检查元数据</h3><p>可以先检查文件大小、更新时间、ETag 或来源系统的版本号，快速识别未变化的文档。</p>
+<p>元数据适合做初步判断，但不一定能证明内容相同。例如，文件可能在内容没有变化时被重新保存。对关键数据，可以再计算规范化文本的内容哈希，确认文本是否真正改变。</p>
+<h3 id="2-检查内容指纹"><a href="#2-检查内容指纹" class="headerlink" title="2. 检查内容指纹"></a>2. 检查内容指纹</h3><p>对规范化后的文本计算哈希，可以识别内容完全相同的情况。也可以使用 SimHash 等方法检测近似内容，作为重复内容过滤的辅助信号。</p>
+<p>近似指纹不等于语义等价判断，存在误判风险。如果跳过了实际有意义的修改，系统就会继续检索旧内容。因此，是否启用这层过滤以及如何设置阈值，需要结合文档类型和召回要求验证。</p>
+<h3 id="3-使用消息队列缓冲变更"><a href="#3-使用消息队列缓冲变更" class="headerlink" title="3. 使用消息队列缓冲变更"></a>3. 使用消息队列缓冲变更</h3><p>通过消息队列异步处理文档变更，可以把上游的突发写入和下游的解析、切分、向量化、索引写入解耦。</p>
+<p>队列还可以配合去重和合并：同一文档短时间内连续变更时，只处理最新版本，避免对过期版本重复计算。</p>
+<h2 id="三、新增：按文档和版本写入"><a href="#三、新增：按文档和版本写入" class="headerlink" title="三、新增：按文档和版本写入"></a>三、新增：按文档和版本写入</h2><p>新增文档通常走标准的增量处理流程：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br><span class="line">6</span><br><span class="line">7</span><br><span class="line">8</span><br><span class="line">9</span><br></pre></td><td class="code"><pre><span class="line">接收文档</span><br><span class="line">  ↓</span><br><span class="line">解析与切分</span><br><span class="line">  ↓</span><br><span class="line">生成向量</span><br><span class="line">  ↓</span><br><span class="line">写入向量库和元数据</span><br><span class="line">  ↓</span><br><span class="line">校验完成后对查询可见</span><br></pre></td></tr></table></figure>
+
+<p>每篇文档应有稳定的 <code>doc_id</code>，每次内容变化生成新的 <code>doc_version</code>。每个分片也要有自己的标识，例如 <code>chunk_id</code>，并记录所属文档、版本和向量模型版本。</p>
+<p>这些字段可以帮助系统区分同一文档的不同版本，也便于后续定位、删除和对账。写入过程还应支持幂等，避免消息重复投递时产生重复数据。</p>
+<h2 id="四、修改：尽量只重算受影响的分片"><a href="#四、修改：尽量只重算受影响的分片" class="headerlink" title="四、修改：尽量只重算受影响的分片"></a>四、修改：尽量只重算受影响的分片</h2><p>修改文档时，最直接的方案是整篇重新切分和向量化。它实现简单，但如果大文档只改了一小段，就可能产生大量不必要的计算和写入。</p>
+<p>可以通过增量差分缩小更新范围：</p>
+<ol>
+<li>比较新旧文本，定位发生变化的段落或区域；</li>
+<li>根据切分规则和分片重叠窗口，找出受影响的分片；</li>
+<li>只为这些分片重新生成向量；</li>
+<li>新分片完成并校验后，再切换到新版本。</li>
+</ol>
+<p>分片边界可能随文本变化而移动。例如，在文档前部插入一段内容，后续分片也可能整体偏移。因此，计算差分时需要同时考虑切分规则、重叠窗口和边界变化。</p>
+<p>当修改范围较大、文档结构变化明显，或差分计算本身已经不划算时，可以直接全量重建。具体阈值应根据文档大小、向量化成本和索引写入耗时，通过实际运行数据确定。</p>
+<h2 id="五、删除：先让内容不可见，再批量清理"><a href="#五、删除：先让内容不可见，再批量清理" class="headerlink" title="五、删除：先让内容不可见，再批量清理"></a>五、删除：先让内容不可见，再批量清理</h2><p>删除通常分为逻辑删除和物理删除两个阶段。</p>
+<h3 id="1-逻辑删除"><a href="#1-逻辑删除" class="headerlink" title="1. 逻辑删除"></a>1. 逻辑删除</h3><p>收到删除事件后，先更新文档状态或可见版本，让查询不再返回该文档。这样可以尽快反映删除结果，不必等待向量索引完成物理清理。</p>
+<p>查询路径必须实际使用删除状态或版本信息进行过滤。仅在元数据中标记“已删除”，但检索时没有检查这个标记，旧向量仍可能出现在结果中。</p>
+<h3 id="2-物理清理"><a href="#2-物理清理" class="headerlink" title="2. 物理清理"></a>2. 物理清理</h3><p>之后再异步删除相关分片和向量。可以合并多条删除任务，减少频繁操作索引带来的维护开销。</p>
+<p>索引碎片和整理方式取决于具体向量数据库及其索引实现。系统可以根据数据库提供的能力，结合索引状态和查询表现，安排批量清理或索引重建。</p>
+<p>对于有效期明确的数据，例如活动内容或每日资讯，也可以按时间或业务周期组织数据，过期后批量清理对应范围。</p>
+<h2 id="六、版本切换：保证查询只看到完整版本"><a href="#六、版本切换：保证查询只看到完整版本" class="headerlink" title="六、版本切换：保证查询只看到完整版本"></a>六、版本切换：保证查询只看到完整版本</h2><p>如果直接覆盖旧数据，更新期间可能出现新旧内容混杂的情况。更稳妥的方式是先写入新版本，确认完整后再切换查询所使用的版本。</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br><span class="line">4</span><br><span class="line">5</span><br></pre></td><td class="code"><pre><span class="line">1. 写入新版本的全部分片和向量，标记为待发布</span><br><span class="line">2. 校验分片数量、必要字段和向量写入结果</span><br><span class="line">3. 原子更新文档的当前版本</span><br><span class="line">4. 查询按当前版本读取</span><br><span class="line">5. 延迟清理旧版本数据</span><br></pre></td></tr></table></figure>
+
+<p>查询侧需要有明确的版本过滤规则，避免同一篇文档的新旧版本同时返回。实现方式可以是查询时过滤版本，也可以通过索引别名、集合切换或其他数据库能力实现，具体取决于存储系统。</p>
+<p>并发修改可以使用乐观锁：更新时带上预期的旧版本号，只有版本匹配才允许提交。如果期间已经有新版本写入，就拒绝过期更新，并重新读取最新状态处理。</p>
+<h2 id="七、运维保障：对账与索引监控"><a href="#七、运维保障：对账与索引监控" class="headerlink" title="七、运维保障：对账与索引监控"></a>七、运维保障：对账与索引监控</h2><p>在线写入链路难以覆盖所有异常。消息可能失败或重复，向量库也可能出现向量写入成功但元数据未更新等情况。因此，系统需要定期执行对账任务。</p>
+<p>对账可以比较：</p>
+<ul>
+<li>原始文档与文档元数据；</li>
+<li>文档当前版本与向量库中的版本；</li>
+<li>分片记录与实际向量；</li>
+<li>向量索引与全文索引中的可见状态。</li>
+</ul>
+<p>发现缺失、冗余或版本不一致时，可以按规则补写、重试或清理，并记录处理结果。</p>
+<p>监控方面，除了写入成功率和队列积压，还可以关注：</p>
+<ul>
+<li>文档从变更到可检索的耗时；</li>
+<li>向量化和索引写入失败率；</li>
+<li>查询延迟和检索结果中的旧版本比例；</li>
+<li>孤立向量、缺失分片和待清理数据数量；</li>
+<li>向量数据库提供的索引健康指标。</li>
+</ul>
+<h2 id="八、总结"><a href="#八、总结" class="headerlink" title="八、总结"></a>八、总结</h2><p>处理 RAG 文档的高频变更，可以从四个方面入手：</p>
+<ol>
+<li><strong>过滤无效变更</strong>，减少不必要的解析和向量化；</li>
+<li><strong>按变更类型处理</strong>，新增走增量写入，修改尽量局部重算，删除先让内容不可见再异步清理；</li>
+<li><strong>通过版本切换保证一致性</strong>，新版本完整写入并校验后，再切换查询版本；</li>
+<li><strong>完善运维保障</strong>，通过幂等处理、失败重试、定期对账和索引监控发现并修复异常。</li>
+</ol>
+<p>设计的关键，是让文档变化能够及时反映到检索结果中，同时控制向量化和索引维护成本。</p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/%E7%B3%BB%E7%BB%9F%E6%9E%B6%E6%9E%84/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    系统架构
+    
+</a>
+
+        
+        
+<a href="/tags/RAG/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    RAG
+    
+</a>
+
+        
+        
+<a href="/tags/%E5%90%91%E9%87%8F%E6%95%B0%E6%8D%AE%E5%BA%93/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    向量数据库
+    
+</a>
+
+        
+        
+<a href="/tags/%E6%95%B0%E6%8D%AE%E4%B8%80%E8%87%B4%E6%80%A7/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    数据一致性
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <div></div>
+        
+
+        
+        <a href="/2026/10/29/Goal%E6%A8%A1%E5%BC%8F%EF%BC%9A%E8%AE%A9Agent%E5%9B%B4%E7%BB%95%E7%9B%AE%E6%A0%87%E6%8C%81%E7%BB%AD%E5%B7%A5%E4%BD%9C/" class="post-nav-link group text-right" title="Goal 模式：让 Agent 围绕目标持续工作">
+            <span class="post-nav-title">Goal 模式：让 Agent 围绕目标持续工作</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>

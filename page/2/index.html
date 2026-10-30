@@ -398,6 +398,80 @@
 <article class="py-2">
     <header class="text-center mb-4">
         <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
+            <a href="/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/">分布式缓存</a>
+        </h2>
+        
+
+
+
+<div class="mt-2 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-25">2026/07/25</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+            
+        </div>
+    
+</div>
+
+    </header>
+    
+    
+    
+    
+    
+    
+    
+    
+    <div class="prose-shiro">
+        <p><strong>分布式缓存通过 Redis 等系统解决本地缓存无法共享和可扩展性差的问题，典型读流程是先查缓存、未命中再查数据库并写回缓存；同时需要通过缓存空值和布隆过滤器防止缓存穿透，通过随机过期时间和 Redis 高可用防止缓存雪崩，并采用“先更新数据库，再删除缓存”的策略尽量保证缓存与数据库最终一致。</strong></p>
+    </div>
+    
+    <div class="mt-6 text-center">
+        <a href="/2026/07/25/%E5%88%86%E5%B8%83%E5%BC%8F%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/"
+            class="focus-elegant btn-ink"
+            aria-label="阅读更多: 分布式缓存">
+            阅读更多
+        </a>
+    </div>
+    
+</article>
+
+
+        
+            
+<div class="my-8 flex items-center justify-center gap-3" aria-hidden="true">
+    <div class="h-px flex-1 bg-linear-to-r from-transparent to-slate-300 max-w-divider"></div>
+    <svg class="h-4 w-10 shrink-0 text-slate-300" viewBox="0 0 40 10">
+        <circle cx="20" cy="5" r="3" fill="currentColor" opacity="0.9" />
+        <circle cx="4" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
+        <circle cx="36" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
+    </svg>
+    <div class="h-px flex-1 bg-linear-to-l from-transparent to-slate-300 max-w-divider"></div>
+</div>
+
+        
+    
+        
+<article class="py-2">
+    <header class="text-center mb-4">
+        <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
             <a href="/2026/07/24/%E6%9C%AC%E5%9C%B0%E7%BC%93%E5%AD%98%E6%80%BB%E7%BB%93/">本地缓存</a>
         </h2>
         
@@ -1039,80 +1113,6 @@
         <a href="/2026/07/12/%E6%8E%A5%E5%85%A5%E5%B1%82%E7%9A%84%E6%8A%80%E6%9C%AF%E6%BC%94%E8%BF%9B/"
             class="focus-elegant btn-ink"
             aria-label="阅读更多: 接入层的技术演进">
-            阅读更多
-        </a>
-    </div>
-    
-</article>
-
-
-        
-            
-<div class="my-8 flex items-center justify-center gap-3" aria-hidden="true">
-    <div class="h-px flex-1 bg-linear-to-r from-transparent to-slate-300 max-w-divider"></div>
-    <svg class="h-4 w-10 shrink-0 text-slate-300" viewBox="0 0 40 10">
-        <circle cx="20" cy="5" r="3" fill="currentColor" opacity="0.9" />
-        <circle cx="4" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
-        <circle cx="36" cy="5" r="1.5" fill="currentColor" opacity="0.6" />
-    </svg>
-    <div class="h-px flex-1 bg-linear-to-l from-transparent to-slate-300 max-w-divider"></div>
-</div>
-
-        
-    
-        
-<article class="py-2">
-    <header class="text-center mb-4">
-        <h2 class="font-bold leading-snug text-slate-900 text-[1.35rem] transition-colors hover:text-seal sm:text-[1.45rem] md:text-[1.6rem]">
-            <a href="/2026/07/10/DNS%E4%B8%8EHTTP-DNS/">DNS与HTTP DNS</a>
-        </h2>
-        
-
-
-
-<div class="mt-2 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
-    <div class="flex items-center gap-1.5">
-        
-<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
-</svg>
-
-        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-07-10">2026/07/10</time></a>
-    </div>
-    
-        
-        <span class="text-slate-300" aria-hidden="true">•</span>
-        <div class="flex items-center gap-1.5">
-            
-<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
-    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
-</svg>
-
-            
-                
-                <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
-            
-        </div>
-    
-</div>
-
-    </header>
-    
-    
-    
-    
-    
-    
-    
-    
-    <div class="prose-shiro">
-        <p>今天我们来总结一下<strong>客户端是如何找到机房入口 IP，并与后台服务建立连接的</strong>。</p>
-    </div>
-    
-    <div class="mt-6 text-center">
-        <a href="/2026/07/10/DNS%E4%B8%8EHTTP-DNS/"
-            class="focus-elegant btn-ink"
-            aria-label="阅读更多: DNS与HTTP DNS">
             阅读更多
         </a>
     </div>
