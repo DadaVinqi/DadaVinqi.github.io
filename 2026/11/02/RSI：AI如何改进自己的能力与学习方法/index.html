@@ -1,0 +1,975 @@
+<!doctype html>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<html lang="zh-CN" class="h-full scroll-smooth">
+<head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="generator" content="Hexo " />
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    
+    
+    <!-- Prefetch the search script/CSS and Pagefind UI assets at lowest priority so the first
+         click (or "/" shortcut) opens the search box instantly, even on touch devices with no hover. -->
+    <link rel="prefetch" as="script" href="/js/search.min.js?v=4e64082f" />
+    <link rel="prefetch" as="style" href="/css/search.min.css?v=81ae2a10" />
+    <link rel="prefetch" as="script" href="/pagefind/pagefind-ui.js" />
+    <link rel="prefetch" as="style" href="/pagefind/pagefind-ui.css" />
+    
+    
+    
+    <!-- Preload the critical (title + body) font stylesheet so it is fetched at highest
+         priority ahead of the blocking theme script, shrinking the swap window.
+         Kept as a preload (not a stylesheet) here so it does not delay the theme script. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    <!-- FOUC prevention: resolve theme before first paint.
+         Flow: read default → build valid states → read localStorage (try/catch for Safari private mode)
+         → validate saved state → set data-theme-state on <html> → resolve effective dark/light
+         → set data-theme and colorScheme. In "system" mode it also keeps following OS
+         light/dark changes live, so the page updates without a reload even when the toggle is hidden.
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring this past first paint
+         (it must run synchronously for both theme resolution and the preloader skip). -->
+    <script data-cfasync="false">
+    ;(() => {
+        const defaultTheme = "light";
+        window.__themeDefault = defaultTheme;
+        const states = defaultTheme === 'system' ? ['system', 'light', 'dark'] : ['light', 'dark'];
+        let saved;
+        try { saved = localStorage.getItem('theme'); } catch (_) {}
+        const state = saved && states.includes(saved) ? saved : defaultTheme;
+        const html = document.documentElement;
+        html.setAttribute('data-theme-state', state);
+        const darkQuery = window.matchMedia('(prefers-color-scheme: dark)');
+        const isDark = state === 'dark' || (state !== 'light' && darkQuery.matches);
+        html.setAttribute('data-theme', isDark ? 'dark' : 'light');
+        html.style.colorScheme = isDark ? 'dark' : 'light';
+        if (defaultTheme === 'system') {
+            // Keep following OS light/dark changes while in "system" mode even when the
+            // toggle (and theme-toggle.js) is disabled, so the page updates without a reload.
+            const followSystem = () => {
+                if (html.getAttribute('data-theme-state') !== 'system') return;
+                html.setAttribute('data-theme', darkQuery.matches ? 'dark' : 'light');
+                html.style.colorScheme = darkQuery.matches ? 'dark' : 'light';
+            };
+            if (darkQuery.addEventListener) darkQuery.addEventListener('change', followSystem);
+            else if (darkQuery.addListener) darkQuery.addListener(followSystem);
+        }
+        try {
+            if (sessionStorage.getItem('shiro:title-font-ready') === '1') {
+                html.classList.add('shiro-preloader-done');
+            }
+        } catch (_) {}
+    })();
+    </script>
+    
+    
+    <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cardo:wght@400;700&family=Yuji+Syuku&family=Zen+Old+Mincho:wght@400;600&family=Noto+Serif+SC:wght@400;600&display=swap" />
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:wght@400;600&display=optional" /></noscript>
+    
+    
+    
+    <!-- Non-critical (display=optional) font stylesheets load async so they never block first
+         paint or compete with the critical title+body stylesheet above. -->
+    <link rel="preload" as="style" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" onload="this.onload=null;this.rel='stylesheet'" />
+    <noscript><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fira+Code:wght@400;500&display=optional" /></noscript>
+    
+    
+    
+    
+    
+    
+    
+    
+    
+        
+    
+    
+    <title>RSI：AI 如何改进自己的能力与学习方法 | DadaVinCi's Blog</title>
+
+    <!-- SEO Meta -->
+    
+    <meta name="description" content="AI 可以从失败中总结经验，但如果负责总结经验的流程本身不够好，谁来改进这套流程？RSI（Recursive Self-Improvement，递归自我改进）研究的就是这个问题：系统根据反馈提升能力，再用得到的能力改进后续的学习和升级过程。 理解 RSI，需要抓住一条主线： 从记住有效经验，到改进学习方法，再到让下一代更会继续改进自己。" />
+    
+    
+    <meta name="author" content="John Doe" />
+    
+    
+    <meta name="keywords" content="AI Agent, Harness, RSI, 模型微调" />
+    
+
+    <!-- Open Graph -->
+    <meta property="og:title" content="RSI：AI 如何改进自己的能力与学习方法 | DadaVinCi's Blog" />
+    
+    <meta property="og:description" content="AI 可以从失败中总结经验，但如果负责总结经验的流程本身不够好，谁来改进这套流程？RSI（Recursive Self-Improvement，递归自我改进）研究的就是这个问题：系统根据反馈提升能力，再用得到的能力改进后续的学习和升级过程。 理解 RSI，需要抓住一条主线： 从记住有效经验，到改进学习方法，再到让下一代更会继续改进自己。" />
+    
+    <meta property="og:url" content="https://dadavinqi.github.io/2026/11/02/RSI%EF%BC%9AAI%E5%A6%82%E4%BD%95%E6%94%B9%E8%BF%9B%E8%87%AA%E5%B7%B1%E7%9A%84%E8%83%BD%E5%8A%9B%E4%B8%8E%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95/index.html" />
+    <meta property="og:type" content="article" />
+    <meta property="og:site_name" content="DadaVinCi's Blog" />
+    
+    
+    <meta property="og:locale" content="zh_CN" />
+    
+    
+    
+    
+    <meta property="article:published_time" content="2026-11-01T16:00:00.000Z" />
+    
+    
+    <meta property="article:modified_time" content="2026-11-02T10:16:33.972Z" />
+    
+    
+    <meta property="article:author" content="John Doe" />
+    
+    
+    
+    <meta property="article:tag" content="AI Agent" />
+    
+    <meta property="article:tag" content="Harness" />
+    
+    <meta property="article:tag" content="RSI" />
+    
+    <meta property="article:tag" content="模型微调" />
+    
+    
+    
+
+    <!-- Twitter Card -->
+    <meta name="twitter:card" content="summary" />
+    <meta name="twitter:title" content="RSI：AI 如何改进自己的能力与学习方法 | DadaVinCi's Blog" />
+    
+    <meta name="twitter:description" content="AI 可以从失败中总结经验，但如果负责总结经验的流程本身不够好，谁来改进这套流程？RSI（Recursive Self-Improvement，递归自我改进）研究的就是这个问题：系统根据反馈提升能力，再用得到的能力改进后续的学习和升级过程。 理解 RSI，需要抓住一条主线： 从记住有效经验，到改进学习方法，再到让下一代更会继续改进自己。" />
+    
+    
+
+    <!-- Canonical URL -->
+    <link rel="canonical" href="https://dadavinqi.github.io/2026/11/02/RSI%EF%BC%9AAI%E5%A6%82%E4%BD%95%E6%94%B9%E8%BF%9B%E8%87%AA%E5%B7%B1%E7%9A%84%E8%83%BD%E5%8A%9B%E4%B8%8E%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95/index.html" />
+
+    <!-- Pagination rel hints for paginated list pages (home / archive / tag / category) -->
+    
+
+    <!-- Structured data (JSON-LD) -->
+    
+    
+    <script type="application/ld+json">[{"@context":"https://schema.org","@type":"BlogPosting","headline":"RSI：AI 如何改进自己的能力与学习方法","mainEntityOfPage":{"@type":"WebPage","@id":"https://dadavinqi.github.io/2026/11/02/RSI%EF%BC%9AAI%E5%A6%82%E4%BD%95%E6%94%B9%E8%BF%9B%E8%87%AA%E5%B7%B1%E7%9A%84%E8%83%BD%E5%8A%9B%E4%B8%8E%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95/index.html"},"description":"AI 可以从失败中总结经验，但如果负责总结经验的流程本身不够好，谁来改进这套流程？RSI（Recursive Self-Improvement，递归自我改进）研究的就是这个问题：系统根据反馈提升能力，再用得到的能力改进后续的学习和升级过程。 理解 RSI，需要抓住一条主线： 从记住有效经验，到改进学习方法，再到让下一代更会继续改进自己。","datePublished":"2026-11-01T16:00:00.000Z","dateModified":"2026-11-02T10:16:33.972Z","author":{"@type":"Person","name":"John Doe"},"publisher":{"@type":"Organization","name":"DadaVinCi's Blog","logo":{"@type":"ImageObject","url":"https://dadavinqi.github.io/favicon.svg"}},"keywords":"AI Agent, Harness, RSI, 模型微调"}]</script>
+    
+
+    <!-- Favicon -->
+    
+    <link rel="icon" href="/favicon.svg" />
+    
+
+    <!-- RSS -->
+    
+    
+
+    <!-- CSS -->
+    <link rel="stylesheet" href="/css/style.min.css?v=775ef865">
+    <link rel="stylesheet" href="/css/header-contact.css?v=ea60dcea">
+    
+    <link rel="stylesheet" href="/css/code.min.css?v=b25e5c93">
+    
+    
+    <link rel="stylesheet" href="/css/toc.min.css?v=eccfbacd">
+    
+    <!-- Preloader script in <head> (defer) so its fetch starts during head parse;
+         data-cfasync="false" stops Cloudflare Rocket Loader from deferring it past first paint. -->
+    <script defer data-cfasync="false" src="/js/preloader.min.js?v=aab4aff5"></script>
+</head>
+
+
+<body class="h-full fog-bg text-slate-800">
+    <!-- Font-load preloader: covers the title-font swap until preloader.min.js fades it out.
+         data-shiro-font-text lists the title glyphs to wait for. -->
+    <div id="shiroPreloader" class="shiro-preloader" aria-hidden="true"
+        data-shiro-font-text="DadaVinCi's Blog黄自律是高级自由">
+        <div class="shiro-preloader-ripple" aria-hidden="true">
+            <span class="shiro-preloader-ring"></span>
+            <span class="shiro-preloader-ring"></span>
+        </div>
+    </div>
+    
+    
+<svg width="0" height="0" class="absolute pointer-events-none" aria-hidden="true">
+    <defs>
+        <filter id="seal-roughness" x="-20%" y="-20%" width="140%" height="140%">
+            <feTurbulence type="turbulence" baseFrequency="0.05" numOctaves="2" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="3" />
+        </filter>
+        <filter id="text-erosion">
+            <feTurbulence type="fractalNoise" baseFrequency="0.15" numOctaves="1" result="noise" />
+            <feDisplacementMap in="SourceGraphic" in2="noise" scale="1.5" />
+        </filter>
+    </defs>
+</svg>
+
+    
+
+    
+    
+
+    
+    <div id="progressBar" class="progress-bar" aria-hidden="true"></div>
+    
+    
+    <div id="backToTopSentinel" class="back-to-top-sentinel" aria-hidden="true"></div>
+    
+
+    <div class="min-h-full px-4 pt-14 pb-6 md:pb-5">
+
+        <!-- Paper Card -->
+        <div
+            class="paper relative mx-auto w-full max-w-4xl rounded-xl px-5 sm:px-8 md:px-12 lg:px-14 pt-10 pb-6 md:pt-12 md:pb-8">
+
+            
+
+<header class="relative" data-pagefind-ignore>
+
+    <div class="relative flex items-start justify-center">
+        <div class="text-center w-full">
+            <div class="relative inline-block site-title-lockup">
+                
+                <p class="site-title">
+                    <a href="/">DadaVinCi's Blog</a>
+                </p>
+                
+                <!-- Seal: Mathematically Centered -->
+                
+                <div
+                    class="absolute left-full top-1/2 -translate-y-1/2 ml-1 sm:ml-4 origin-left scale-75 sm:scale-110">
+                    
+<svg width="52" height="52" viewBox="0 0 100 100" aria-hidden="true"
+    xmlns="http://www.w3.org/2000/svg">
+    <path d="M15,12 Q50,5 85,12 Q95,50 88,88 Q50,95 12,88 Q5,50 15,12 Z"
+        fill="var(--color-seal)" filter="url(#seal-roughness)" opacity="0.92" />
+    <text x="50" y="50" text-anchor="middle" dominant-baseline="central"
+        font-size="42" fill="rgba(255,255,255,0.92)" filter="url(#text-erosion)"
+        class="seal-text select-none">黄</text>
+</svg>
+
+                </div>
+                
+            </div>
+            
+            <div class="mt-3 sm:mt-4 flex w-full justify-center gap-2">
+                
+                
+                
+                <button id="themeToggle" type="button" class="focus-elegant header-pill-btn" aria-label="浅色" data-label-system="跟随系统" data-label-light="浅色" data-label-dark="深色">
+                    
+<svg data-icon="system" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <rect x="2" y="3" width="20" height="14" rx="2" stroke-width="1.5"/>
+    <path d="M8 21h8M12 17v4" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="light" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <circle cx="12" cy="12" r="4" stroke-width="1.5"/>
+    <path d="M12 2v2M12 20v2M4.93 4.93l1.41 1.41M17.66 17.66l1.41 1.41M2 12h2M20 12h2M4.93 19.07l1.41-1.41M17.66 6.34l1.41-1.41" stroke-width="1.5" stroke-linecap="round"/>
+</svg>
+
+                    
+<svg data-icon="dark" class="size-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path d="M21 12.79A9 9 0 1111.21 3 7 7 0 0021 12.79z" stroke-width="1.5" stroke-linecap="round" stroke-linejoin="round"/>
+</svg>
+
+                </button>
+                
+                
+                <button id="searchToggle" type="button" class="focus-elegant header-pill-btn" aria-haspopup="dialog" aria-label="搜索">
+                    
+<svg class="size-3.5" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+    <circle cx="11" cy="11" r="7"></circle>
+    <path d="M21 21l-4.35-4.35"></path>
+</svg>
+
+                </button>
+                
+                
+            </div>
+        </div>
+    </div>
+</header>
+
+<!-- Navigation -->
+
+<nav class="mt-8 md:mt-10" aria-label="菜单" data-pagefind-ignore>
+    <!-- Mobile Toggle -->
+    <div class="flex items-center justify-center md:hidden">
+        <button id="menuBtn" type="button"
+            class="focus-elegant inline-flex cursor-pointer items-center gap-2 rounded-full border border-slate-200 bg-paper/95 px-4 py-2 text-sm text-slate-700 shadow-xs"
+            aria-expanded="false" aria-controls="mobileMenu">
+            <span class="text-base leading-none tracking-widest">菜单</span>
+            
+<svg class="size-4 text-slate-500 transition-transform duration-200" id="menuChevron"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+        </button>
+    </div>
+
+    <!-- Desktop Menu -->
+    <div class="hidden md:block">
+        <ul class="flex flex-wrap items-center justify-center gap-x-6 gap-y-2 text-base text-slate-700 px-4">
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="text-slate-400 select-none" role="separator" aria-hidden="true">/</li>
+            
+            
+            
+            
+            <li><a class="focus-elegant rounded-md px-2 py-1 hover:text-seal transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+
+    <!-- Mobile Menu Panel -->
+    <div id="mobileMenu" class="menu-panel md:hidden mt-4" data-open="false">
+        <ul
+            class="mx-auto max-w-sm max-h-menu overflow-y-auto rounded-2xl border border-slate-200 bg-paper/95 shadow-xs">
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/" >首页</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/archives" >归档</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/categories" >分类</a></li>
+            
+            <li class="h-px bg-slate-200/70" role="separator" aria-hidden="true"></li>
+            
+            
+            
+            
+            <li><a class="focus-elegant block px-6 py-3 text-center text-slate-800 hover:text-seal hover:bg-seal/5 transition-colors"
+                    href="/tags" >标签</a></li>
+            
+            
+        </ul>
+    </div>
+</nav>
+
+
+
+            <!-- Main Content -->
+            <main class="section-divider">
+                
+
+
+
+
+
+
+
+
+<article class="py-2">
+    <header class="text-center mb-8">
+        
+        <h1 class="page-title mb-4" data-pagefind-body data-pagefind-meta="title">
+            RSI：AI 如何改进自己的能力与学习方法
+        </h1>
+        
+        
+
+
+
+<div class="mb-4 flex items-center justify-center gap-4 text-sm text-slate-500 flex-wrap">
+    <div class="flex items-center gap-1.5">
+        
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+</svg>
+
+        <a href="/archives/2026/" class="oldstyle-nums link-muted"><time datetime="2026-11-02">2026/11/02</time></a>
+    </div>
+    
+        
+        <span class="text-slate-300" aria-hidden="true">•</span>
+        <div class="flex items-center gap-1.5">
+            
+<svg class="size-4 text-slate-400 shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"></path>
+</svg>
+
+            
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/">技术</a>
+                    <span class="text-slate-300">/</span>
+                
+                    <a class="link-muted" href="/categories/%E6%8A%80%E6%9C%AF/agent/">agent</a>
+                    
+                
+            
+        </div>
+    
+</div>
+
+        
+    </header>
+
+    
+    
+<!-- Inline TOC (small screens < xl) -->
+<nav id="tocInline" class="toc-inline xl:hidden mb-8" aria-label="目录" data-pagefind-ignore>
+    <button type="button" class="toc-toggle" aria-expanded="false" aria-controls="tocInlineBody">
+        <span class="toc-toggle-title">目录</span>
+        
+<svg class="toc-chevron size-4 text-slate-500 transition-transform duration-200"
+    viewBox="0 0 20 20" fill="currentColor" aria-hidden="true">
+    <path fill-rule="evenodd"
+        d="M5.23 7.21a.75.75 0 0 1 1.06.02L10 10.94l3.71-3.71a.75.75 0 1 1 1.06 1.06l-4.24 4.24a.75.75 0 0 1-1.06 0L5.21 8.29a.75.75 0 0 1 .02-1.08z"
+        clip-rule="evenodd" />
+</svg>
+
+    </button>
+    <div class="toc-body" id="tocInlineBody" data-open="false"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E9%80%92%E5%BD%92%E8%87%AA%E6%88%91%E6%94%B9%E8%BF%9B" data-target="一、什么是递归自我改进">一、什么是递归自我改进</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81RSI-%E7%9A%84%E4%B8%89%E4%B8%AA%E5%B1%82%E7%BA%A7" data-target="二、RSI-的三个层级">二、RSI 的三个层级</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%BC%B1%E5%B1%82%E7%BA%A7%EF%BC%9A%E8%AE%A9%E6%9C%89%E6%95%88%E7%BB%8F%E9%AA%8C%E7%95%99%E4%B8%8B%E6%9D%A5" data-target="1-弱层级：让有效经验留下来">1. 弱层级：让有效经验留下来</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%AD%E7%AD%89%E5%B1%82%E7%BA%A7%EF%BC%9A%E8%BF%9E%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E4%B9%9F%E8%83%BD%E6%94%B9%E8%BF%9B" data-target="2-中等层级：连学习方法也能改进">2. 中等层级：连学习方法也能改进</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%BC%BA%E5%B1%82%E7%BA%A7%EF%BC%9A%E4%B8%8B%E4%B8%80%E4%BB%A3%E6%9B%B4%E4%BC%9A%E7%BB%A7%E7%BB%AD%E6%94%B9%E8%BF%9B%E8%87%AA%E5%B7%B1" data-target="3-强层级：下一代更会继续改进自己">3. 强层级：下一代更会继续改进自己</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81MetaRSI%EF%BC%9A%E6%8A%8A%E8%87%AA%E6%88%91%E6%94%B9%E8%BF%9B%E6%8B%86%E6%88%90%E4%B8%89%E7%B1%BB%E5%B7%A5%E4%BD%9C" data-target="三、MetaRSI：把自我改进拆成三类工作">三、MetaRSI：把自我改进拆成三类工作</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%B2%BF%E7%9D%80%E4%B8%80%E6%AC%A1%E5%A4%B1%E8%B4%A5%EF%BC%8C%E7%9C%8B%E6%B8%85%E4%B8%89%E9%87%8D%E6%94%B9%E8%BF%9B" data-target="四、沿着一次失败，看清三重改进">四、沿着一次失败，看清三重改进</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E9%87%8D%EF%BC%9A%E8%AE%A9-Agent-%E5%AD%A6%E4%BC%9A%E5%AE%8C%E6%88%90%E4%BB%BB%E5%8A%A1" data-target="第一重：让-Agent-学会完成任务">第一重：让 Agent 学会完成任务</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E9%87%8D%EF%BC%9A%E4%BF%AE%E6%94%B9%E4%BA%A7%E7%94%9F%E6%94%B9%E8%BF%9B%E7%9A%84%E6%B5%81%E7%A8%8B" data-target="第二重：修改产生改进的流程">第二重：修改产生改进的流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E9%87%8D%EF%BC%9A%E4%BF%AE%E6%94%B9%E5%AE%89%E6%8E%92%E6%94%B9%E8%BF%9B%E5%B7%A5%E4%BD%9C%E7%9A%84%E7%AD%96%E7%95%A5" data-target="第三重：修改安排改进工作的策略">第三重：修改安排改进工作的策略</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E4%B8%8D%E8%83%BD%E7%9B%B4%E6%8E%A5%E7%A7%B0%E4%B8%BA%E5%BC%BA-RSI" data-target="五、为什么还不能直接称为强-RSI">五、为什么还不能直接称为强 RSI</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E6%80%8E%E6%A0%B7%E5%88%A4%E6%96%AD%E7%B3%BB%E7%BB%9F%E7%9C%9F%E7%9A%84%E5%8F%98%E5%BC%BA%E4%BA%86" data-target="六、怎样判断系统真的变强了">六、怎样判断系统真的变强了</a></li></ul></div>
+</nav>
+
+<!-- Sidebar TOC (xl+ screens) -->
+<nav id="tocSidebar" class="toc-sidebar hidden xl:block" aria-label="目录" data-pagefind-ignore>
+    <div class="toc-sidebar-inner">
+        <p class="toc-sidebar-title">目录</p>
+        <div class="toc-body"><ul class="toc-list"><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%80%E3%80%81%E4%BB%80%E4%B9%88%E6%98%AF%E9%80%92%E5%BD%92%E8%87%AA%E6%88%91%E6%94%B9%E8%BF%9B" data-target="一、什么是递归自我改进">一、什么是递归自我改进</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%8C%E3%80%81RSI-%E7%9A%84%E4%B8%89%E4%B8%AA%E5%B1%82%E7%BA%A7" data-target="二、RSI-的三个层级">二、RSI 的三个层级</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#1-%E5%BC%B1%E5%B1%82%E7%BA%A7%EF%BC%9A%E8%AE%A9%E6%9C%89%E6%95%88%E7%BB%8F%E9%AA%8C%E7%95%99%E4%B8%8B%E6%9D%A5" data-target="1-弱层级：让有效经验留下来">1. 弱层级：让有效经验留下来</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#2-%E4%B8%AD%E7%AD%89%E5%B1%82%E7%BA%A7%EF%BC%9A%E8%BF%9E%E5%AD%A6%E4%B9%A0%E6%96%B9%E6%B3%95%E4%B9%9F%E8%83%BD%E6%94%B9%E8%BF%9B" data-target="2-中等层级：连学习方法也能改进">2. 中等层级：连学习方法也能改进</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#3-%E5%BC%BA%E5%B1%82%E7%BA%A7%EF%BC%9A%E4%B8%8B%E4%B8%80%E4%BB%A3%E6%9B%B4%E4%BC%9A%E7%BB%A7%E7%BB%AD%E6%94%B9%E8%BF%9B%E8%87%AA%E5%B7%B1" data-target="3-强层级：下一代更会继续改进自己">3. 强层级：下一代更会继续改进自己</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%B8%89%E3%80%81MetaRSI%EF%BC%9A%E6%8A%8A%E8%87%AA%E6%88%91%E6%94%B9%E8%BF%9B%E6%8B%86%E6%88%90%E4%B8%89%E7%B1%BB%E5%B7%A5%E4%BD%9C" data-target="三、MetaRSI：把自我改进拆成三类工作">三、MetaRSI：把自我改进拆成三类工作</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%9B%9B%E3%80%81%E6%B2%BF%E7%9D%80%E4%B8%80%E6%AC%A1%E5%A4%B1%E8%B4%A5%EF%BC%8C%E7%9C%8B%E6%B8%85%E4%B8%89%E9%87%8D%E6%94%B9%E8%BF%9B" data-target="四、沿着一次失败，看清三重改进">四、沿着一次失败，看清三重改进</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%80%E9%87%8D%EF%BC%9A%E8%AE%A9-Agent-%E5%AD%A6%E4%BC%9A%E5%AE%8C%E6%88%90%E4%BB%BB%E5%8A%A1" data-target="第一重：让-Agent-学会完成任务">第一重：让 Agent 学会完成任务</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%AC%AC%E4%BA%8C%E9%87%8D%EF%BC%9A%E4%BF%AE%E6%94%B9%E4%BA%A7%E7%94%9F%E6%94%B9%E8%BF%9B%E7%9A%84%E6%B5%81%E7%A8%8B" data-target="第二重：修改产生改进的流程">第二重：修改产生改进的流程</a></li><li class="toc-item" data-level="1"><a class="toc-link" href="#%E7%AC%AC%E4%B8%89%E9%87%8D%EF%BC%9A%E4%BF%AE%E6%94%B9%E5%AE%89%E6%8E%92%E6%94%B9%E8%BF%9B%E5%B7%A5%E4%BD%9C%E7%9A%84%E7%AD%96%E7%95%A5" data-target="第三重：修改安排改进工作的策略">第三重：修改安排改进工作的策略</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E4%BA%94%E3%80%81%E4%B8%BA%E4%BB%80%E4%B9%88%E8%BF%98%E4%B8%8D%E8%83%BD%E7%9B%B4%E6%8E%A5%E7%A7%B0%E4%B8%BA%E5%BC%BA-RSI" data-target="五、为什么还不能直接称为强-RSI">五、为什么还不能直接称为强 RSI</a></li><li class="toc-item" data-level="0"><a class="toc-link" href="#%E5%85%AD%E3%80%81%E6%80%8E%E6%A0%B7%E5%88%A4%E6%96%AD%E7%B3%BB%E7%BB%9F%E7%9C%9F%E7%9A%84%E5%8F%98%E5%BC%BA%E4%BA%86" data-target="六、怎样判断系统真的变强了">六、怎样判断系统真的变强了</a></li></ul></div>
+    </div>
+</nav>
+
+    
+
+    <div class="prose-shiro" data-pagefind-body>
+        <p>AI 可以从失败中总结经验，但如果负责总结经验的流程本身不够好，谁来改进这套流程？RSI（Recursive Self-Improvement，递归自我改进）研究的就是这个问题：系统根据反馈提升能力，再用得到的能力改进后续的学习和升级过程。</p>
+<p>理解 RSI，需要抓住一条主线：<strong>从记住有效经验，到改进学习方法，再到让下一代更会继续改进自己。</strong></p>
+<span id="more"></span>
+
+<h2 id="一、什么是递归自我改进"><a href="#一、什么是递归自我改进" class="headerlink" title="一、什么是递归自我改进"></a>一、什么是递归自我改进</h2><p>假设一个 AI 在《我的世界》中接到任务：采集圆石。它反复空手挖石头，却始终没有得到需要的材料。经过检查，它发现应该先准备镐，再开采石头。</p>
+<p>如果这次任务结束后，它又忘记了这个前置条件，那么改善的只是当前这次表现。如果它将经验写进技能库，下一次任务也能使用，改进就被保留下来了。</p>
+<p>但经验积累还会带来新的问题：技能库越来越长，规则开始重复、冲突，查找和执行也变得困难。</p>
+<p>于是，系统调整了维护技能库的方法：以后新增规则前，先检查已有内容，合并重复项，明确适用条件，再验证修改效果。这套新方法会用于之后的每一次学习。</p>
+<p>这里就出现了递归：<strong>系统改进了自己的能力，也改进了产生这些能力的方法；改进后的方法，又参与下一轮改进。</strong></p>
+<p>因此，判断一个系统是否具有递归特征，关键在于后续的改进过程有没有继承并使用新的改进机制。</p>
+<h2 id="二、RSI-的三个层级"><a href="#二、RSI-的三个层级" class="headerlink" title="二、RSI 的三个层级"></a>二、RSI 的三个层级</h2><p>按照改进深入的程度，可以用弱、中、强三个层级来理解 RSI。这个分法用于说明能力差异，并非统一的行业标准；研究中也有按系统自主程度进一步细分的方式。<a target="_blank" rel="noopener" href="https://arxiv.org/abs/2609.11873">RSI 的自治能力分级与发展路线</a></p>
+<h3 id="1-弱层级：让有效经验留下来"><a href="#1-弱层级：让有效经验留下来" class="headerlink" title="1. 弱层级：让有效经验留下来"></a>1. 弱层级：让有效经验留下来</h3><p>系统能根据反馈修改提示词、记忆、技能或模型参数，并在后续任务中复用有效结果。</p>
+<p>例如，Agent 将“采集圆石前先准备镐”写进技能库，以后遇到相同问题就不再从头摸索。</p>
+<p>这一层的变化发生在系统的知识和行为上。至于如何发现错误、如何修改技能、如何判断修改有效，仍然可以遵循人预先设计好的固定流程。</p>
+<p>更严格地说，这属于持久化自我改进，是递归自我改进的基础。</p>
+<h3 id="2-中等层级：连学习方法也能改进"><a href="#2-中等层级：连学习方法也能改进" class="headerlink" title="2. 中等层级：连学习方法也能改进"></a>2. 中等层级：连学习方法也能改进</h3><p>系统开始修改负责产生改进的机制，包括如何分析失败、组织数据、更新技能，以及安排模型训练。</p>
+<p>例如，原来的学习方法是“每次失败就追加一条规则”，后来改成“先归纳原因、合并重复规则，再补充新规则”。这次改变会影响后续所有技能更新。</p>
+<p>这一层的变化发生在学习过程上。系统已经能够改进自己的改进方法，但仍可能只在预设的任务、组件和评价方式内运行。</p>
+<h3 id="3-强层级：下一代更会继续改进自己"><a href="#3-强层级：下一代更会继续改进自己" class="headerlink" title="3. 强层级：下一代更会继续改进自己"></a>3. 强层级：下一代更会继续改进自己</h3><p>更强的目标，是让系统更自主地发现能力缺口、选择研究方向、设计实验，并使后继系统成为更有效的改进者。</p>
+<p>例如，下一代系统不仅更会玩游戏，还更擅长判断该学习什么、如何获取可靠经验、应该修改哪些组件，以及如何用有限资源验证方案。这些能力又能帮助它研发后续版本。</p>
+<p>这里需要证明的是：在可比较的条件和预算下，后继系统比前一代更能产生有效的后续改进。单次任务分数提高，或者成功训练出一个新模型，都不足以单独证明这一点。</p>
+<table>
+<thead>
+<tr>
+<th>层级</th>
+<th>改进的重点</th>
+<th>关键问题</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>弱</td>
+<td>保留并复用有效经验</td>
+<td>这次学到的，下次还能用吗？</td>
+</tr>
+<tr>
+<td>中等</td>
+<td>修改产生改进的机制</td>
+<td>以后能用更好的方法学习吗？</td>
+</tr>
+<tr>
+<td>强</td>
+<td>增强后继系统的改进能力</td>
+<td>下一代能更有效地研发下一代吗？</td>
+</tr>
+</tbody></table>
+<h2 id="三、MetaRSI：把自我改进拆成三类工作"><a href="#三、MetaRSI：把自我改进拆成三类工作" class="headerlink" title="三、MetaRSI：把自我改进拆成三类工作"></a>三、MetaRSI：把自我改进拆成三类工作</h2><p>一个 Agent 的表现由多部分共同决定。它需要学习数据，需要模型本身的能力，也需要运行时使用的提示词、记忆、工具和技能。这套围绕模型组织工作的运行环境，通常称为 Harness。</p>
+<p>MetaRSI 将这些部分作为三类改进对象，由不同角色负责。调度器读取运行反馈，决定先调用哪个组件、让它处理什么问题，以及是否需要继续调用其他组件。</p>
+<table>
+<thead>
+<tr>
+<th>组件</th>
+<th>负责的工作</th>
+<th>主要产物</th>
+</tr>
+</thead>
+<tbody><tr>
+<td>Data-RSI</td>
+<td>从运行经验中整理、合成并验证学习材料</td>
+<td>可复用的数据和经验记录</td>
+</tr>
+<tr>
+<td>Harness-RSI</td>
+<td>修改提示词、记忆、工具和技能等运行环境</td>
+<td>能立即使用的规则、工具或流程</td>
+</tr>
+<tr>
+<td>Model-RSI</td>
+<td>通过训练调整模型参数等模型状态</td>
+<td>能力发生变化的模型</td>
+</tr>
+</tbody></table>
+<p>数据、Harness 和模型是三个<strong>修改对象</strong>，各自都可能参与不同层级的改进。修改了模型参数，也不代表系统就达到了强 RSI。</p>
+<p>在论文实验中，分析、提案、调度等由模型执行的角色，都使用被改进的目标模型。同一个底层模型在不同上下文中承担不同职责，使实验能够研究系统自身的改进机制，而不必依靠一个更强的模型来提供方案。<a target="_blank" rel="noopener" href="https://arxiv.org/html/2609.06396v1#S4">MetaRSI 方法部分</a></p>
+<h2 id="四、沿着一次失败，看清三重改进"><a href="#四、沿着一次失败，看清三重改进" class="headerlink" title="四、沿着一次失败，看清三重改进"></a>四、沿着一次失败，看清三重改进</h2><p>继续用《我的世界》中的采集任务说明这套机制。下面是帮助理解的简化例子；MetaRSI 论文实际使用的是代码、终端任务和封闭式科学推理等基准。<a target="_blank" rel="noopener" href="https://arxiv.org/html/2609.06396v1#S5">MetaRSI 实验部分</a></p>
+<h3 id="第一重：让-Agent-学会完成任务"><a href="#第一重：让-Agent-学会完成任务" class="headerlink" title="第一重：让 Agent 学会完成任务"></a>第一重：让 Agent 学会完成任务</h3><p>Agent 多次采集失败后，系统分析运行记录，发现它没有检查工具的前置条件。一个成本较低的尝试，是先让 Harness-RSI 修改采集技能，补充“检查镐；没有镐时先收集材料并合成”的规则。</p>
+<p>修改之后，系统重新运行任务。背包里已经有镐、只有部分材料、完全没有木材时，Agent 都应当采取相应行动。如果新规则在这些场景中有效，就保留这次修改。</p>
+<p>随后，Data-RSI 可以整理当前系统的运行轨迹，围绕工具检查、材料收集和合成顺序生成并验证更多学习材料。系统状态已经变化，因此需要使用修改后的新反馈，不能只依赖旧日志。</p>
+<p>如果这类行为经常出现，而且有足够可靠的数据，调度器可以调用 Model-RSI，使用 LoRA 等方式微调模型。训练完成后，再检查模型是否已经掌握相关行为；如果减少额外规则后仍然表现稳定，就可以尝试精简技能。</p>
+<p>这条路径可以概括为：</p>
+<figure class="highlight text"><table><tr><td class="gutter"><pre><span class="line">1</span><br><span class="line">2</span><br><span class="line">3</span><br></pre></td><td class="code"><pre><span class="line">发现失败 → 修改技能 → 收集并验证新经验 → 必要时训练模型</span><br><span class="line">             ↑                              ↓</span><br><span class="line">             └────── 重新执行任务，检查效果 ──────┘</span><br></pre></td></tr></table></figure>
+
+<p>数据、Harness 和模型需要根据新反馈交替工作，具体顺序取决于当前问题和成本。某项能力通过技能就能稳定实现时，也可以继续保留在技能库中。</p>
+<p>这一轮改进的结果是：Agent 学会了完成采集任务。如果产生改进的流程始终固定，到这里主要体现的仍是弱层级的持久化改进。</p>
+<h3 id="第二重：修改产生改进的流程"><a href="#第二重：修改产生改进的流程" class="headerlink" title="第二重：修改产生改进的流程"></a>第二重：修改产生改进的流程</h3><p>随着任务增加，Harness-RSI 每遇到一次失败就追加一条规则。技能库逐渐变长，还出现了适用条件不清、前后冲突的问题。</p>
+<p>调度器因此修改 Harness-RSI 所遵循的改进流程：新增内容前先查找相关规则，合并重复项，解决冲突，再验证修改效果。</p>
+<p>这次修改影响的是后续所有技能更新。原本负责改进 Agent 的机制，现在也得到了改进，因此进入了中等层级所讨论的范围。</p>
+<h3 id="第三重：修改安排改进工作的策略"><a href="#第三重：修改安排改进工作的策略" class="headerlink" title="第三重：修改安排改进工作的策略"></a>第三重：修改安排改进工作的策略</h3><p>系统进一步发现，每学到一条规则就启动一次训练，会产生大量收益有限的小任务，整个过程又慢又贵。</p>
+<p>更高一层的控制角色读取多轮改进记录，修改调度器遵循的策略：先通过技能解决问题，积累经过验证的经验；当某类行为足够高频、稳定，而且值得承担训练成本时，再安排微调。</p>
+<p>这次修改会改变后续如何选择和组合改进手段。它比更新单个组件的流程又深入了一层，但仍然属于对改进机制的调整。</p>
+<p>因此，**MetaRSI 的三重改进，不能直接对应弱、中、强三个层级。**第一重改变任务能力，第二重改变组件的改进流程，第三重改变调度策略；后两重都可以属于中等层级。</p>
+<h2 id="五、为什么还不能直接称为强-RSI"><a href="#五、为什么还不能直接称为强-RSI" class="headerlink" title="五、为什么还不能直接称为强 RSI"></a>五、为什么还不能直接称为强 RSI</h2><p>能修改调度策略，说明系统可以调整自身的改进机制。但这并没有自动证明：下一代系统能够在更开放的任务中，自主找到有价值的研究方向，并更有效地继续研发后继系统。</p>
+<p>MetaRSI 展示了预设框架内的递归改进机制。按照前面的划分，可以用它理解中等层级的 RSI；要进一步声称具备强层级的能力，还需要验证更广的自主研究能力，以及这种能力能否跨代增强。</p>
+<p>同样，让模型自己写训练代码、合成数据，再产出一个新模型，也不意味着这条链路已经完成。新模型可能更会完成任务，却仍然不会挑选更好的数据、设计更好的实验，或者找到值得投入资源的方向。</p>
+<p>这里需要分别评估两种进步：<strong>任务能力的进步，以及产生后续改进的能力的进步。</strong></p>
+<p>后者如果能够持续增强，可能缩短研发周期，让同样的资源产生更多改进；但收益不会因此自动无限增长，数据、算力、实验和验证仍然有成本。</p>
+<h2 id="六、怎样判断系统真的变强了"><a href="#六、怎样判断系统真的变强了" class="headerlink" title="六、怎样判断系统真的变强了"></a>六、怎样判断系统真的变强了</h2><p>自我改进需要可靠的反馈。让同一个模型写题、作答、打分，并不能保证结果正确；多个角色也可能共享同一种错误认识。</p>
+<p>以采集任务为例，验证应该检查 Agent 是否真正获得了圆石，而不是只看它有没有写出一段合理的行动计划。</p>
+<p>还需要检查三件事：</p>
+<ul>
+<li><strong>新任务上的表现</strong>：改进是否能用于没有参与学习的场景，而不是只记住已有样例。</li>
+<li><strong>原有能力和总成本</strong>：新增能力有没有带来退化，收益是否值得消耗的时间、Token 和训练资源。</li>
+<li><strong>后续改进的效率</strong>：从相同起点出发、使用相同预算，新改进机制是否比旧机制带来更多有效进步。</li>
+</ul>
+<p>评价标准本身也需要受到保护。如果系统可以把“成功采集圆石”改成“找到石头”，更高的成功率就失去了意义。MetaRSI 因此将封闭评估器等对象放在改进机制的修改范围之外。<a target="_blank" rel="noopener" href="https://arxiv.org/html/2609.06396v1#S4.SS7">MetaRSI 的评估保护边界</a></p>
+<p>系统还需要获得可靠的新信息。反复整理已有回答，不能保证补上原本缺少的知识；环境反馈、检索资料和真实实验，可能成为下一步进展的来源。<a target="_blank" rel="noopener" href="https://arxiv.org/html/2609.06396v1#S6.SS2">MetaRSI 关于能力边界的讨论</a></p>
+<p>RSI 的研究价值，在于把这些反馈持续转化为能力，并让产生能力的过程本身变得更有效。至于它何时能够支持更开放、更自主的智能系统，需要由跨任务、跨轮次和跨代的实验结果来回答。</p>
+
+    </div>
+
+    <!-- Tags -->
+    
+    <div class="mt-8 flex flex-wrap gap-2">
+        
+        
+<a href="/tags/AI-Agent/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    AI Agent
+    
+</a>
+
+        
+        
+<a href="/tags/Harness/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    Harness
+    
+</a>
+
+        
+        
+<a href="/tags/RSI/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    RSI
+    
+</a>
+
+        
+        
+<a href="/tags/%E6%A8%A1%E5%9E%8B%E5%BE%AE%E8%B0%83/" class="tag-pill">
+    <svg class="size-3 text-slate-400 mr-2 shrink-0" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+        <path d="M12.586 2.586A2 2 0 0 0 11.172 2H4a2 2 0 0 0-2 2v7.172a2 2 0 0 0 .586 1.414l8.704 8.704a2.426 2.426 0 0 0 3.42 0l6.58-6.58a2.426 2.426 0 0 0 0-3.42z" />
+        <circle cx="7.5" cy="7.5" r=".5" fill="currentColor" />
+    </svg>
+    模型微调
+    
+</a>
+
+        
+    </div>
+    
+
+    
+    <!-- Post Navigation: Hexo's page.prev = newer post, page.next = older post -->
+    <div class="section-divider flex justify-between items-center text-sm md:text-base">
+        
+        <a href="/2026/11/03/Agent%E8%AF%84%E6%B5%8B%EF%BC%9A%E4%BB%8E%E4%BB%BB%E5%8A%A1%E7%BB%93%E6%9E%9C%E5%88%B0%E6%8C%81%E7%BB%AD%E8%BF%AD%E4%BB%A3/" class="post-nav-link group text-left" title="Agent 评测：从任务结果到持续迭代">
+             <span aria-hidden="true">&larr;</span>
+             <span class="post-nav-title">Agent 评测：从任务结果到持续迭代</span>
+        </a>
+        
+
+        
+        <a href="/2026/10/30/RAG%E7%B3%BB%E7%BB%9F%E4%B8%AD%E7%9A%84%E6%96%87%E6%A1%A3%E9%AB%98%E9%A2%91%E5%8F%98%E6%9B%B4%E4%B8%8E%E5%90%91%E9%87%8F%E7%B4%A2%E5%BC%95%E7%BB%B4%E6%8A%A4/" class="post-nav-link group text-right" title="RAG 系统中的文档高频变更，如何维护向量索引？">
+            <span class="post-nav-title">RAG 系统中的文档高频变更，如何维护向量索引？</span>
+            <span aria-hidden="true">&rarr;</span>
+        </a>
+        
+    </div>
+
+
+    
+
+
+
+
+
+
+
+<script>
+;(() => {
+    const commentsCss = "/css/comments.min.css?v=08b62f9b";
+    // Keep this tiny inline loader behavior aligned with tools/snippets/asset-loader.js.
+    const assetTimeout = 12000;
+    let commentsCssLoading = null;
+
+    function watchAssetLoad(el, reject) {
+        let settled = false;
+        let timer;
+        const settle = (callback) => {
+            if (settled) return;
+            settled = true;
+            clearTimeout(timer);
+            callback();
+        };
+        const fail = (error) => {
+            settle(() => {
+                el.dataset.shiroError = 'true';
+                el.remove();
+                reject(error);
+            });
+        };
+        timer = setTimeout(() => fail(new Error('Asset load timed out')), assetTimeout);
+        return { settle, fail };
+    }
+
+    function assetReady(el, tag) {
+        if (el.dataset.shiroLoaded === 'true' || (tag === 'link' && el.sheet)) {
+            el.dataset.shiroLoaded = 'true';
+            return Promise.resolve();
+        }
+        if (el.dataset.shiroError === 'true') {
+            el.remove();
+            return Promise.reject(new Error('Asset failed to load'));
+        }
+        return new Promise((resolve, reject) => {
+            const { settle, fail } = watchAssetLoad(el, reject);
+            el.addEventListener('load', () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            }, { once: true });
+            el.addEventListener('error', (event) => {
+                fail(event);
+            }, { once: true });
+        });
+    }
+
+    function loadAsset(tag, attrs, selector) {
+        const existing = selector ? document.querySelector(selector) : null;
+        if (existing && existing.dataset.shiroError === 'true') {
+            existing.remove();
+        } else if (existing) {
+            return assetReady(existing, tag);
+        }
+
+        return new Promise((resolve, reject) => {
+            const el = document.createElement(tag);
+            const { settle, fail } = watchAssetLoad(el, reject);
+            Object.keys(attrs).forEach((key) => {
+                if (attrs[key] === true) {
+                    el.setAttribute(key, '');
+                } else {
+                    el.setAttribute(key, attrs[key]);
+                }
+            });
+            el.onload = () => {
+                settle(() => {
+                    el.dataset.shiroLoaded = 'true';
+                    delete el.dataset.shiroError;
+                    resolve();
+                });
+            };
+            el.onerror = (event) => {
+                fail(event);
+            };
+            document.head.appendChild(el);
+        });
+    }
+
+    window.__shiroLoadCommentsCss = window.__shiroLoadCommentsCss || (() => {
+        if (!commentsCss) return Promise.resolve();
+        if (commentsCssLoading) return commentsCssLoading;
+        commentsCssLoading = loadAsset('link', {
+            rel: 'stylesheet',
+            href: commentsCss,
+            'data-shiro-comments-css': 'true'
+        }, 'link[data-shiro-comments-css]').catch((error) => {
+            commentsCssLoading = null;
+            throw error;
+        });
+        return commentsCssLoading;
+    });
+
+    window.__shiroOnNearViewport = window.__shiroOnNearViewport || ((element, callback, options) => {
+        const w = window;
+        if (!element || typeof callback !== 'function') return;
+        if (!('IntersectionObserver' in w)) {
+            callback();
+            return;
+        }
+        const io = new IntersectionObserver((entries) => {
+            if (!entries[0].isIntersecting) return;
+            callback();
+            io.disconnect();
+        }, options || { rootMargin: '200px 0px', threshold: 0 });
+        io.observe(element);
+    });
+})();
+</script>
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+<div id="giscus-container" class="giscus" data-pagefind-ignore></div>
+<script>
+;(() => {
+    const d = document, w = window;
+    const container = d.getElementById('giscus-container');
+    if (!container) return;
+
+    const loadCommentsCss = w.__shiroLoadCommentsCss || (() => Promise.resolve());
+    let loaded = false;
+
+    const loadGiscus = () => {
+        if (loaded) return;
+        loaded = true;
+
+        const binaryAttr = (value, fallback) => {
+            if (value === true) return '1';
+            if (value === false) return '0';
+            const text = String(value == null ? fallback : value).trim().toLowerCase();
+            if (text === 'true') return '1';
+            if (text === 'false') return '0';
+            return text || fallback;
+        };
+        const safeScriptSrc = (value, fallback) => {
+            const text = String(value || '').trim();
+            if (!text) return fallback;
+            if (/[\u0000-\u001F\u007F]/.test(text)) return fallback;
+            if (/^https?:\/\//i.test(text) || /^\/\//.test(text)) return text;
+            return /^[a-z][a-z0-9+.-]*:/i.test(text) ? fallback : text;
+        };
+
+        const s = d.createElement('script');
+        s.src = safeScriptSrc("https://giscus.app/client.js", 'https://giscus.app/client.js');
+        s.async = true;
+        s.crossOrigin = 'anonymous';
+        const attrs = {
+            'data-repo': "DadaVinqi/DadaVinqi.github.io",
+            'data-repo-id': "R_kgDOSxqpTQ",
+            'data-category': "General",
+            'data-category-id': "DIC_kwDOSxqpTc4C-8VI",
+            'data-mapping': "pathname",
+            'data-strict': binaryAttr(0, '0'),
+            'data-reactions-enabled': binaryAttr(1, '1'),
+            'data-emit-metadata': binaryAttr(0, '0'),
+            'data-input-position': "bottom",
+            
+            'data-theme': "https://cdn.jsdelivr.net/npm/hexo-theme-shiro@1.5.2/source/css/giscus.min.css",
+            'data-lang': "en",
+        };
+        for (const [key, value] of Object.entries(attrs)) {
+            s.setAttribute(key, value);
+        }
+        const appendScript = () => { container.appendChild(s); };
+        loadCommentsCss().then(appendScript).catch(appendScript);
+    };
+
+    w.__shiroOnNearViewport(container, loadGiscus);
+})();
+</script>
+<noscript>Please enable JavaScript to view the comments.</noscript>
+
+
+
+
+</article>
+
+
+            </main>
+
+            <footer class="section-divider" data-pagefind-ignore>
+    <div class="text-center text-sm text-slate-500 leading-relaxed">
+        <p>&copy; <span class="oldstyle-nums">2026</span> DadaVinCi's Blog</p>
+        <p class="font-eng text-footnote tracking-wide opacity-90">Elegant theme by <a href="https://github.com/Acris/hexo-theme-shiro" target="_blank" rel="noopener noreferrer" class="link-muted">Shiro</a> · Made by <a href="https://acris.me" target="_blank" rel="noopener noreferrer" class="link-muted">Acris</a>
+                        with <span aria-label="love" title="love">❤️</span></p>
+    </div>
+</footer>
+
+        </div>
+
+        <!-- Note Text — decorative aside, not part of main content or footer -->
+        <aside class="mt-4 text-center" aria-hidden="true" role="presentation">
+            <p class="site-note font-title text-xs sm:text-sm text-slate-400/70 tracking-note font-light select-none">
+                自律是高级自由
+            </p>
+        </aside>
+    </div>
+
+    
+    <button id="backToTop" type="button" class="back-to-top" data-visible="false" aria-label="回到顶部">
+        <svg class="size-4" fill="none" stroke="currentColor" viewBox="0 0 24 24" aria-hidden="true">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7"></path>
+        </svg>
+    </button>
+    
+
+    <!-- Scripts -->
+    
+    
+    <script>
+        
+        window.__i18n = window.__i18n || {};
+        
+        
+        window.__i18n["search"] = {"button":"搜索","close":"关闭","loading":"加载中…","many_results":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","one_result":"找到 [COUNT] 个与 \"[SEARCH_TERM]\" 相关的结果","placeholder":"搜索文章…","unavailable":"搜索暂时不可用。","zero_results":"未找到与 \"[SEARCH_TERM]\" 相关的内容"};
+        window["__pagefindBase"] = "/pagefind/";
+        window["__searchCss"] = "/css/search.min.css?v=81ae2a10";
+        window["__searchScript"] = "/js/search.min.js?v=4e64082f";
+        
+        
+        
+        window.__i18n["clipboard"] = {"copied":"已复制","copy":"复制代码"};
+        window["__clipboardScript"] = "/js/clipboard.min.js?v=398448ef";
+        
+        
+        window["__mobileMenuScript"] = "/js/mobile-menu.min.js?v=346d5ab1";
+        
+    </script>
+    
+    
+    <script defer src="/js/search-bootstrap.min.js?v=360bb33e"></script>
+    
+    
+    
+    <script defer src="/js/clipboard-bootstrap.min.js?v=ee68f730"></script>
+    
+    
+    <script defer src="/js/toc.min.js?v=f2791db0"></script>
+    
+    
+    <script defer src="/js/progress.min.js?v=6b058157"></script>
+    
+    
+    <script defer src="/js/back-to-top.min.js?v=cebd24d7"></script>
+    
+    
+    <script defer src="/js/theme-toggle.min.js?v=5572a0a4"></script>
+    
+    <script defer src="/js/header-contact.min.js?v=f1e12333"></script>
+    
+    <script defer src="/js/mobile-menu-bootstrap.min.js?v=2703c648"></script>
+    
+
+    
+
+
+  <!-- Google tag (gtag.js) — SRI omitted because Google updates this script frequently,
+       which would break integrity checks. Use CSP script-src instead for protection. -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-6WEMH0PKG7"></script>
+  <script>
+    window.dataLayer = window.dataLayer || [];
+    function gtag(){dataLayer.push(arguments);}
+    gtag('js', new Date());
+
+    gtag('config', "G-6WEMH0PKG7");
+  </script>
+
+
+</body>
+</html>
